@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Property Estimate — valUProp.in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">valUProp<span class="logo-dot">.in</span></a>
+      <a href="estimate.html" class="btn-back-nav">← New estimate</a>
+    </div>
+  </nav>
+
+  <main class="results-main">
+
+    <!-- Property label -->
+    <div class="results-property-bar">
+      <div class="rpb-inner">
+        <div class="rpb-type-badge" id="res-type-badge">Apartment</div>
+        <div class="rpb-address" id="res-address">Anna Nagar, Chennai</div>
+      </div>
+    </div>
+
+    <!-- FREE ESTIMATE BLOCK -->
+    <div class="free-estimate-block">
+      <div class="feb-label">FREE ESTIMATE</div>
+      <div class="feb-value" id="res-value-range">₹X.X Cr – ₹Y.Y Cr</div>
+      <div class="feb-sub">Estimated market value · Based on AI analysis of locality data</div>
+      <div class="feb-teaser" id="res-teaser-insight"></div>
+    </div>
+
+    <!-- ONE TEASER INSIGHT -->
+    <div class="teaser-insight-card" id="teaser-card">
+      <div class="tic-icon">
+        <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm.75 10.5h-1.5v-5h1.5v5zm0-6.5h-1.5V3.5h1.5V5z"/></svg>
+      </div>
+      <div id="teaser-text">Properties in this locality have appreciated 8% in the last 12 months.</div>
+    </div>
+
+    <!-- BLURRED REPORT PREVIEW -->
+    <div class="blurred-preview">
+      <div class="bp-label">What's in the full report</div>
+      <div class="bp-sections">
+        <div class="bp-sec bp-visible">
+          <div class="bp-sec-letter">A</div>
+          <div class="bp-sec-content">
+            <div class="bp-sec-title">Asset Overview</div>
+            <div class="bp-sec-text" id="preview-asset">Your property details and locality character</div>
+          </div>
+        </div>
+        <div class="bp-sec bp-visible">
+          <div class="bp-sec-letter">B</div>
+          <div class="bp-sec-content">
+            <div class="bp-sec-title">Micro-Market Context</div>
+            <div class="bp-sec-text">Demand drivers, infrastructure, neighbourhood trends</div>
+          </div>
+        </div>
+        <div class="bp-sec bp-blurred">
+          <div class="bp-sec-letter">C</div>
+          <div class="bp-sec-content">
+            <div class="bp-sec-title">Observed Pricing Signals</div>
+            <div class="bp-sec-text">₹/sq.ft rates, guideline value, comparables</div>
+          </div>
+        </div>
+        <div class="bp-sec bp-blurred">
+          <div class="bp-sec-letter">D</div>
+          <div class="bp-sec-content">
+            <div class="bp-sec-title">Valuation Build-Up</div>
+            <div class="bp-sec-text">Land + building + adjustments breakdown</div>
+          </div>
+        </div>
+        <div class="bp-sec bp-blurred">
+          <div class="bp-sec-letter">E</div>
+          <div class="bp-sec-content">
+            <div class="bp-sec-title">Independent Value Opinion</div>
+            <div class="bp-sec-text">Tighter value range + confidence score</div>
+          </div>
+        </div>
+        <div class="bp-sec bp-blurred">
+          <div class="bp-sec-letter">F</div>
+          <div class="bp-sec-content">
+            <div class="bp-sec-title">Risk & Due Diligence</div>
+            <div class="bp-sec-text">What to verify before transacting</div>
+          </div>
+        </div>
+      </div>
+      <div class="bp-overlay">
+        <div class="bp-lock-icon">
+          <svg viewBox="0 0 20 20" fill="white" width="18" height="18"><path d="M14 9V7a4 4 0 10-8 0v2H4v9h12V9h-2zm-6-2a2 2 0 114 0v2H8V7z"/></svg>
+        </div>
+        <div class="bp-overlay-text">Unlock sections C–F for ₹99</div>
+      </div>
+    </div>
+
+    <!-- LEAD CAPTURE + PAYMENT -->
+    <div class="lead-capture-card" id="lead-capture">
+      <div class="lcc-head">
+        <div class="lcc-price-badge">₹99</div>
+        <div>
+          <div class="lcc-title">Unlock Detailed Valuation Report</div>
+          <div class="lcc-sub">Full 7-section report · PDF emailed to you · Instant access</div>
+        </div>
+      </div>
+      <div class="lcc-form">
+        <div class="field-row">
+          <div class="field">
+            <label for="lcc-phone">Phone number *</label>
+            <input type="tel" id="lcc-phone" placeholder="+91 98765 43210" maxlength="15"/>
+          </div>
+          <div class="field">
+            <label for="lcc-email">Email address *</label>
+            <input type="email" id="lcc-email" placeholder="you@example.com"/>
+          </div>
+        </div>
+        <div class="lcc-error" id="lcc-error"></div>
+        <button class="unlock-btn" onclick="proceedToPayment()">
+          Pay ₹99 &amp; Unlock Report →
+        </button>
+        <div class="lcc-note">
+          🔒 Secured by Razorpay · UPI / Cards / Net Banking · 7-day refund guarantee
+        </div>
+      </div>
+    </div>
+
+    <div class="results-disclaimer">
+      This is an AI-generated estimate for informational purposes only. Not a statutory or bank-certified valuation. <a href="pages/limitations.html">Read our limitations →</a>
+    </div>
+
+    <div style="text-align:center; padding: 8px 0 32px;">
+      <a href="estimate.html" style="font-size:13px; color:var(--muted);">← Start a new estimate</a>
+    </div>
+
+  </main>
+
+  <script src="js/estimate.js"></script>
+  <script src="js/results.js"></script>
+</body>
+</html>

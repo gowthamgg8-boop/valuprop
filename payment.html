@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Unlock Detailed Report — valUProp.in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">valUProp<span class="logo-dot">.in</span></a>
+      <a href="results.html" class="btn-back-nav">← Back to estimate</a>
+    </div>
+  </nav>
+
+  <main class="payment-container">
+    <h1 class="payment-h1">Unlock Detailed Report</h1>
+    <p class="payment-sub">One-time payment · PDF emailed instantly · 7-day refund guarantee</p>
+
+    <div class="order-box">
+      <div style="font-size:11px;font-weight:600;letter-spacing:0.7px;text-transform:uppercase;color:var(--muted-light);margin-bottom:14px;">Order Summary</div>
+      <div class="order-row"><span>Property</span><span id="pay-prop">Loading…</span></div>
+      <div class="order-row"><span>Report type</span><span>Detailed Valuation Report (7 sections)</span></div>
+      <div class="order-row"><span>Delivery</span><span>PDF emailed to <span id="pay-email">your email</span></span></div>
+      <div class="order-row"><span>Valid for</span><span>48 hours from generation</span></div>
+      <div class="order-row"><span>Total</span><span>₹99</span></div>
+    </div>
+
+    <div style="background:var(--success-light);border:1px solid #b6e0ca;border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px;font-size:13px;color:#1a4730;display:flex;gap:10px;align-items:flex-start;">
+      <span style="flex-shrink:0;">✓</span>
+      <div>Your report will be emailed as a PDF to <strong id="pay-email-confirm">your email address</strong>. You can also download it directly from the next page.</div>
+    </div>
+
+    <div class="security-note">
+      <span style="font-size:20px;flex-shrink:0;">🔒</span>
+      <div>
+        <strong>Secured by Razorpay</strong> · 256-bit SSL encryption · PCI-DSS compliant<br/>
+        <span style="font-size:12px;">UPI / GPay / PhonePe / Credit Card / Debit Card / Net Banking / Paytm</span>
+      </div>
+    </div>
+
+    <button class="pay-btn" id="pay-btn" onclick="initiatePayment()">
+      Pay ₹99 &amp; Get My Report →
+    </button>
+
+    <p style="font-size:12px;color:var(--muted-light);text-align:center;margin-top:12px;">
+      7-day no-questions-asked refund · <a href="pages/refund.html">Refund Policy</a>
+    </p>
+  </main>
+
+  <!--
+    RAZORPAY INTEGRATION
+    1. Sign up at razorpay.com → Settings → API Keys → Get Test Key
+    2. Replace YOUR_RAZORPAY_KEY_ID below with your actual key (rzp_test_...)
+    3. For production: create order server-side (backend/main.py /api/create-order)
+       and pass order_id to options.order_id below
+  -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="js/estimate.js"></script>
+  <script>
+    const RAZORPAY_KEY_ID = 'YOUR_RAZORPAY_KEY_ID'; // ← Replace with rzp_test_ key
+    const BACKEND_URL     = window.BACKEND_URL || 'http://localhost:8000';
+
+    const search = getSearch();
+    if (!search.type) window.location.href = 'estimate.html';
+
+    const typeLabels = {
+      'Apartment':'Apartment','IndependentHouse':'Independent House',
+      'Villa':'Villa','LandPlot':'Land / Plot'
+    };
+    const propLabel = `${typeLabels[search.type]||search.type}${search.bhk?' · '+search.bhk:''} · ${search.locality||search.address}`;
+    document.getElementById('pay-prop').textContent = propLabel;
+    document.getElementById('pay-email').textContent = search.email || 'your email';
+    document.getElementById('pay-email-confirm').textContent = search.email || 'your email address';
+
+    async function initiatePayment() {
+      const btn = document.getElementById('pay-btn');
+      btn.disabled = true;
+      btn.textContent = 'Opening payment…';
+
+      const propId = sessionStorage.getItem('valuprop_prop_id');
+      const valId  = sessionStorage.getItem('valuprop_val_id');
+
+      // DEMO mode — simulate payment for local testing (no real Razorpay key)
+      if (!RAZORPAY_KEY_ID || RAZORPAY_KEY_ID === 'YOUR_RAZORPAY_KEY_ID') {
+        btn.textContent = 'Processing…';
+        // Try to create real order on backend for demo
+        let paidValId = null;
+        if (valId) {
+          try {
+            const vr = await fetch(`${BACKEND_URL}/api/payment/verify`, {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({
+                razorpay_order_id:   'demo_order_' + Date.now(),
+                razorpay_payment_id: 'demo_pay_'  + Date.now(),
+                razorpay_signature:  'demo_sig',
+                valuation_id:        parseInt(valId),
+              })
+            });
+            const vd = await vr.json();
+            paidValId = vd.paid_valuation_id;
+          } catch(e) { /* offline */ }
+        }
+        setTimeout(() => {
+          markPaid(search.phone||'', search.email||'');
+          if (paidValId) sessionStorage.setItem('valuprop_paid_val_id', paidValId);
+          window.location.href = 'detail.html';
+        }, 1800);
+        return;
+      }
+
+      // Create Razorpay order via backend
+      let orderData;
+      try {
+        const r = await fetch(`${BACKEND_URL}/api/payment/create-order`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ property_id: parseInt(propId||0), valuation_id: parseInt(valId||0) })
+        });
+        orderData = await r.json();
+      } catch(e) {
+        alert('Could not connect to payment server. Please try again.');
+        btn.disabled = false; btn.textContent = 'Pay ₹99 & Get My Report →';
+        return;
+      }
+
+      const options = {
+        key:         RAZORPAY_KEY_ID,
+        amount:      orderData.amount,
+        currency:    'INR',
+        name:        'valUProp.in',
+        description: `Detailed Report — ${search.locality||search.address}`,
+        order_id:    orderData.order_id,
+        prefill:     { contact: search.phone||'', email: search.email||'' },
+        notes:       { propertyType: search.type, locality: search.locality||'', city: search.city||'' },
+        theme:       { color: '#1B3F6E' },
+        handler: async function(response) {
+          btn.textContent = 'Verifying payment…';
+          try {
+            const vr = await fetch(`${BACKEND_URL}/api/payment/verify`, {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({
+                razorpay_order_id:   response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature:  response.razorpay_signature,
+                valuation_id:        parseInt(valId||0),
+              })
+            });
+            const vd = await vr.json();
+            if (vd.verified) {
+              markPaid(search.phone||'', search.email||'');
+              sessionStorage.setItem('valuprop_payment_id',  response.razorpay_payment_id);
+              sessionStorage.setItem('valuprop_paid_val_id', vd.paid_valuation_id);
+              window.location.href = 'detail.html';
+            } else {
+              alert('Payment verification failed. Contact support@valuprop.in');
+              btn.disabled = false; btn.textContent = 'Pay ₹99 & Get My Report →';
+            }
+          } catch(e) {
+            // Payment done but verification call failed — still proceed (manual reconcile later)
+            markPaid(search.phone||'', search.email||'');
+            window.location.href = 'detail.html';
+          }
+        },
+        modal: { ondismiss: function() { btn.disabled=false; btn.textContent='Pay ₹99 & Get My Report →'; } }
+      };
+
+      const rzp = new Razorpay(options);
+      rzp.on('payment.failed', function(resp) {
+        alert('Payment failed: ' + resp.error.description);
+        btn.disabled=false; btn.textContent='Pay ₹99 & Get My Report →';
+      });
+      rzp.open();
+    }
+  </script>
+</body>
+</html>

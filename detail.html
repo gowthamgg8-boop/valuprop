@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Valuation Report — valUProp.in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    /* Report-specific styles */
+    .report-wrap { max-width: 680px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    .report-hero {
+      background: var(--brand); border-radius: var(--radius);
+      padding: 26px 28px; margin-bottom: 16px; color: white;
+    }
+    .report-hero-top {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .report-ref { font-size: 11px; opacity: 0.6; }
+    .report-paid-tag {
+      background: rgba(255,255,255,0.15); color: white;
+      font-size: 11px; font-weight: 600; padding: 4px 12px;
+      border-radius: 20px; letter-spacing: 0.4px;
+    }
+    .report-address { font-size: 13px; opacity: 0.75; margin-bottom: 14px; }
+    .report-value-label {
+      font-size: 11px; font-weight: 700; letter-spacing: 0.8px;
+      text-transform: uppercase; opacity: 0.7; margin-bottom: 8px;
+    }
+    .report-value {
+      font-family: var(--font-head); font-size: 34px; font-weight: 700;
+      line-height: 1.1; margin-bottom: 6px;
+    }
+    .report-value-sub { font-size: 12px; opacity: 0.7; margin-bottom: 12px; }
+    .confidence-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;
+    }
+    .confidence-high   { background: var(--success); color: white; }
+    .confidence-medium { background: #D97706; color: white; }
+    .confidence-low    { background: var(--danger); color: white; }
+    .confidence-warn {
+      margin-top: 10px; padding: 10px 14px;
+      background: rgba(255,255,255,0.1); border-radius: var(--radius-sm);
+      font-size: 12px; line-height: 1.5; opacity: 0.9;
+    }
+
+    .section-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      margin-bottom: 12px; box-shadow: var(--shadow-sm);
+    }
+    .section-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 13px 18px; border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-letter {
+      width: 28px; height: 28px; border-radius: 7px;
+      background: var(--brand); color: white;
+      font-family: var(--font-head); font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .section-title {
+      font-family: var(--font-head); font-size: 14px; font-weight: 600;
+      color: var(--text);
+    }
+    .section-body { padding: 16px 18px; }
+    .section-body p {
+      font-size: 14px; color: var(--muted); line-height: 1.7; margin: 0;
+    }
+
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table td {
+      padding: 10px 0; border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .data-table td:first-child { color: var(--muted); }
+    .data-table td:last-child {
+      text-align: right; color: var(--text); font-weight: 500;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+
+    .risk-list {
+      list-style: none; display: flex; flex-direction: column; gap: 8px;
+    }
+    .risk-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 14px; color: var(--muted); line-height: 1.55;
+    }
+    .risk-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+      flex-shrink: 0; margin-top: 6px;
+    }
+
+    .comp-list { display: flex; flex-direction: column; gap: 0; }
+    .comp-item {
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 12px;
+    }
+    .comp-item:last-child { border-bottom: none; }
+    .comp-desc { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
+    .comp-source { font-size: 12px; color: var(--muted-light); }
+    .comp-price { font-size: 14px; font-weight: 600; color: var(--brand); white-space: nowrap; }
+
+    .disclaimer-card {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); padding: 14px 18px;
+      font-size: 12px; color: var(--muted-light); line-height: 1.65;
+      margin-bottom: 12px;
+    }
+
+    .report-actions { display: flex; gap: 10px; margin-bottom: 24px; }
+    .btn-print {
+      flex: 1; padding: 13px; background: var(--brand); color: white;
+      border: none; border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600; font-family: var(--font-head);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-print:hover { background: var(--brand-dark); }
+    .btn-share {
+      padding: 13px 20px; background: none; color: var(--brand);
+      border: 1.5px solid var(--brand); border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 600; font-family: var(--font-body);
+      cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    }
+    .btn-share:hover { background: var(--brand-light); }
+
+    /* Loading state */
+    .report-loading {
+      text-align: center; padding: 80px 20px;
+    }
+    .report-loading .spinner-ring {
+      width: 52px; height: 52px; margin: 0 auto 20px;
+      border: 3px solid var(--brand-light); border-top-color: var(--brand);
+      border-radius: 50%; animation: spin 0.9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media print {
+      .navbar, .report-actions, .btn-back-nav { display: none !important; }
+      .report-wrap { padding: 0; }
+      .section-card { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">valUProp<span class="logo-dot">.in</span></a>
+      <a href="estimate.html" class="btn-back-nav">New estimate →</a>
+    </div>
+  </nav>
+
+  <main class="report-wrap">
+
+    <!-- Loading state (shown while polling) -->
+    <div class="report-loading" id="report-loading">
+      <div class="spinner-ring"></div>
+      <div style="font-family:var(--font-head);font-size:18px;font-weight:600;margin-bottom:8px;">
+        Generating your report…
+      </div>
+      <p style="font-size:14px;color:var(--muted);">
+        Our AI is analysing your property. This takes 10–20 seconds.
+      </p>
+    </div>
+
+    <!-- Report content (hidden until loaded) -->
+    <div id="report-content" style="display:none;">
+
+      <!-- Hero banner -->
+      <div class="report-hero">
+        <div class="report-hero-top">
+          <div class="report-ref" id="r-ref">VUP-00000</div>
+          <div class="report-paid-tag">✓ Report Unlocked</div>
+        </div>
+        <div class="report-address" id="r-address">Property address</div>
+        <div class="report-value-label">ESTIMATED MARKET VALUE</div>
+        <div class="report-value" id="r-value">Loading…</div>
+        <div class="report-value-sub">Excl. registration charges &amp; taxes</div>
+        <div class="confidence-pill" id="r-confidence-pill">
+          <span id="r-confidence-text">Loading…</span>
+        </div>
+        <div id="r-confidence-warn" class="confidence-warn" style="display:none;">
+          ⚠️ Confidence below 70% — we recommend consulting a registered valuer before transacting.
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="report-actions">
+        <button class="btn-print" id="btn-download" onclick="downloadPdf()">⬇ Download PDF</button>
+        <button class="btn-print" onclick="window.print()" style="background:var(--muted);">🖨️ Print</button>
+        <button class="btn-share" onclick="shareReport()">📲 Share</button>
+      </div>
+
+      <!-- Section A -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-letter">A</div>
+          <div class="section-title">Asset Overview</div>
+        </div>
+        <div class="section-body"><p id="sec-a"></p></div>
+      </div>
+
+      <!-- Section B -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-letter">B</div>
+          <div class="section-title">Micro-Market Context</div>
+        </div>
+        <div class="section-body"><p id="sec-b"></p></div>
+      </div>
+
+      <!-- Section C -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-letter">C</div>
+          <div class="section-title">Observed Pricing Signals</div>
+        </div>
+        <div class="section-body">
+          <table class="data-table" id="sec-c-table" style="margin-bottom:12px;"></table>
+          <p id="sec-c-content" style="font-size:13px;color:var(--muted);line-height:1.65;"></p>
+        </div>
+      </div>
+
+      <!-- Section D -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-letter">D</div>
+          <div class="section-title">Valuation Build-Up</div>
+        </div>
+        <div class="section-body">
+          <table class="data-table" id="sec-d-table" style="margin-bottom:12px;"></table>
+          <p id="sec-d-content" style="font-size:13px;color:var(--muted);line-height:1.65;"></p>
+        </div>
+      </div>
+
+      <!-- Section E -->
+      <div class="section-card" style="border-color: var(--brand);">
+        <div class="section-head" style="background: var(--brand-light);">
+          <div class="section-letter">E</div>
+          <div class="section-title">Independent Value Opinion</div>
+        </div>
+        <div class="section-body">
+          <div id="sec-e-range" style="font-family:var(--font-head);font-size:22px;font-weight:700;
+            color:var(--brand);margin-bottom:8px;"></div>
+          <p id="sec-e-content" style="font-size:14px;color:var(--muted);line-height:1.65;margin:0;"></p>
+        </div>
+      </div>
+
+      <!-- Section F -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-letter">F</div>
+          <div class="section-title">Risk &amp; Due Diligence Focus Areas</div>
+        </div>
+        <div class="section-body">
+          <ul class="risk-list" id="sec-f-list"></ul>
+        </div>
+      </div>
+
+      <!-- Comparables -->
+      <div class="section-card" id="comp-card" style="display:none;">
+        <div class="section-head">
+          <div class="section-letter" style="background:var(--muted);">~</div>
+          <div class="section-title">Comparable Pricing References</div>
+        </div>
+        <div class="section-body">
+          <div class="comp-list" id="comp-list"></div>
+        </div>
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="disclaimer-card" id="sec-g"></div>
+
+      <div style="text-align:center;font-size:12px;color:var(--muted-light);padding-bottom:8px;">
+        Report emailed to <span id="r-email">your email address</span>.
+        Valid for 48 hours from generation. Ref: <span id="r-ref-bottom"></span>
+      </div>
+
+    </div><!-- end report-content -->
+  </main>
+
+  <script src="js/estimate.js"></script>
+  <script src="js/detail.js"></script>
+</body>
+</html>

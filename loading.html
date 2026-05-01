@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analysing your property… — valUProp.in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <div class="logo">valUProp<span class="logo-dot">.in</span></div>
+      <div class="progress-bar-wrap">
+        <div class="progress-step done">1. Type</div>
+        <div class="progress-sep">›</div>
+        <div class="progress-step done">2. Details</div>
+        <div class="progress-sep">›</div>
+        <div class="progress-step active">3. Estimate</div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="loading-main">
+    <div class="loading-wrap">
+      <div class="loading-anim">
+        <div class="loading-ring"></div>
+        <div class="loading-shield">
+          <svg viewBox="0 0 20 20" fill="white" width="22" height="22"><path d="M10 2L3 6v5c0 4.1 3 7.9 7 8.9 4-1 7-4.8 7-8.9V6L10 2z"/></svg>
+        </div>
+      </div>
+
+      <h2 class="loading-title">Analysing your property…</h2>
+      <p class="loading-sub" id="loading-property-label">Running AI valuation model</p>
+
+      <div class="loading-steps">
+        <div class="loading-step" id="ls-0">
+          <div class="ls-dot pending" id="dot-0"></div>
+          <div class="ls-text">
+            <span class="ls-label">Checking locality benchmarks</span>
+            <span class="ls-status" id="stat-0">Pending</span>
+          </div>
+        </div>
+        <div class="loading-step" id="ls-1">
+          <div class="ls-dot pending" id="dot-1"></div>
+          <div class="ls-text">
+            <span class="ls-label">Applying guideline value data</span>
+            <span class="ls-status" id="stat-1">Pending</span>
+          </div>
+        </div>
+        <div class="loading-step" id="ls-2">
+          <div class="ls-dot pending" id="dot-2"></div>
+          <div class="ls-text">
+            <span class="ls-label">Analysing comparable pricing signals</span>
+            <span class="ls-status" id="stat-2">Pending</span>
+          </div>
+        </div>
+        <div class="loading-step" id="ls-3">
+          <div class="ls-dot pending" id="dot-3"></div>
+          <div class="ls-text">
+            <span class="ls-label">Running AI valuation model</span>
+            <span class="ls-status" id="stat-3">Pending</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="loading-progress-bar">
+        <div class="loading-progress-fill" id="loading-fill"></div>
+      </div>
+      <div class="loading-pct" id="loading-pct">0%</div>
+    </div>
+  </main>
+
+  <script src="js/estimate.js"></script>
+  <script>
+    const sub = document.getElementById('loading-property-label');
+    const prop = JSON.parse(sessionStorage.getItem('valuprop_search') || '{}');
+    if (prop.address) sub.textContent = prop.address;
+
+    const steps = [
+      { delay: 1200,  pct: 25 },
+      { delay: 3500,  pct: 50 },
+      { delay: 6000,  pct: 75 },
+      { delay: 9000,  pct: 95 },
+    ];
+
+    steps.forEach((s, i) => {
+      setTimeout(() => {
+        // Mark previous done
+        if (i > 0) {
+          document.getElementById('dot-' + (i-1)).className = 'ls-dot done';
+          document.getElementById('stat-' + (i-1)).textContent = 'Done ✓';
+        }
+        document.getElementById('dot-' + i).className = 'ls-dot active';
+        document.getElementById('stat-' + i).textContent = 'Running…';
+        document.getElementById('loading-fill').style.width = s.pct + '%';
+        document.getElementById('loading-pct').textContent = s.pct + '%';
+      }, s.delay);
+    });
+
+    setTimeout(() => {
+      document.getElementById('dot-3').className = 'ls-dot done';
+      document.getElementById('stat-3').textContent = 'Done ✓';
+      document.getElementById('loading-fill').style.width = '100%';
+      document.getElementById('loading-pct').textContent = '100%';
+    }, 11500);
+
+    setTimeout(() => {
+      window.location.href = 'results.html';
+    }, 12500);
+  </script>
+</body>
+</html>

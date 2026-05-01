@@ -1,0 +1,47 @@
+# ValUprop.in — Git ignore
+
+# Environment files (NEVER commit these)
+.env
+backend/.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+backend/venv/
+backend/.venv/
+*.egg-info/
+dist/
+build/
+
+# Database (local dev SQLite)
+*.db
+*.sqlite3
+
+# Zips and build artifacts
+*.zip
+*.tar.gz
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# WeasyPrint font cache
+.weasyprint/
