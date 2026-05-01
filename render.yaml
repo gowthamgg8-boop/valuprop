@@ -9,7 +9,7 @@ services:
   - type: web
     name: valuprop-api
     env: python
-    pythonversion: "3.11.9"
+    pythonVersion: "3.11.9"
     region: singapore
     plan: free
 
