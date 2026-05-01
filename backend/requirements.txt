@@ -1,42 +1,26 @@
-# ValUprop.in — Python dependencies (Phase 3)
-# Install: pip install -r requirements.txt
+# valUProp.in — Python dependencies
+# Versions chosen for compatibility with Render free tier (Python 3.11)
 
 # Web framework
-fastapi==0.111.0
-uvicorn[standard]==0.29.0
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
 
 # Database
-sqlalchemy==2.0.30
-psycopg2-binary==2.9.9    # PostgreSQL driver (SQLite used automatically for local dev)
-alembic==1.13.1            # DB migrations
+sqlalchemy==2.0.25
+psycopg2-binary==2.9.9
 
 # HTTP client
-httpx==0.27.0
+httpx==0.26.0
 
-# LLM
-openai==1.30.1             # GPT-4o-mini (primary)
-# anthropic==0.26.0        # Uncomment to use Claude instead
+# LLM (Anthropic - Claude)
+anthropic==0.25.6
 
 # Email
-resend==1.0.0              # Transactional email (3k free/month)
+resend==0.8.0
 
-# PDF generation
-weasyprint==62.3           # HTML → PDF
-# System deps needed for WeasyPrint:
-#   Ubuntu:  apt-get install -y libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libfontconfig1
-#   macOS:   brew install pango
-#   Render:  add build command (see render.yaml)
-
-# AWS (S3 + optional SES)
-boto3==1.34.114
-
-# Validation + config
-pydantic==2.7.1
-pydantic[email]==2.7.1
+# Validation + config (using older pydantic that has prebuilt wheels)
+pydantic==2.5.3
 python-dotenv==1.0.1
 
 # Payment
 razorpay==1.4.1
-
-# Rate limiting
-slowapi==0.1.9
