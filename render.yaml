@@ -8,7 +8,8 @@ services:
   # ── Backend API ─────────────────────────────────────────────────
   - type: web
     name: valuprop-api
-    runtime: python
+    env: python
+    pythonversion: "3.11.9"
     region: singapore
     plan: free
 
