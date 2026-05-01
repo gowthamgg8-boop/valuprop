@@ -1,18 +1,7 @@
-# ValUprop.in — Render.com Deployment Config
+# valUProp.in — Render.com Deployment Config
 # ─────────────────────────────────────────────────────────────────
-# Deploy in 3 steps:
-#   1. Push code to GitHub
-#   2. Connect repo at https://render.com/new
-#   3. Render auto-detects this file and sets everything up
-#
-# FREE TIER limits (as of 2025):
-#   - Web service: 512 MB RAM, spins down after 15 min inactivity
-#   - PostgreSQL:  90 days free, then ~$7/month
-#   - Good enough for MVP and early traction
-#
-# UPGRADE PATH:
-#   - Starter plan ($7/month) → always-on, faster
-#   - For production: switch to AWS (see DEPLOYMENT_GUIDE.md)
+# Deploys the backend API on Render's free tier.
+# Frontend will be deployed separately as a Static Site.
 
 services:
 
@@ -20,28 +9,31 @@ services:
   - type: web
     name: valuprop-api
     runtime: python
-    region: singapore  # Closest to India (Mumbai not available on free tier)
+    region: singapore
     plan: free
+
+    rootDir: backend
 
     buildCommand: |
       pip install -r requirements.txt
-      apt-get install -y libpango-1.0-0 libharfbuzz0b libpangoft2-1.0-0 libfontconfig1 || true
       python init_db.py
 
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
 
-    rootDir: backend
-
     envVars:
-      # These are set via Render dashboard → Environment
-      # DO NOT hardcode real keys here
       - key: DATABASE_URL
         fromDatabase:
           name: valuprop-db
           property: connectionString
 
-      - key: OPENAI_API_KEY
-        sync: false    # Set manually in Render dashboard
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+      - key: LLM_PROVIDER
+        value: anthropic
+
+      - key: ANTHROPIC_MODEL
+        value: claude-haiku-4-5-20251001
 
       - key: RAZORPAY_KEY_ID
         sync: false
@@ -53,25 +45,13 @@ services:
         sync: false
 
       - key: FROM_EMAIL
-        value: reports@valuprop.in
+        value: onboarding@resend.dev
 
       - key: FROM_NAME
-        value: ValUprop.in
-
-      - key: AWS_REGION
-        value: ap-south-1
-
-      - key: AWS_ACCESS_KEY_ID
-        sync: false
-
-      - key: AWS_SECRET_ACCESS_KEY
-        sync: false
-
-      - key: S3_BUCKET
-        value: valuprop-reports
+        value: valUProp.in
 
       - key: ALLOWED_ORIGINS
-        value: https://valuprop.in,https://www.valuprop.in
+        value: "*"
 
       - key: DEV_MODE
         value: "false"
@@ -81,41 +61,6 @@ services:
 
     healthCheckPath: /api/health
 
-  # ── Frontend (static site) ──────────────────────────────────────
-  - type: web
-    name: valuprop-frontend
-    runtime: static
-    region: singapore
-    plan: free
-
-    rootDir: .   # Serve from project root (index.html etc.)
-
-    # No build step needed — pure HTML/CSS/JS
-    buildCommand: echo "Static site — no build needed"
-    publishPath: .
-
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: public, max-age=3600
-
-      - path: /css/*
-        name: Cache-Control
-        value: public, max-age=86400
-
-      - path: /js/*
-        name: Cache-Control
-        value: public, max-age=86400
-
-    routes:
-      # SPA fallback — redirect all unknown paths to index.html
-      - type: rewrite
-        source: /*
-        destination: /index.html
-
-  # Note: After deploy, update BACKEND_URL in your JS files:
-  # In estimate.js / results.js / detail.js:
-  #   const BACKEND_URL = 'https://valuprop-api.onrender.com';
 
 # ── Database ────────────────────────────────────────────────────
 databases:
@@ -124,4 +69,3 @@ databases:
     region: singapore
     databaseName: valuprop
     user: valuprop_user
-    # Free tier: 90 days, then $7/month (Starter) or migrate to AWS RDS
