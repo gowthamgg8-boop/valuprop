@@ -3,7 +3,7 @@
  * Polls backend for LLM estimate. Falls back to static data if offline.
  */
 
-const BACKEND_URL = window.BACKEND_URL || 'http://127.0.0.1:8000';
+const BACKEND_URL = window.BACKEND_URL || 'https://valuprop-api.onrender.com';
 let _poll = 0;
 
 const PRICE_DB = {
