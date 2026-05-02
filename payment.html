@@ -55,14 +55,14 @@
   <!--
     RAZORPAY INTEGRATION
     1. Sign up at razorpay.com → Settings → API Keys → Get Test Key
-    2. Replace YOUR_RAZORPAY_KEY_ID below with your actual key (rzp_test_...)
+    2. Replace rzp_test_SkKhIC1M8yKbMX below with your actual key (rzp_test_...)
     3. For production: create order server-side (backend/main.py /api/create-order)
        and pass order_id to options.order_id below
   -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script src="js/estimate.js"></script>
   <script>
-    const RAZORPAY_KEY_ID = 'YOUR_RAZORPAY_KEY_ID'; // ← Replace with rzp_test_ key
+    const RAZORPAY_KEY_ID = 'rzp_test_SkKhIC1M8yKbMX'; // ← Replace with rzp_test_ key
     const BACKEND_URL     = window.BACKEND_URL || 'http://localhost:8000';
 
     const search = getSearch();
@@ -86,7 +86,7 @@
       const valId  = sessionStorage.getItem('valuprop_val_id');
 
       // DEMO mode — simulate payment for local testing (no real Razorpay key)
-      if (!RAZORPAY_KEY_ID || RAZORPAY_KEY_ID === 'YOUR_RAZORPAY_KEY_ID') {
+      if (!RAZORPAY_KEY_ID || RAZORPAY_KEY_ID === 'rzp_test_SkKhIC1M8yKbMX') {
         btn.textContent = 'Processing…';
         // Try to create real order on backend for demo
         let paidValId = null;
