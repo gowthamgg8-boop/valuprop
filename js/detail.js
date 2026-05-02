@@ -6,7 +6,7 @@
  * the full 7-section report into detail.html
  */
 
-const BACKEND_URL = window.BACKEND_URL || 'http://127.0.0.1:8000';
+const BACKEND_URL = window.BACKEND_URL || 'https://valuprop-api.onrender.com';
 const MAX_POLLS   = 30;    // 30 × 2s = 60s max wait
 let   pollCount   = 0;
 
