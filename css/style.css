@@ -169,7 +169,7 @@ button { cursor: pointer; font-family: var(--font-body); }
 .sample-brand {
   font-family: var(--font-head); font-size: 16px; font-weight: 700; color: white;
 }
-.sample-brand span { color: #FFD580; }
+.sample-brand span { color: white; }
 .sample-type-tag {
   font-size: 11px; color: rgba(255,255,255,0.7);
   background: rgba(255,255,255,0.12); padding: 3px 10px; border-radius: 20px;
