@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Your Property Estimate — valUProp.in</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css"/>
+  <style>
+    /* ==========================================================
+       REPORT PREVIEW — aggressive tease styles
+       Self-contained so existing css/style.css needs no changes.
+       ========================================================== */
+    .rep-wrap {
+      max-width: 760px;
+      margin: 28px auto 0;
+      padding: 0 20px;
+    }
+    .rep-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #6b7280;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .rep-eyebrow::before,
+    .rep-eyebrow::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+    }
+    .rep-title {
+      text-align: center;
+      font-family: 'Sora', sans-serif;
+      font-size: 22px;
+      font-weight: 600;
+      color: #0f172a;
+      margin: 0 0 4px;
+      letter-spacing: -0.01em;
+    }
+    .rep-subtitle {
+      text-align: center;
+      font-size: 13px;
+      color: #6b7280;
+      margin-bottom: 22px;
+    }
+
+    /* Section card */
+    .rep-section {
+      background: #ffffff;
+      border: 1px solid #e8eaee;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 12px;
+      position: relative;
+      transition: border-color 0.2s ease;
+    }
+    .rep-section:hover {
+      border-color: #d1d5db;
+    }
+
+    .rep-sec-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+    .rep-sec-letter {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: #0f172a;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Sora', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .rep-sec-title {
+      font-family: 'Sora', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+      flex: 1;
+      letter-spacing: -0.005em;
+    }
+    .rep-sec-pill {
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 999px;
+    }
+    .rep-pill-included {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+    .rep-pill-locked {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fde68a;
+    }
+
+    .rep-sec-body {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #374151;
+    }
+    .rep-sec-body p {
+      margin: 0 0 10px;
+    }
+    .rep-sec-body p:last-child { margin-bottom: 0; }
+
+    /* Data rows (used in C and D) */
+    .rep-data-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .rep-data-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #eef0f3;
+      border-radius: 8px;
+      font-size: 13px;
+    }
+    .rep-data-label {
+      color: #4b5563;
+      font-weight: 500;
+    }
+    .rep-data-value {
+      color: #0f172a;
+      font-weight: 600;
+      font-family: 'Sora', sans-serif;
+      font-variant-numeric: tabular-nums;
+    }
+    .rep-data-meta {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 2px;
+      font-weight: 400;
+    }
+
+    /* Build-up formula (D) */
+    .rep-formula {
+      background: linear-gradient(180deg, #fafbfc 0%, #f5f7fa 100%);
+      border: 1px solid #eef0f3;
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 10px;
+    }
+    .rep-formula-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 6px 0;
+      font-size: 13px;
+      border-bottom: 1px dashed #e5e7eb;
+    }
+    .rep-formula-row:last-of-type { border-bottom: none; }
+    .rep-formula-row.is-total {
+      margin-top: 6px;
+      padding-top: 12px;
+      border-top: 2px solid #0f172a;
+      border-bottom: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .rep-formula-label { color: #4b5563; }
+    .rep-formula-op {
+      color: #9ca3af;
+      font-weight: 600;
+      margin: 0 6px;
+    }
+    .rep-formula-val {
+      color: #0f172a;
+      font-family: 'Sora', sans-serif;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* The blur primitive (anti-cheat: real text is decorative placeholder) */
+    .rep-blur {
+      display: inline-block;
+      filter: blur(5px);
+      user-select: none;
+      pointer-events: none;
+      color: #0f172a;
+      letter-spacing: 0.02em;
+    }
+    .rep-blur-strong {
+      filter: blur(7px);
+    }
+
+    /* Section E — the money shot, locked */
+    .rep-section.is-locked {
+      background: linear-gradient(180deg, #ffffff 0%, #fdfcf7 100%);
+      border-color: #f0e6c8;
+    }
+    .rep-locked-headline {
+      font-family: 'Sora', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.015em;
+      margin: 4px 0 6px;
+      line-height: 1.2;
+    }
+    .rep-locked-sub {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+    .rep-confidence-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #4b5563;
+    }
+    .rep-confidence-label {
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: #6b7280;
+      font-size: 10px;
+    }
+    .rep-confidence-bar {
+      flex: 1;
+      height: 6px;
+      background: #f1f3f5;
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+    .rep-confidence-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #d4a373 0%, #b8860b 100%);
+      border-radius: 999px;
+      transition: width 0.8s ease;
+    }
+    .rep-confidence-fill.is-blurred {
+      filter: blur(4px);
+      width: 70%;
+    }
+
+    /* Section F — risk preview */
+    .rep-risk-list {
+      margin: 8px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+    .rep-risk-item {
+      display: flex;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f3f5;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .rep-risk-item:last-child { border-bottom: none; }
+    .rep-risk-bullet {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 10px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+    .rep-risk-item.is-locked .rep-risk-bullet {
+      background: #f1f3f5;
+      color: #9ca3af;
+    }
+    .rep-risk-text { color: #374151; flex: 1; }
+
+    /* Lock chip on locked sections */
+    .rep-lock-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #92400e;
+    }
+
+    /* Sticky CTA on scroll into locked zone */
+    .rep-sticky-cta {
+      position: sticky;
+      bottom: 16px;
+      margin: 18px auto 0;
+      max-width: 720px;
+      padding: 14px 18px;
+      background: #0f172a;
+      color: #fff;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.35);
+      z-index: 30;
+      animation: rep-slide-up 0.5s ease both;
+    }
+    @keyframes rep-slide-up {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .rep-sticky-cta-text {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.35;
+    }
+    .rep-sticky-cta-text strong {
+      font-family: 'Sora', sans-serif;
+      font-weight: 600;
+    }
+    .rep-sticky-cta-btn {
+      background: #fbbf24;
+      color: #0f172a;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-family: 'Sora', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+    .rep-sticky-cta-btn:hover {
+      background: #f59e0b;
+      transform: translateY(-1px);
+    }
+
+    /* ==========================================================
+       PRE-PAYMENT DISCLAIMER (Set 2 #8)
+       Sits directly above the lead-capture card so users see it
+       before paying. Warning-toned but readable, not alarming.
+       ========================================================== */
+    .pre-payment-disclaimer {
+      max-width: 640px;
+      margin: 24px auto 12px;
+      padding: 14px 18px;
+      background: #FEF3C7;
+      border: 1px solid #F59E0B;
+      border-radius: 12px;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 13px;
+      line-height: 1.55;
+      color: #78350F;
+    }
+    .pre-payment-disclaimer-icon {
+      flex-shrink: 0;
+      font-size: 18px;
+      line-height: 1.2;
+      margin-top: 1px;
+    }
+    .pre-payment-disclaimer strong:first-child {
+      display: block;
+      font-family: 'Sora', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #78350F;
+      margin-bottom: 3px;
+    }
+    .pre-payment-disclaimer a {
+      color: #78350F;
+      text-decoration: underline;
+      font-weight: 600;
+    }
+    .pre-payment-disclaimer a:hover {
+      color: #451A03;
+    }
+
+    /* Mobile tweaks */
+    @media (max-width: 560px) {
+      .rep-wrap { padding: 0 14px; margin-top: 20px; }
+      .rep-section { padding: 16px; }
+      .rep-locked-headline { font-size: 20px; }
+      .rep-sticky-cta {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
+      .rep-sticky-cta-btn { width: 100%; }
+      .pre-payment-disclaimer { margin: 18px 14px 10px; font-size: 12px; padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">valUProp<span class="logo-dot">.in</span></a>
+      <a href="estimate.html" class="btn-back-nav">← New estimate</a>
+    </div>
+  </nav>
+
+  <main class="results-main">
+
+    <!-- Property label -->
+    <div class="results-property-bar">
+      <div class="rpb-inner">
+        <div class="rpb-type-badge" id="res-type-badge">Apartment</div>
+        <div class="rpb-address" id="res-address">Anna Nagar, Chennai</div>
+      </div>
+    </div>
+
+    <!-- FREE ESTIMATE BLOCK -->
+    <div class="free-estimate-block">
+      <div class="feb-label">FREE ESTIMATE</div>
+      <div class="feb-value" id="res-value-range">₹X.X Cr – ₹Y.Y Cr</div>
+      <div class="feb-sub">Estimated market value · Based on AI analysis of locality data</div>
+      <div class="feb-teaser" id="res-teaser-insight"></div>
+    </div>
+
+    <!-- ONE TEASER INSIGHT -->
+    <div class="teaser-insight-card" id="teaser-card">
+      <div class="tic-icon">
+        <svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm.75 10.5h-1.5v-5h1.5v5zm0-6.5h-1.5V3.5h1.5V5z"/></svg>
+      </div>
+      <div id="teaser-text">Properties in this locality have appreciated 8% in the last 12 months.</div>
+    </div>
+
+    <!-- ====================================================
+         REPORT PREVIEW — aggressive tease
+         A,B,C visible · D mostly visible · E,F locked
+         ==================================================== -->
+    <section class="rep-wrap">
+      <div class="rep-eyebrow">A taste of your full report</div>
+      <h2 class="rep-title">Your Detailed Valuation Report</h2>
+      <p class="rep-subtitle">6 sections · Continues below · Unlock the full report for ₹99</p>
+
+      <!-- A. Asset Overview -->
+      <div class="rep-section">
+        <div class="rep-sec-head">
+          <div class="rep-sec-letter">A</div>
+          <div class="rep-sec-title">Asset Overview</div>
+          <span class="rep-sec-pill rep-pill-included">Included</span>
+        </div>
+        <div class="rep-sec-body" id="rep-a-body">
+          <!-- filled by results.js -->
+        </div>
+      </div>
+
+      <!-- B. Micro-Market Context -->
+      <div class="rep-section">
+        <div class="rep-sec-head">
+          <div class="rep-sec-letter">B</div>
+          <div class="rep-sec-title">Micro-Market Context</div>
+          <span class="rep-sec-pill rep-pill-included">Included</span>
+        </div>
+        <div class="rep-sec-body" id="rep-b-body">
+          <!-- filled by results.js -->
+        </div>
+      </div>
+
+      <!-- C. Observed Pricing Signals -->
+      <div class="rep-section">
+        <div class="rep-sec-head">
+          <div class="rep-sec-letter">C</div>
+          <div class="rep-sec-title">Observed Pricing Signals</div>
+          <span class="rep-sec-pill rep-pill-included">Included</span>
+        </div>
+        <div class="rep-sec-body">
+          <p id="rep-c-intro">Based on locality data and recent transactions in this micro-market.</p>
+          <div class="rep-data-grid" id="rep-c-grid">
+            <!-- filled by results.js -->
+          </div>
+        </div>
+      </div>
+
+      <!-- D. Valuation Build-Up — formula visible, final blurred -->
+      <div class="rep-section">
+        <div class="rep-sec-head">
+          <div class="rep-sec-letter">D</div>
+          <div class="rep-sec-title">Valuation Build-Up</div>
+          <span class="rep-sec-pill rep-pill-included">Method shown</span>
+        </div>
+        <div class="rep-sec-body">
+          <p id="rep-d-intro">Your valuation is built bottom-up from three components, then adjusted for property-specific factors.</p>
+          <div class="rep-formula" id="rep-d-formula">
+            <!-- filled by results.js -->
+          </div>
+          <p style="margin-top:10px; font-size:12px; color:#6b7280;">
+            Full computed values for each component are in your detailed report.
+          </p>
+        </div>
+      </div>
+
+      <!-- E. Independent Value Opinion — THE MONEY SHOT, LOCKED -->
+      <div class="rep-section is-locked">
+        <div class="rep-sec-head">
+          <div class="rep-sec-letter">E</div>
+          <div class="rep-sec-title">Independent Value Opinion</div>
+          <span class="rep-sec-pill rep-pill-locked">🔒 Unlock for ₹99</span>
+        </div>
+        <div class="rep-sec-body">
+          <div class="rep-locked-sub">Tighter market value range (±5%, vs ±6% on free estimate)</div>
+          <div class="rep-locked-headline">
+            <span class="rep-blur rep-blur-strong">₹X.XX Cr&nbsp;–&nbsp;₹Y.YY Cr</span>
+          </div>
+          <div class="rep-locked-sub">Refined using property-specific adjustments and 2026 market signals.</div>
+          <div class="rep-confidence-row">
+            <span class="rep-confidence-label">Confidence</span>
+            <div class="rep-confidence-bar">
+              <div class="rep-confidence-fill is-blurred"></div>
+            </div>
+            <span><span class="rep-blur">XX%</span> · <span class="rep-blur">Good</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- F. Risk & Due Diligence — 1 visible, rest locked -->
+      <div class="rep-section">
+        <div class="rep-sec-head">
+          <div class="rep-sec-letter">F</div>
+          <div class="rep-sec-title">Risk &amp; Due Diligence</div>
+          <span class="rep-sec-pill rep-pill-locked">🔒 1 of 5 shown</span>
+        </div>
+        <div class="rep-sec-body">
+          <p>Specific items to verify before transacting on this property:</p>
+          <ul class="rep-risk-list" id="rep-f-list">
+            <!-- filled by results.js -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sticky CTA -->
+      <div class="rep-sticky-cta" id="rep-sticky-cta">
+        <div class="rep-sticky-cta-text">
+          <strong>Get the full report</strong><br>
+          Tighter range · Build-up · Risk checklist · PDF emailed
+        </div>
+        <button class="rep-sticky-cta-btn" onclick="document.getElementById('lead-capture').scrollIntoView({behavior:'smooth', block:'center'})">
+          Unlock for ₹99 →
+        </button>
+      </div>
+    </section>
+
+    <!-- ==========================================================
+         PRE-PAYMENT DISCLAIMER (Set 2 #8)
+         Placed strictly before the lead-capture / payment card.
+         ========================================================== -->
+    <div class="pre-payment-disclaimer">
+      <div class="pre-payment-disclaimer-icon">⚠️</div>
+      <div>
+        <strong>Before you pay — please read</strong>
+        This is an AI-generated property valuation for informational and decision-support purposes only. It is <strong>not</strong> a statutory, bank-certified, or RERA-approved valuation. Do not use this report alone for bank loans, legal disputes, or court proceedings — those require a registered valuer. <a href="pages/limitations.html">See full limitations →</a>
+      </div>
+    </div>
+
+    <!-- LEAD CAPTURE + PAYMENT -->
+    <div class="lead-capture-card" id="lead-capture">
+      <div class="lcc-head">
+        <div class="lcc-price-badge">₹99</div>
+        <div>
+          <div class="lcc-title">Unlock Detailed Valuation Report</div>
+          <div class="lcc-sub">Full 6-section report · PDF emailed to you · Instant access</div>
+        </div>
+      </div>
+      <div class="lcc-form">
+        <div class="field-row">
+          <div class="field">
+            <label for="lcc-phone">Phone number *</label>
+            <input type="tel" id="lcc-phone" placeholder="+91 98765 43210" maxlength="15"/>
+          </div>
+          <div class="field">
+            <label for="lcc-email">Email address *</label>
+            <input type="email" id="lcc-email" placeholder="you@example.com"/>
+          </div>
+        </div>
+        <div class="lcc-error" id="lcc-error"></div>
+        <button class="unlock-btn" onclick="proceedToPayment()">
+          Pay ₹99 &amp; Unlock Report →
+        </button>
+        <div class="lcc-note">
+          🔒 Secured by Razorpay · UPI / Cards / Net Banking
+        </div>
+      </div>
+    </div>
+
+    <div class="results-disclaimer">
+      This is an AI-generated estimate for informational purposes only. Not a statutory or bank-certified valuation. <a href="pages/limitations.html">Read our limitations →</a>
+    </div>
+
+    <div style="text-align:center; padding: 8px 0 32px;">
+      <a href="estimate.html" style="font-size:13px; color:var(--muted);">← Start a new estimate</a>
+    </div>
+
+  </main>
+
+  <script src="js/estimate.js"></script>
+  <script src="js/results.js"></script>
+</body>
+</html>
