@@ -65,7 +65,7 @@ def _normalise(report_data: dict) -> dict:
         "E": {
             "title":       "Independent Value Opinion",
             "content":     report_data.get("value_opinion", ""),
-            "value_range": _fmt_range(report_data.get("value_lo"), report_data.get("value_hi"), prefix="\u20b9", suffix="L"),
+            "value_range": _fmt_range(report_data.get("value_lo"), report_data.get("value_hi"), prefix="Rs.", suffix="L"),
         },
         "F": {
             "title":        "Risk & Due Diligence",
@@ -84,10 +84,10 @@ def _normalise(report_data: dict) -> dict:
     }
 
 
-def _fmt_range(lo, hi, prefix="\u20b9", suffix="L") -> str:
+def _fmt_range(lo, hi, prefix="Rs.", suffix="L") -> str:
     if lo is None or hi is None:
         return ""
-    return f"{prefix}{lo}{suffix} \u2013 {prefix}{hi}{suffix}"
+    return f"{prefix}{lo}{suffix} - {prefix}{hi}{suffix}"
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -211,7 +211,7 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
          Paragraph(f"<b>ESTIMATED MARKET VALUE</b><br/>"
                    f"<font size=\'16\'><b>{val_range}</b></font><br/>"
                    f"<font size=\'8\'>Excl. registration charges &amp; taxes</font><br/>"
-                   f"Confidence: {conf}% \u2014 {conf_label}", sBo)]
+                   f"Confidence: {conf}% - {conf_label}", sBo)]
     ], colWidths=[W*0.45, W*0.55], rowHeights=[80])
     b.setStyle(TableStyle([
         ("BACKGROUND",(0,0),(-1,-1),C_LIGHT),
@@ -225,7 +225,7 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
 
     if conf < 70:
         w = Table([[Paragraph(
-            "\u26a0 Confidence below 70%. Recommend consulting a registered valuer before transacting.", sN
+            "[!] Confidence below 70%. Recommend consulting a registered valuer before transacting.", sN
         )]], colWidths=[W], rowHeights=[30])
         w.setStyle(TableStyle([
             ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#FEF3C7")),
@@ -372,14 +372,14 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
     story.append(HRFlowable(width=W, color=C_BORDER))
     story.append(Spacer(1, 4))
     story.append(Paragraph(
-        f"valUProp.in \u00b7 {ref} \u00b7 {date_str} \u00b7 "
+        f"valUProp.in | {ref} | {date_str} | "
         "Not a statutory or bank-certified valuation", sMu))
 
     def _footer(canvas, doc):
         canvas.saveState()
         canvas.setFont("Helvetica", 7)
         canvas.setFillColor(C_MUTED)
-        canvas.drawString(LM, 12*mm, f"{ref} \u00b7 {date_str} \u00b7 valUProp.in")
+        canvas.drawString(LM, 12*mm, f"{ref} | {date_str} | valUProp.in")
         canvas.drawRightString(PAGE_W-RM, 12*mm, f"Page {doc.page}")
         canvas.restoreState()
 
@@ -590,10 +590,10 @@ def _watermark_css() -> str:
 
 def _fmt(lakhs: float) -> str:
     if not lakhs:
-        return "\u2014"
+        return "-"
     if lakhs >= 100:
-        return f"\u20b9{lakhs/100:.2f} Cr"
-    return f"\u20b9{lakhs:.1f} L"
+        return f"Rs.{lakhs/100:.2f} Cr"
+    return f"Rs.{lakhs:.1f} L"
 
 
 def _type_label(t: str) -> str:
