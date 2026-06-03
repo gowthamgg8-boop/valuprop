@@ -20,4 +20,4 @@ razorpay==1.4.1
 # Rate limiting (OWASP A04)
 slowapi==0.1.9
 # PDF generation
-weasyprint==60.0
+weasyprint==68.0
