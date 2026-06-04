@@ -442,28 +442,22 @@ Locality database context:
     components = _calculate_components(prop, loc_data, lo, hi)
 
     return f"""
-Generate a complete ValUprop.in property valuation report in JSON format.
+Generate a valUProp.in paid valuation report. Use web search for real market data.
 
-PROPERTY:
-{prop_desc}
+PROPERTY: {prop_desc}
+LOCALITY: {loc_ctx if loc_ctx else f"City: {prop.city}, Locality: {prop.locality}"}
+BASE RANGE: Rs.{lo}L - Rs.{hi}L | Land Rs.{components['land_lo']}-{components['land_hi']}L | Bldg Rs.{components['bldg_lo']}-{components['bldg_hi']}L | Adj Rs.{components['adj_lo']}-{components['adj_hi']}L
 
-LOCALITY DATA:
-{loc_ctx if loc_ctx else f"City: {prop.city}, Locality: {prop.locality}"}
+Search for current market rates, adjust value_lo/value_hi based on findings. Keep range within 10%.
 
-PRE-CALCULATED COMPONENTS (use these as anchors, you may adjust slightly):
-- Land value range: ₹{components['land_lo']}L – ₹{components['land_hi']}L
-- Building value (depreciated): ₹{components['bldg_lo']}L – ₹{components['bldg_hi']}L
-- Location adjustments: ₹{components['adj_lo']}L – ₹{components['adj_hi']}L
-- FINAL estimated market value: ₹{lo}L – ₹{hi}L
-
-RESPOND WITH THIS EXACT JSON STRUCTURE:
+Respond ONLY with this JSON:
 {{
-  "section_a": "Asset overview paragraph: property type, area, age, configuration, parking, locality character. 3–4 sentences.",
-  "section_b": "Micro-market context: 2–3 sentences about locality (mature/emerging, key infra, demand drivers).",
-  "section_c": "Observed pricing signals: land ₹/sq.ft, apartment ₹/sq.ft, guideline value, 2–3 comparable signals. Be specific with numbers.",
-  "section_d": "Valuation build-up narrative: explain Land + Building + Adjustments = Final. Reference the component ranges above. Include a brief table description.",
-  "section_e": "Independent value opinion: state the final value range ₹{lo}L – ₹{hi}L, explain what it means, note the confidence score.",
-  "section_f": "Risk and due diligence: exactly 4 specific bullet points as a single string, each starting with '• '. Cover title, approvals, physical, market risks specific to this property and locality.",
+  "section_a": "Property type, size, configuration, locality character. 2-3 sentences.",
+  "section_b": "Micro-market: infrastructure projects nearby, connectivity, demand drivers. Specific names.",
+  "section_c": "Pricing signals: per-sqft rate found, appreciation trend, guideline value, 2-3 comparables with prices.",
+  "section_d": "Build-up: base rate source, area x rate, depreciation %, adjustments each on own line, rental yield check, sanity vs guideline.",
+  "section_e": "Value Rs.{lo}L - Rs.{hi}L. Transaction range after negotiation. Confidence %. Sanity check results.",
+  "section_f": "• Title/UDS check\n• Approval status (CMDA/DTCP/Avadi)\n• Age and OC status\n• Infrastructure timeline risk\n• Flooding/civic risk",
   "section_g": "This AI-generated valuation is for informational purposes only and does not constitute a statutory or bank-certified valuation.",
   "value_lo": {lo},
   "value_hi": {hi},
@@ -475,9 +469,9 @@ RESPOND WITH THIS EXACT JSON STRUCTURE:
   "adj_value_hi": {components['adj_hi']},
   "confidence": {loc_data.data_confidence if loc_data else 70},
   "comparables": [
-    {{"description": "comparable property 1 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}},
-    {{"description": "comparable property 2 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}},
-    {{"description": "comparable property 3 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}}
+    {{"description": "specific comp 1 with size", "price_signal": "Rs.X/sqft", "source": "market signals"}},
+    {{"description": "specific comp 2", "price_signal": "Rs.XL", "source": "aggregator data"}},
+    {{"description": "specific comp 3", "price_signal": "Rs.XL", "source": "community observations"}}
   ]
 }}
 """.strip()
@@ -754,17 +748,17 @@ def _build_fallback_report(
         micro_market      = loc_data.micro_context if loc_data else f"{prop.locality} is a residential locality in {prop.city}.",
         pricing_signals   = (
             f"Based on our locality database: "
-            f"Land rates in {prop.locality}: Rs.{loc_data.land_rate_lo:,} - Rs.{loc_data.land_rate_hi:,}/sq.ft. "
-            f"Apartment rates: Rs.{loc_data.apt_rate_lo:,} - Rs.{loc_data.apt_rate_hi:,}/sq.ft carpet. "
-            f"Government guideline value: Rs.{loc_data.guideline_value:,}/sq.ft (regulatory floor only)."
+            f"Land rates in {prop.locality}: ₹{loc_data.land_rate_lo:,}–{loc_data.land_rate_hi:,}/sq.ft. "
+            f"Apartment rates: ₹{loc_data.apt_rate_lo:,}–{loc_data.apt_rate_hi:,}/sq.ft carpet. "
+            f"Government guideline value: ₹{loc_data.guideline_value:,}/sq.ft (regulatory floor only)."
         ) if loc_data else "Pricing signals based on our locality database.",
         valuation_buildup = (
-            f"Land component: Rs.{components['land_lo']}L - Rs.{components['land_hi']}L. "
-            f"Building (depreciated): Rs.{components['bldg_lo']}L - Rs.{components['bldg_hi']}L. "
-            f"Location adjustments: Rs.{components['adj_lo']}L - Rs.{components['adj_hi']}L. "
-            f"Total estimated value: Rs.{lo}L - Rs.{hi}L."
+            f"Land component: ₹{components['land_lo']}L–{components['land_hi']}L. "
+            f"Building (depreciated): ₹{components['bldg_lo']}L–{components['bldg_hi']}L. "
+            f"Location adjustments: ₹{components['adj_lo']}L–{components['adj_hi']}L. "
+            f"Total estimated value: ₹{lo}L–₹{hi}L."
         ),
-        value_opinion     = f"Based on the above analysis, the estimated market value of this property is Rs.{lo}L - Rs.{hi}L (excluding registration and taxes). Confidence: {confidence}%.",
+        value_opinion     = f"Based on the above analysis, the estimated market value of this property is ₹{lo}L–₹{hi}L (excluding registration and taxes). Confidence: {confidence}%.",
         risk_diligence    = (
             "• Verify title deed and encumbrance certificate before transacting.\n"
             "• Confirm building approval (CMDA/DTCP) and occupancy certificate.\n"
