@@ -7,7 +7,7 @@
  */
 
 const BACKEND_URL = window.BACKEND_URL || 'https://valuprop-api.onrender.com';
-const MAX_POLLS   = 30;    // 30 × 2s = 60s max wait
+const MAX_POLLS   = 60;    // 60 × 2s = 120s max wait
 let   pollCount   = 0;
 
 document.addEventListener('DOMContentLoaded', function () {
