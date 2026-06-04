@@ -48,7 +48,7 @@ ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
 # Model config — cheap fast model for MVP
 OPENAI_MODEL    = os.getenv("OPENAI_MODEL",    "gpt-4o-mini")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
 
 # Dev mode uses cheaper/faster model
 DEV_MODE        = os.getenv("DEV_MODE", "false").lower() == "true"
@@ -380,16 +380,8 @@ async def call_llm_with_search(
                         sources.append({"url": result.url, "title": result.title})
 
         usage = message.usage
-        try:
-            web_count = getattr(usage, "server_tool_use", None)
-            if web_count and hasattr(web_count, "web_search_requests"):
-                web_count = web_count.web_search_requests
-            elif isinstance(web_count, dict):
-                web_count = web_count.get("web_search_requests", searches_done)
-            else:
-                web_count = searches_done
-        except Exception:
-            web_count = searches_done
+        web_count = getattr(usage, "server_tool_use", None)
+        web_count = web_count.web_search_requests if web_count else searches_done
         logger.info(
             f"Anthropic+search — input:{usage.input_tokens} output:{usage.output_tokens} "
             f"searches:{web_count} sources:{len(sources)}"
@@ -404,19 +396,114 @@ async def call_llm_with_search(
 def parse_json_response(text: str) -> dict:
     """
     Safely parse JSON from LLM response.
-    Handles cases where model wraps JSON in ```json ... ``` markdown.
+    Handles markdown fences, nested wrappers, and truncated JSON.
+    Extracts section_a/b/c/d/e/f/g keys from anywhere in the structure.
     """
     text = text.strip()
-    # Strip markdown code fences if present
+
+    # Strip markdown code fences
     if text.startswith("```"):
         lines = text.split("\n")
         text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
     text = text.strip()
+
+    # Try direct parse first
     try:
-        return json.loads(text)
-    except json.JSONDecodeError as e:
-        logger.error(f"JSON parse failed: {e}\nRaw text: {text[:500]}")
-        raise ValueError(f"LLM returned invalid JSON: {e}")
+        data = json.loads(text)
+        # If it has our keys directly, return as-is
+        if "section_a" in data or "section_b" in data:
+            return data
+        # Otherwise search recursively for our keys
+        extracted = _extract_report_fields(data)
+        if extracted.get("section_a") or extracted.get("section_b"):
+            return extracted
+        return data
+    except json.JSONDecodeError:
+        pass
+
+    # Try to fix truncated JSON by finding the last complete field
+    try:
+        # Find the last complete "section_X": "..." pattern
+        fixed = _repair_truncated_json(text)
+        if fixed:
+            return fixed
+    except Exception:
+        pass
+
+    # Last resort: extract fields via regex
+    try:
+        extracted = _regex_extract_fields(text)
+        if extracted.get("section_a") or extracted.get("section_b"):
+            logger.warning("JSON parse: used regex fallback extraction")
+            return extracted
+    except Exception:
+        pass
+
+    logger.error(f"JSON parse failed completely\nRaw text: {text[:500]}")
+    raise ValueError(f"LLM returned invalid JSON — could not extract report fields")
+
+
+def _extract_report_fields(data: dict, depth: int = 0) -> dict:
+    """Recursively search a dict for our report field keys."""
+    if depth > 5:
+        return {}
+    result = {}
+    report_keys = {"section_a","section_b","section_c","section_d","section_e",
+                   "section_f","section_g","value_lo","value_hi","confidence",
+                   "comparables","land_value_lo","land_value_hi",
+                   "building_value_lo","building_value_hi","adj_value_lo","adj_value_hi"}
+
+    if isinstance(data, dict):
+        # Check if this dict has our keys
+        found = {k: v for k, v in data.items() if k in report_keys}
+        if found:
+            result.update(found)
+        # Also search nested dicts
+        for v in data.values():
+            if isinstance(v, dict):
+                nested = _extract_report_fields(v, depth+1)
+                if nested:
+                    # Only update if we found more keys
+                    for k, val in nested.items():
+                        if k not in result:
+                            result[k] = val
+    return result
+
+
+def _repair_truncated_json(text: str) -> dict:
+    """Try to fix truncated JSON by closing open brackets."""
+    # Count open braces/brackets
+    opens = text.count("{") - text.count("}")
+    closes = text.count("[") - text.count("]")
+    if opens > 0 or closes > 0:
+        fixed = text
+        fixed += "]" * max(0, closes)
+        fixed += "}" * max(0, opens)
+        try:
+            data = json.loads(fixed)
+            return _extract_report_fields(data) or data
+        except Exception:
+            pass
+    return {}
+
+
+def _regex_extract_fields(text: str) -> dict:
+    """Extract section fields using regex as last resort."""
+    result = {}
+    # Match "section_X": "content" or "section_X": "content with escaped quotes"
+    pattern = re.compile(r'"(section_[a-g]|value_lo|value_hi|confidence)"\s*:\s*("(?:[^"\\]|\\.)*"|[-\d.]+)', re.S)
+    for match in pattern.finditer(text):
+        key = match.group(1)
+        val = match.group(2)
+        if val.startswith('"'):
+            val = val[1:-1].replace('\\"', '"').replace("\\n", "\n")
+        else:
+            try:
+                val = float(val)
+            except Exception:
+                pass
+        result[key] = val
+    return result
 
 
 # ═══════════════════════════════════════════════════════════════════
