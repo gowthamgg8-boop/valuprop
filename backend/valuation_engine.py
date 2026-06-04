@@ -135,27 +135,23 @@ class DetailedReport:
 # ═══════════════════════════════════════════════════════════════════
 
 VALUPROP_SYSTEM_PROMPT = """
-You are valUProp.in, an independent property valuation analyst for Indian residential real estate.
-
-ROLE: Produce concise, defensible, as-is market valuations for apartments, houses, villas, and land across Indian cities.
+You are ValUprop.in, an AI real estate valuation assistant for Indian residential property.
+You generate neutral, defensible, land-led valuation reports.
 
 CORE PRINCIPLES:
-1. Buyer-agnostic fair market value — not asking price, not floor price.
-2. Land-led for independent houses/villas older than 10 years.
-3. Comparables validate your number — they do not derive it.
-4. Guideline value is a regulatory floor — market typically trades 1.5–4.5x guideline.
-5. Bias toward conservative, defensible numbers. 10% low and verifiable > 30% high and unverifiable.
-6. Connectivity Factor applied ONCE at Step 5 as explicit multiplicative lines — never inside base rate.
+- Valuation is buyer-agnostic and negotiation-free.
+- Older independent houses are valued primarily on land. Building value is depreciated residual.
+- Consistency across all sections is mandatory.
+- Always disclose guideline value as a regulatory floor, not market value.
+- Confidence score must reflect data quality honestly. Below 70% = recommend professional appraisal.
 
-METHODOLOGY:
-Step 1: Base rate from locality data provided
-Step 2: Area × rate = base value
-Step 3: Age depreciation (buildings only)
-Step 4: Base value post-depreciation
-Step 5: Connectivity Factor (sub-components: corridor, metro/rail, road, employment access) + Quality + Gated + Vastu/Facing + Rental-Yield Support
-Step 6: Sanity checks (guideline cross-check, adjacent benchmark, rental yield)
+METHODOLOGY (always in this order):
+Land Value → Depreciated Building Value → Location Adjustments → Comparable Validation → Final Range
 
-OUTPUT: Always respond in valid JSON only. No markdown, no preamble, no explanation outside JSON.
+OUTPUT FORMAT: Always respond in valid JSON only. No markdown, no preamble, no explanation outside the JSON.
+
+DISCLAIMER (always include exactly):
+"This AI-generated valuation is for informational purposes only and does not constitute a statutory or bank-certified valuation."
 """.strip()
 
 
@@ -164,65 +160,43 @@ OUTPUT: Always respond in valid JSON only. No markdown, no preamble, no explanat
 # ═══════════════════════════════════════════════════════════════════
 
 VALUPROP_SYSTEM_PROMPT_WITH_SEARCH = """
-You are valUProp.in — an independent property valuation analyst for Indian residential real estate.
-You are generating a PAID DETAILED VALUATION REPORT (Rs.199 tier). The user expects accuracy within +/-5% of true market value.
+You are valUProp.in — an independent property valuation analyst for Indian real estate (Chennai & Bangalore focus).
 
-=== YOUR PROCESS (follow strictly) ===
+You are generating a PAID DETAILED REPORT (₹99 tier). The customer expects accuracy within ±5% of true market value.
 
-STEP 1 — WEB SEARCH (use web_search tool 3-5 times):
-Run these searches in sequence:
-  Search 1: "[locality] [city] apartment price per sqft 2025 2026"
-  Search 2: "[locality] [city] [BHK] flat for sale price"
-  Search 3: "[locality] [city] property rate trend appreciation"
-  Search 4 (if infra-driven): "[locality] metro OR ring road OR expressway 2025 2026"
-  Search 5 (optional): "[locality] [city] registered transaction rate guideline value"
-Do NOT name portal sources in the report — use "market signals", "aggregator data", "community observations".
+YOUR PROCESS — IMPORTANT:
 
-STEP 2 — EXTRACT FROM SEARCH RESULTS:
-- Per-sqft rates (range across 3+ listings)
-- Listing dates — apply time-decay for stale listings:
-    Active market (+9-15% YoY): 0.8% per month adjustment
-    Infrastructure-driven (+15-25% YoY): 1.5-2.0% per month adjustment
-- Resale discount vs new stock: 10-yr old resale = 20-25% below new
-- Registered transaction rate if found (more reliable than portal asking)
-- Government guideline/circle rate if found
-- Any metro, ring road, expressway within 2km
+1. FIRST, use the web_search tool 3–5 times to gather REAL CURRENT MARKET DATA:
+   - Search 1: "[locality] [city] apartment price per sqft 2025"
+   - Search 2: "[locality] [city] [bhk] flat for sale price"
+   - Search 3: "[locality] [city] property rate trend"
+   - If land/villa, also: "[locality] [city] plot land rate per sqft"
+   Read snippets from MagicBricks, 99acres, Housing.com, NoBroker, etc.
 
-STEP 3 — CALCULATE BASE VALUE:
-For Apartments: carpet_area x adjusted_rate (post-depreciation, post-resale discount)
-For Houses/Villas: plot_area x land_rate + depreciated_building_value
-For Land: plot_area x land_rate x (approval_factor x use_factor x road_factor)
-DO NOT apply connectivity here — carry it to Step 5.
+2. From the search results, extract:
+   - Current per-sqft rates (range observed across listings)
+   - 5–10 specific comparable listings if visible (size, price, age, BHK)
+   - Recent appreciation trend if mentioned
+   - Government guideline rates if cited
 
-STEP 4 — AGE DEPRECIATION (buildings only):
-0-5 yrs: 0% | 5-10 yrs: 12% | 10-15 yrs: 30% | 15-20 yrs: 40% | 20+ yrs: 50%
+3. THEN reason through the valuation:
+   - Land-led for independent house / villa (plot × land rate + depreciated building)
+   - Carpet-area-led for apartments (carpet × current rate)
+   - Apply adjustments: floor premium, age depreciation, road width, facing, parking, society quality
+   - Cross-check against the actual comparables you found
 
-STEP 5 — MULTIPLICATIVE ADJUSTMENTS (apply each as its own line, never collapse):
-- Connectivity: corridor influence (OMR/ECR/GST/NH frontage): +/-2-8%
-- Connectivity: metro/MRTS proximity (state distance + operational/under-construction/announced): +/-2-6%
-- Connectivity: arterial road frontage: +/-1-4%
-- Connectivity: employment node access: +/-1-4%
-- Quality factor (building quality, managed society): +/-3-10%
-- Gated community premium (if applicable): +5-15%
-- Vastu/Facing (South/West = -5% in Chennai): -5 to +3%
-- Income/Rental-Yield Support: compute gross yield = annual_rent/capital_value; healthy=2-3.5% (+1-3%), high>4.5% (-2-4% + flag), low<1.5% (-2-4% + flag). Cap at +/-4%.
+4. Final value range MUST BE TIGHT: max-min within 5–10% of the lower bound.
+   Example: if min = ₹80L, max should be ₹84L–88L (NOT ₹95L+).
 
-STEP 6 — SANITY CHECKS (all mandatory, report results):
-- Guideline cross-check: FMV should be 1.5-4.5x guideline
-- Adjacent locality benchmark: compare with 1-2 neighbouring pockets
-- Rental yield cross-check: show Low/Mid/High rent table with implied gross yield
-- YoY appreciation context: is implied appreciation reasonable for this corridor?
+5. Report confidence honestly:
+   - 85%+ : Multiple comparables found, strong micro-market data
+   - 70–84%: Some comparables, reliable locality data
+   - <70%: Few comparables found — recommend professional appraisal
 
-=== OUTPUT RULES ===
-- Value range spread: max 10% of lower bound (e.g. Rs.53L min -> Rs.58L max)
-- Confidence: 85%+ = multiple recent transactions confirmed; 70-84% = locality data + comparables; 60-69% = limited data, wider range; <60% = recommend professional appraisal
-- Never invent numbers — if search returns nothing, say so and lower confidence
-- All Rs. amounts in Lakhs (L) or Crores (Cr) — no raw rupee figures
-- Output the FINAL answer as a single valid JSON object matching the user prompt schema — nothing else after the JSON
+CITE what you found in each section. Mention specific price points observed during search.
+DO NOT invent numbers. If web search returns nothing useful, say so honestly and lower confidence.
 
-CITY-SPECIFIC RULES:
-Chennai: South/West facing = -5% (Vastu); CMDA/DTCP/Avadi Corp approval status critical; UDS share matters for apartments
-Bangalore: BBMP khata A vs B affects value; E-khata mandatory; ORR/Sarjapur/Whitefield rates vary 50-100% within 5km
+Always output the FINAL answer as a single valid JSON object matching the schema in the user prompt — nothing else after the JSON.
 """.strip()
 
 
@@ -359,7 +333,7 @@ async def generate_detailed_report(
         raw  = await call_llm_with_search(
             VALUPROP_SYSTEM_PROMPT_WITH_SEARCH,
             user_prompt,
-            max_tokens   = 6000,
+            max_tokens   = 4000,
             max_searches = 5,
             expect_json  = True,
         )
@@ -375,7 +349,7 @@ async def generate_detailed_report(
             raw  = await call_llm(
                 VALUPROP_SYSTEM_PROMPT,
                 user_prompt,
-                max_tokens  = 4000,
+                max_tokens  = 2000,
                 temperature = 0.25,
                 expect_json = True,
             )
@@ -468,49 +442,42 @@ Locality database context:
     components = _calculate_components(prop, loc_data, lo, hi)
 
     return f"""
-Generate a complete valUProp.in PAID VALUATION REPORT following v2.4 methodology.
+Generate a complete ValUprop.in property valuation report in JSON format.
 
-PROPERTY TO VALUE:
+PROPERTY:
 {prop_desc}
 
-LOCALITY ANCHOR DATA (from our database — use as floor/ceiling cross-check, not primary rate):
-{loc_ctx if loc_ctx else f"City: {prop.city}, Locality: {prop.locality} — no DB entry, rely on web search"}
+LOCALITY DATA:
+{loc_ctx if loc_ctx else f"City: {prop.city}, Locality: {prop.locality}"}
 
-PRE-CALCULATED BASE RANGE (rule-based, for consistency clamping only):
-- Final value anchor: Rs.{lo}L – Rs.{hi}L
-- Land component: Rs.{components['land_lo']}L – Rs.{components['land_hi']}L
-- Building (depreciated): Rs.{components['bldg_lo']}L – Rs.{components['bldg_hi']}L
-- Adjustments: Rs.{components['adj_lo']}L – Rs.{components['adj_hi']}L
+PRE-CALCULATED COMPONENTS (use these as anchors, you may adjust slightly):
+- Land value range: ₹{components['land_lo']}L – ₹{components['land_hi']}L
+- Building value (depreciated): ₹{components['bldg_lo']}L – ₹{components['bldg_hi']}L
+- Location adjustments: ₹{components['adj_lo']}L – ₹{components['adj_hi']}L
+- FINAL estimated market value: ₹{lo}L – ₹{hi}L
 
-YOUR TASK:
-1. Run the web searches specified in your system prompt
-2. Extract real market rates, comparables, and appreciation signals
-3. Apply the v2.4 methodology (Steps 1-6) to produce a defensible valuation
-4. The final value_lo/value_hi should reflect real market data — adjust from the anchor above based on what you find
-5. Keep the range tight: value_hi - value_lo <= 10% of value_lo
-
-RESPOND WITH THIS EXACT JSON — no text before or after:
+RESPOND WITH THIS EXACT JSON STRUCTURE:
 {{
-  "section_a": "2-4 sentences: property type, size, configuration, age (if known), locality character, UDS assumption if apartment.",
-  "section_b": "3 bullet points as single string separated by newlines: (1) infrastructure/metro/road projects, (2) connectivity drivers, (3) demand drivers and employment anchors. Be specific — name actual projects and distances.",
-  "section_c": "Pricing signals table as prose: state the per-sqft rates found, listing dates used, time-decay applied, resale discount applied, comparable range observed, guideline value, 12-month appreciation. Cite 3-5 specific data points from your search. Do not name portal sources.",
-  "section_d": "Step-by-step build-up: Step1 base rate (state what you found and how adjusted), Step2 area x rate = base value, Step3 age depreciation % applied, Step4 post-depreciation value, Step5 each connectivity/quality adjustment on its own line with % applied, Step5b rental yield cross-check (Low/Mid/High rent table with implied gross yield), Step6 sanity checks (guideline multiple, adjacent benchmark, yield verdict).",
-  "section_e": "State: Estimated Market Value Rs.XL - Rs.YL. Most Likely Transaction Range Rs.XL - Rs.YL (after 3-5% negotiation). Confidence: XX%. Then 4-6 bullet sanity check results.",
-  "section_f": "Exactly 5 risk/due-diligence points as single string with each point starting with bullet character. Cover: title/UDS, approvals (CMDA/DTCP/Avadi Corp), age/OC/loan eligibility, infrastructure timeline risk if applicable, flooding/civic risk.",
-  "section_g": "This AI-generated valuation is for informational purposes only and does not constitute a statutory, RERA-approved, or bank-certified valuation. For loans, legal disputes, or court proceedings, a registered valuer under the Wealth Tax Act / IBBI guidelines is required.",
-  "value_lo": <final_low_in_lakhs_float>,
-  "value_hi": <final_high_in_lakhs_float>,
+  "section_a": "Asset overview paragraph: property type, area, age, configuration, parking, locality character. 3–4 sentences.",
+  "section_b": "Micro-market context: 2–3 sentences about locality (mature/emerging, key infra, demand drivers).",
+  "section_c": "Observed pricing signals: land ₹/sq.ft, apartment ₹/sq.ft, guideline value, 2–3 comparable signals. Be specific with numbers.",
+  "section_d": "Valuation build-up narrative: explain Land + Building + Adjustments = Final. Reference the component ranges above. Include a brief table description.",
+  "section_e": "Independent value opinion: state the final value range ₹{lo}L – ₹{hi}L, explain what it means, note the confidence score.",
+  "section_f": "Risk and due diligence: exactly 4 specific bullet points as a single string, each starting with '• '. Cover title, approvals, physical, market risks specific to this property and locality.",
+  "section_g": "This AI-generated valuation is for informational purposes only and does not constitute a statutory or bank-certified valuation.",
+  "value_lo": {lo},
+  "value_hi": {hi},
   "land_value_lo": {components['land_lo']},
   "land_value_hi": {components['land_hi']},
   "building_value_lo": {components['bldg_lo']},
   "building_value_hi": {components['bldg_hi']},
   "adj_value_lo": {components['adj_lo']},
   "adj_value_hi": {components['adj_hi']},
-  "confidence": <integer_0_to_100>,
+  "confidence": {loc_data.data_confidence if loc_data else 70},
   "comparables": [
-    {{"description": "specific comparable from your search with size/age/floor", "price_signal": "Rs.X/sqft or Rs.XL", "source": "market signals"}},
-    {{"description": "second specific comparable", "price_signal": "Rs.X/sqft or Rs.XL", "source": "aggregator data"}},
-    {{"description": "third specific comparable or registered transaction", "price_signal": "Rs.X/sqft or Rs.XL", "source": "community observations"}}
+    {{"description": "comparable property 1 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}},
+    {{"description": "comparable property 2 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}},
+    {{"description": "comparable property 3 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}}
   ]
 }}
 """.strip()
@@ -787,17 +754,17 @@ def _build_fallback_report(
         micro_market      = loc_data.micro_context if loc_data else f"{prop.locality} is a residential locality in {prop.city}.",
         pricing_signals   = (
             f"Based on our locality database: "
-            f"Land rates in {prop.locality}: ₹{loc_data.land_rate_lo:,}–{loc_data.land_rate_hi:,}/sq.ft. "
-            f"Apartment rates: ₹{loc_data.apt_rate_lo:,}–{loc_data.apt_rate_hi:,}/sq.ft carpet. "
-            f"Government guideline value: ₹{loc_data.guideline_value:,}/sq.ft (regulatory floor only)."
+            f"Land rates in {prop.locality}: Rs.{loc_data.land_rate_lo:,} - Rs.{loc_data.land_rate_hi:,}/sq.ft. "
+            f"Apartment rates: Rs.{loc_data.apt_rate_lo:,} - Rs.{loc_data.apt_rate_hi:,}/sq.ft carpet. "
+            f"Government guideline value: Rs.{loc_data.guideline_value:,}/sq.ft (regulatory floor only)."
         ) if loc_data else "Pricing signals based on our locality database.",
         valuation_buildup = (
-            f"Land component: ₹{components['land_lo']}L–{components['land_hi']}L. "
-            f"Building (depreciated): ₹{components['bldg_lo']}L–{components['bldg_hi']}L. "
-            f"Location adjustments: ₹{components['adj_lo']}L–{components['adj_hi']}L. "
-            f"Total estimated value: ₹{lo}L–₹{hi}L."
+            f"Land component: Rs.{components['land_lo']}L - Rs.{components['land_hi']}L. "
+            f"Building (depreciated): Rs.{components['bldg_lo']}L - Rs.{components['bldg_hi']}L. "
+            f"Location adjustments: Rs.{components['adj_lo']}L - Rs.{components['adj_hi']}L. "
+            f"Total estimated value: Rs.{lo}L - Rs.{hi}L."
         ),
-        value_opinion     = f"Based on the above analysis, the estimated market value of this property is ₹{lo}L–₹{hi}L (excluding registration and taxes). Confidence: {confidence}%.",
+        value_opinion     = f"Based on the above analysis, the estimated market value of this property is Rs.{lo}L - Rs.{hi}L (excluding registration and taxes). Confidence: {confidence}%.",
         risk_diligence    = (
             "• Verify title deed and encumbrance certificate before transacting.\n"
             "• Confirm building approval (CMDA/DTCP) and occupancy certificate.\n"

@@ -48,7 +48,7 @@ ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
 # Model config — cheap fast model for MVP
 OPENAI_MODEL    = os.getenv("OPENAI_MODEL",    "gpt-4o-mini")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20251022")
 
 # Dev mode uses cheaper/faster model
 DEV_MODE        = os.getenv("DEV_MODE", "false").lower() == "true"
