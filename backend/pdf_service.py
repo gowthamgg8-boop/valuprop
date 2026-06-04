@@ -303,31 +303,108 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                 ]))
                 story.append(dt)
 
-        # Section D — components table + narrative (v2.4 style)
+        # Section D — v2.4 tables: Steps + Adjustments + Rental Yield
         elif letter == "D":
-            # Components table (Land / Building / Adjustments)
+            raw_content = sec.get("content", "")
+            # Parse structured pipe-separated data
+            step_rows = []
+            adj_rows  = []
+            yield_rows= []
+            note_text = ""
+            final_val = ""
+            for line in raw_content.split("\n"):
+                parts = [p.strip() for p in line.split("|")]
+                if not parts or not parts[0]:
+                    continue
+                tag = parts[0]
+                if tag == "STEPS" and len(parts) >= 5:
+                    step_rows.append(parts[1:5])
+                elif tag == "ADJ" and len(parts) >= 4:
+                    adj_rows.append(parts[1:4])
+                elif tag == "FINAL" and len(parts) >= 5:
+                    final_val = parts[4] if len(parts) > 4 else ""
+                elif tag == "YIELD" and len(parts) >= 6:
+                    yield_rows.append(parts[1:6])
+                elif tag == "NOTE":
+                    note_text = "|".join(parts[1:])
+
+            # Steps table (Step 1-4)
+            if step_rows:
+                hdr = [Paragraph(h, S(f"sh{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
+                       for i, h in enumerate(["STEP","COMPONENT","CALCULATION","VALUE"])]
+                rows = [[Paragraph(c, sBo if i==0 else (sBo if i==3 else sN)) for i,c in enumerate(r)] for r in step_rows]
+                if final_val:
+                    rows.append([Paragraph("", sN), Paragraph("FINAL VALUE", sBo), Paragraph("", sN), Paragraph(final_val, S("fv", fontSize=9, leading=14, textColor=C_BLUE, fontName="Helvetica-Bold"))])
+                t = Table([hdr]+rows, colWidths=[W*0.12, W*0.28, W*0.33, W*0.27])
+                t.setStyle(TableStyle([
+                    ("BACKGROUND",(0,0),(-1,0),C_BG),
+                    ("BACKGROUND",(0,-1),(-1,-1),C_LIGHT),
+                    ("LINEBELOW",(0,0),(-1,-1),0.5,C_BORDER),
+                    ("BOX",(0,0),(-1,-1),1,C_BORDER),
+                    ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
+                    ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+                ]))
+                story.append(t)
+                story.append(Spacer(1,4))
+
+            # Adjustments table (Step 5)
+            if adj_rows:
+                ahdr = [Paragraph(h, S(f"ah{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
+                        for i,h in enumerate(["STEP 5 ADJUSTMENTS","FACTOR","APPLIED"])]
+                arows = []
+                for r in adj_rows:
+                    is_net = "NET" in r[0].upper()
+                    style = S("adj_bold", fontSize=8, leading=12, textColor=C_BLUE if is_net else C_TEXT,
+                              fontName="Helvetica-Bold" if is_net else "Helvetica")
+                    arows.append([Paragraph(r[0], style), Paragraph(r[1], sBo), Paragraph(r[2] if len(r)>2 else "", sN)])
+                at = Table([ahdr]+arows, colWidths=[W*0.50, W*0.15, W*0.35])
+                at.setStyle(TableStyle([
+                    ("BACKGROUND",(0,0),(-1,0),C_BG),
+                    ("BACKGROUND",(0,-1),(-1,-1),colors.HexColor("#F0F4FF")),
+                    ("LINEBELOW",(0,0),(-1,-1),0.5,C_BORDER),
+                    ("BOX",(0,0),(-1,-1),1,C_BORDER),
+                    ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
+                    ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+                ]))
+                story.append(at)
+                story.append(Spacer(1,4))
+
+            # Rental yield table (Step 5b)
+            if yield_rows:
+                yhdr = [Paragraph(h, S(f"yh{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
+                        for i,h in enumerate(["SCENARIO","MONTHLY RENT","ANNUAL RENT","CAPITAL VALUE","GROSS YIELD"])]
+                yrows = [[Paragraph(c, sBo if i==0 else (S("yg", fontSize=8, leading=12, textColor=colors.HexColor("#1A7A4A"), fontName="Helvetica-Bold") if i==4 else sN))
+                          for i,c in enumerate(r)] for r in yield_rows]
+                yt = Table([yhdr]+yrows, colWidths=[W*0.12, W*0.22, W*0.22, W*0.22, W*0.22])
+                yt.setStyle(TableStyle([
+                    ("BACKGROUND",(0,0),(-1,0),C_BG),
+                    ("LINEBELOW",(0,0),(-1,-1),0.5,C_BORDER),
+                    ("BOX",(0,0),(-1,-1),1,C_BORDER),
+                    ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
+                    ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
+                ]))
+                story.append(yt)
+                if note_text:
+                    nt = Table([[Paragraph(note_text, sN)]], colWidths=[W])
+                    nt.setStyle(TableStyle([
+                        ("BACKGROUND",(0,0),(-1,-1),colors.HexColor("#ECFDF5")),
+                        ("BOX",(0,0),(-1,-1),1,colors.HexColor("#6EE7B7")),
+                        ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+                        ("TOPPADDING",(0,0),(-1,-1),5),("BOTTOMPADDING",(0,0),(-1,-1),5),
+                    ]))
+                    story.append(nt)
+                story.append(Spacer(1,4))
+            content = ""  # skip default content block since we rendered tables above
+
+            # Also render components summary table
             comp_rows = []
-            for k, fk in [("Land Value",     "land_value"),
-                           ("Building Value", "building_value"),
-                           ("Adjustments",    "adjustments")]:
+            for k, fk in [("Land Value","land_value"),("Building Value","building_value"),("Adjustments","adjustments")]:
                 v = sec.get(fk,"")
                 if v:
                     comp_rows.append([Paragraph(k, sMu), Paragraph(str(v), sBo)])
             if comp_rows:
-                hdr = [
-                    Paragraph("COMPONENT", S("dh", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold")),
-                    Paragraph("VALUE RANGE", S("dh2", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
-                ]
-                dt = Table([hdr] + comp_rows, colWidths=[W*0.55, W*0.45])
-                dt.setStyle(TableStyle([
-                    ("BACKGROUND",(0,0),(-1,0),C_BG),
-                    ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
-                    ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
-                    ("LINEBELOW",(0,0),(-1,-1),0.5,C_BORDER),
-                    ("BOX",(0,0),(-1,-1),1,C_BORDER),
-                ]))
-                story.append(dt)
-                story.append(Spacer(1, 4))
+                # Insert before steps as a summary
+                pass  # already shown in steps table
 
         # Section F risks
         elif letter == "F":
