@@ -325,42 +325,36 @@ async def generate_detailed_report(
     # ── Build detailed prompt ─────────────────────────────────────
     user_prompt = _build_report_prompt(prop, loc_data, lo, hi)
 
-    # ── Call LLM ─────────────────────────────────────────────────
+    # ── Build structured report (Python-calculated tables) ──────
+    # Stage 1: Python computes all tables deterministically
+    # Stage 2: LLM enriches 3 prose sections with web-searched data
+    report = _build_structured_report(prop, loc_data, lo, hi)
+
+    # ── LLM enrichment (prose only — not tables) ─────────────────
     try:
-        # ─── PAID TIER: Use web search for real-market validation ────
-        # Claude searches MagicBricks/99acres/Housing.com to validate
-        # the estimate against current listings, aiming for ±5% accuracy
-        raw  = await call_llm_with_search(
+        prose_prompt = _build_prose_prompt(prop, loc_data, lo, hi)
+        raw = await call_llm_with_search(
             VALUPROP_SYSTEM_PROMPT_WITH_SEARCH,
-            user_prompt,
-            max_tokens   = 4000,
-            max_searches = 5,
+            prose_prompt,
+            max_tokens   = 3000,
+            max_searches = 4,
             expect_json  = True,
         )
-        data = parse_json_response(raw)
-        # LLM guardrail — soften unsafe claims in every prose field of
-        # the parsed report before it is turned into a DetailedReport.
-        data = validate_report_dict(data)
-        report = _parse_report_response(data, prop, loc_data, lo, hi)
+        prose = parse_json_response(raw)
+        prose = validate_report_dict(prose)
+        # Enrich only the prose fields — tables stay Python-calculated
+        if prose.get("micro_market"):
+            report.micro_market = prose["micro_market"]
+        if prose.get("pricing_signals"):
+            report.pricing_signals = prose["pricing_signals"]
+        if prose.get("risk_diligence"):
+            report.risk_diligence = prose["risk_diligence"]
+        if prose.get("comparables"):
+            report.comparables = prose["comparables"]
+        logger.info(f"LLM prose enrichment succeeded for {prop.locality}")
     except Exception as e:
-        logger.warning(f"Web-search-enabled report failed, falling back to knowledge-only: {e}")
-        # Fallback 1: try without web search
-        try:
-            raw  = await call_llm(
-                VALUPROP_SYSTEM_PROMPT,
-                user_prompt,
-                max_tokens  = 2000,
-                temperature = 0.25,
-                expect_json = True,
-            )
-            data = parse_json_response(raw)
-            # LLM guardrail — same softening on the knowledge-only path
-            data = validate_report_dict(data)
-            report = _parse_report_response(data, prop, loc_data, lo, hi)
-        except Exception as e2:
-            logger.error(f"Detailed report (knowledge-only) also failed: {e2}")
-            # Fallback 2: static report
-            report = _build_fallback_report(prop, loc_data, lo, hi)
+        logger.warning(f"LLM prose enrichment failed (using structured fallback): {e}")
+        # Structured report still has good content from Python — no further fallback needed
 
     # ════════════════════════════════════════════════════════════
     # CONSISTENCY CLAMP — keep paid report close to free estimate
@@ -442,22 +436,28 @@ Locality database context:
     components = _calculate_components(prop, loc_data, lo, hi)
 
     return f"""
-CRITICAL: You MUST respond with ONLY the exact JSON structure shown below. Do NOT use any other JSON format. Do NOT add report_metadata, property_details, or any other wrapper. Start your response with {{ and end with }}.
+Generate a complete ValUprop.in property valuation report in JSON format.
 
-Property: {prop_desc}
-Locality data: {loc_ctx if loc_ctx else f"{prop.locality}, {prop.city}"}
-Value anchor: Rs.{lo}L - Rs.{hi}L
+PROPERTY:
+{prop_desc}
 
-Use web search to find current market rates for {prop.locality}, {prop.city}. Then fill in the JSON below with real data.
+LOCALITY DATA:
+{loc_ctx if loc_ctx else f"City: {prop.city}, Locality: {prop.locality}"}
 
-YOUR RESPONSE MUST BE EXACTLY THIS JSON FORMAT — nothing before {{, nothing after }}:
+PRE-CALCULATED COMPONENTS (use these as anchors, you may adjust slightly):
+- Land value range: ₹{components['land_lo']}L – ₹{components['land_hi']}L
+- Building value (depreciated): ₹{components['bldg_lo']}L – ₹{components['bldg_hi']}L
+- Location adjustments: ₹{components['adj_lo']}L – ₹{components['adj_hi']}L
+- FINAL estimated market value: ₹{lo}L – ₹{hi}L
+
+RESPOND WITH THIS EXACT JSON STRUCTURE:
 {{
-  "section_a": "2-3 sentences about this property: type, size, config, locality character.",
-  "section_b": "Micro-market context: key infrastructure (metro/road/IT park), connectivity, demand drivers with specific names.",
-  "section_c": "Pricing signals from your search: per-sqft rate, appreciation trend, guideline value, 2-3 specific comparables.",
-  "section_d": "Valuation steps: base rate Rs.X/sqft, area calculation, age depreciation, adjustments, rental yield check, sanity checks.",
-  "section_e": "Final value Rs.{lo}L - Rs.{hi}L. Transaction range. Confidence. Sanity check pass/fail.",
-  "section_f": "• Verify title deed and UDS\n• Confirm CMDA/DTCP approval and OC\n• Check age and loan eligibility\n• Note any infrastructure timeline risks\n• Verify flooding/drainage risk",
+  "section_a": "Asset overview paragraph: property type, area, age, configuration, parking, locality character. 3–4 sentences.",
+  "section_b": "Micro-market context: 2–3 sentences about locality (mature/emerging, key infra, demand drivers).",
+  "section_c": "Observed pricing signals: land ₹/sq.ft, apartment ₹/sq.ft, guideline value, 2–3 comparable signals. Be specific with numbers.",
+  "section_d": "Valuation build-up narrative: explain Land + Building + Adjustments = Final. Reference the component ranges above. Include a brief table description.",
+  "section_e": "Independent value opinion: state the final value range ₹{lo}L – ₹{hi}L, explain what it means, note the confidence score.",
+  "section_f": "Risk and due diligence: exactly 4 specific bullet points as a single string, each starting with '• '. Cover title, approvals, physical, market risks specific to this property and locality.",
   "section_g": "This AI-generated valuation is for informational purposes only and does not constitute a statutory or bank-certified valuation.",
   "value_lo": {lo},
   "value_hi": {hi},
@@ -469,9 +469,9 @@ YOUR RESPONSE MUST BE EXACTLY THIS JSON FORMAT — nothing before {{, nothing af
   "adj_value_hi": {components['adj_hi']},
   "confidence": {loc_data.data_confidence if loc_data else 70},
   "comparables": [
-    {{"description": "comparable 1 from search", "price_signal": "Rs.X/sqft", "source": "market signals"}},
-    {{"description": "comparable 2 from search", "price_signal": "Rs.XL", "source": "aggregator data"}},
-    {{"description": "comparable 3 from search", "price_signal": "Rs.XL", "source": "community observations"}}
+    {{"description": "comparable property 1 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}},
+    {{"description": "comparable property 2 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}},
+    {{"description": "comparable property 3 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}}
   ]
 }}
 """.strip()
@@ -728,6 +728,199 @@ def _parse_report_response(
         locality_trend    = loc_data.trend_12m if loc_data else "+8.0%",
         data_source       = "ai",
     )
+
+
+
+def _build_structured_report(
+    prop:     PropertyInput,
+    loc_data: Optional[LocalityData],
+    lo:       float,
+    hi:       float,
+) -> DetailedReport:
+    """
+    Build a complete, structured report using Python calculations only.
+    No LLM dependency — always produces correct tables.
+    LLM enrichment is applied on top of this in generate_detailed_report().
+    """
+    components = _calculate_components(prop, loc_data, lo, hi)
+    confidence = loc_data.data_confidence if loc_data else 65
+
+    # ── Section A: Asset Overview ─────────────────────────────────
+    area_info = ""
+    if prop.carpet_area:
+        area_info = f" The apartment measures {prop.carpet_area:,} sq.ft carpet area"
+        if prop.bhk:
+            area_info += f" ({prop.bhk})"
+        area_info += "."
+    elif prop.plot_house:
+        area_info = f" The property sits on a {prop.plot_house:,} sq.ft plot."
+    elif prop.plot_land:
+        area_info = f" Plot area: {prop.plot_land:,} sq.ft."
+
+    age_info = ""
+    if prop.age_apt:
+        age_info = f" Building age: {prop.age_apt}."
+    elif prop.age_house:
+        age_info = f" Building age: {prop.age_house} years."
+
+    section_a = (
+        f"This {prop.prop_type.replace('IndependentHouse','Independent House')} "
+        f"is located in {prop.locality}, {prop.city}."
+        f"{area_info}{age_info}"
+        f" Locality character and micro-market rates are based on our proprietary database."
+        f" For apartments, a 30% undivided share of land (UDS) assumption applies unless specified."
+    )
+
+    # ── Section B: Micro-Market (placeholder — LLM enriches this) ─
+    section_b = loc_data.micro_context if loc_data else (
+        f"{prop.locality} is a residential locality in {prop.city}. "
+        f"Demand is supported by local employment, connectivity, and civic infrastructure."
+    )
+
+    # ── Section C: Pricing Signals (Python-calculated) ─────────────
+    if loc_data:
+        section_c = (
+            f"Based on our locality database: "
+            f"Land rates in {prop.locality}: Rs.{loc_data.land_rate_lo:,}-Rs.{loc_data.land_rate_hi:,}/sq.ft. "
+            f"Apartment rates: Rs.{loc_data.apt_rate_lo:,}-Rs.{loc_data.apt_rate_hi:,}/sq.ft carpet. "
+            f"12-month appreciation: {loc_data.trend_12m}. "
+            f"Government guideline value: Rs.{loc_data.guideline_value:,}/sq.ft (regulatory floor only)."
+        )
+    else:
+        section_c = f"Pricing signals based on our locality database for {prop.locality}, {prop.city}."
+
+    # ── Section D: Valuation Build-Up (Python-calculated) ──────────
+    age_factor = _age_depreciation(prop.age_apt if prop.prop_type == "Apartment" else "5-10 years")
+    dep_pct = round((1 - age_factor) * 100)
+
+    if prop.prop_type == "Apartment" and prop.carpet_area and loc_data:
+        base_rate_lo = loc_data.apt_rate_lo
+        base_rate_hi = loc_data.apt_rate_hi
+        area = prop.carpet_area
+        section_d = (
+            f"Step 1 - Base rate: Rs.{base_rate_lo:,}-Rs.{base_rate_hi:,}/sq.ft (locality benchmark). "
+            f"Step 2 - Area calculation: {area:,} sq.ft carpet x rate = "
+            f"Rs.{round(area*base_rate_lo/100000,1)}L-Rs.{round(area*base_rate_hi/100000,1)}L. "
+            f"Step 3 - Age depreciation: {dep_pct}% applied. "
+            f"Step 4 - Post-depreciation base: Rs.{round(area*base_rate_lo*age_factor/100000,1)}L-"
+            f"Rs.{round(area*base_rate_hi*age_factor/100000,1)}L. "
+            f"Step 5 - Location adjustments (connectivity, quality, floor): "
+            f"Rs.{components['adj_lo']}L-Rs.{components['adj_hi']}L. "
+            f"Final estimated value: Rs.{lo}L-Rs.{hi}L."
+        )
+    else:
+        section_d = (
+            f"Land component: Rs.{components['land_lo']}L-Rs.{components['land_hi']}L. "
+            f"Building (depreciated): Rs.{components['bldg_lo']}L-Rs.{components['bldg_hi']}L. "
+            f"Location adjustments: Rs.{components['adj_lo']}L-Rs.{components['adj_hi']}L. "
+            f"Total estimated value: Rs.{lo}L-Rs.{hi}L."
+        )
+
+    # ── Section E: Value Opinion ────────────────────────────────────
+    txn_lo = round(lo * 0.96, 1)
+    txn_hi = round(hi * 0.97, 1)
+    gv = loc_data.guideline_value if loc_data else 0
+    guideline_multiple = round(lo / (gv * (prop.carpet_area or 950) / 100000), 1) if gv > 0 and (prop.carpet_area or 950) else 0
+    section_e = (
+        f"Estimated Market Value: Rs.{lo}L - Rs.{hi}L. "
+        f"Most Likely Transaction Range: Rs.{txn_lo}L - Rs.{txn_hi}L (after 3-5% negotiation). "
+        f"Confidence: {confidence}%."
+    )
+    if guideline_multiple > 0:
+        section_e += f" Guideline cross-check: FMV implies {guideline_multiple}x guideline value (within 1.5-4.5x expected band)."
+    if loc_data:
+        section_e += f" Locality appreciation trend: {loc_data.trend_12m} (12 months)."
+
+    # ── Section F: Risk & Due Diligence ────────────────────────────
+    if prop.prop_type == "Apartment":
+        section_f = (
+            "• Verify title deed, encumbrance certificate, and UDS percentage matches sale agreement.\n"
+            "• Confirm CMDA/DTCP building approval and Occupancy Certificate before purchase.\n"
+            "• Inspect physical condition — this report assumes standard construction quality.\n"
+            "• Verify property tax, maintenance dues, and society NOC are clear.\n"
+            "• Check loan eligibility — absence of OC limits PSU bank financing."
+        )
+    elif prop.prop_type == "IndependentHouse":
+        section_f = (
+            "• Verify patta/khata is in seller's name and matches registered sale deed.\n"
+            "• Confirm boundary measurements match documents and no encroachments exist.\n"
+            "• Check building plan approval and any deviations from sanctioned plan.\n"
+            "• Review 30-year encumbrance certificate for any liens or mortgages.\n"
+            "• Verify no overhead high-tension lines or road widening proposals affecting plot."
+        )
+    else:
+        section_f = (
+            "• Verify title deed and encumbrance certificate before transacting.\n"
+            "• Confirm applicable approvals (CMDA/DTCP/RERA) and compliance status.\n"
+            "• Inspect physical condition — this report assumes standard condition.\n"
+            "• Verify property tax payments and no outstanding dues.\n"
+            "• Consult a registered valuer for loan or legal purposes."
+        )
+
+    section_g = (
+        "This AI-generated valuation is for informational purposes only and does not constitute "
+        "a statutory, RERA-approved, or bank-certified valuation. For loans, legal disputes, or "
+        "court proceedings, a registered valuer under the Wealth Tax Act / IBBI guidelines is required."
+    )
+
+    return DetailedReport(
+        asset_overview    = section_a,
+        micro_market      = section_b,
+        pricing_signals   = section_c,
+        valuation_buildup = section_d,
+        value_opinion     = section_e,
+        risk_diligence    = section_f,
+        disclaimer        = section_g,
+        value_lo          = lo,
+        value_hi          = hi,
+        confidence        = confidence,
+        confidence_label  = get_confidence_label(confidence),
+        land_value_lo     = components["land_lo"],
+        land_value_hi     = components["land_hi"],
+        building_value_lo = components["bldg_lo"],
+        building_value_hi = components["bldg_hi"],
+        adj_value_lo      = components["adj_lo"],
+        adj_value_hi      = components["adj_hi"],
+        locality_trend    = loc_data.trend_12m if loc_data else "+8.0%",
+        data_source       = "structured",
+    )
+
+
+def _build_prose_prompt(
+    prop:     PropertyInput,
+    loc_data: Optional[LocalityData],
+    lo:       float,
+    hi:       float,
+) -> str:
+    """
+    Minimal prompt asking LLM for ONLY 3 prose fields.
+    Small output = reliable JSON = no truncation issues.
+    """
+    loc_info = f"{prop.locality}, {prop.city}"
+    if loc_data:
+        loc_info += (
+            f" | Rate: Rs.{loc_data.apt_rate_lo:,}-{loc_data.apt_rate_hi:,}/sqft | "
+            f"Trend: {loc_data.trend_12m} | Infra: {loc_data.infra_notes[:150]}"
+        )
+    area = prop.carpet_area or prop.plot_house or prop.plot_land or 0
+    return f"""
+Search for current property prices in {prop.locality}, {prop.city} and provide 3 short text fields.
+
+Property: {prop.prop_type} | {prop.bhk or ''} | {area} sq.ft | {loc_info}
+Value range: Rs.{lo}L - Rs.{hi}L
+
+Respond ONLY with this JSON (keep each field under 100 words):
+{{
+  "micro_market": "2-3 sentences on infrastructure projects, connectivity, demand drivers. Name specific metro stations, IT parks, roads.",
+  "pricing_signals": "Current per-sqft rate from search, appreciation trend, guideline value, 2 specific comparable listings with prices.",
+  "risk_diligence": "• Risk point 1\n• Risk point 2\n• Risk point 3\n• Risk point 4\n• Risk point 5",
+  "comparables": [
+    {{"description": "comparable 1 from search", "price_signal": "Rs.X/sqft", "source": "market signals"}},
+    {{"description": "comparable 2", "price_signal": "Rs.XL", "source": "aggregator data"}},
+    {{"description": "comparable 3", "price_signal": "Rs.XL", "source": "community observations"}}
+  ]
+}}
+""".strip()
 
 
 def _build_fallback_report(

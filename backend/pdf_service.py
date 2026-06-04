@@ -54,6 +54,7 @@ def _normalise(report_data: dict) -> dict:
             "land_rate_range": _fmt_range(report_data.get("land_value_lo"), report_data.get("land_value_hi"), suffix="L"),
             "apt_rate_range":  "",
             "guideline_value": "",
+            "trend":           report_data.get("locality_trend", ""),
         },
         "D": {
             "title":           "Valuation Build-Up",
@@ -277,40 +278,51 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                 ]))
                 story.append(vrt)
 
-        # Section C data
+        # Section C data - pricing signals table
         elif letter == "C":
             rows = []
             for k, fk in [("Land Rate Range","land_rate_range"),
-                           ("Apartment Rate","apt_rate_range"),
+                           ("Apartment Rate", "apt_rate_range"),
+                           ("12-Month Trend", "trend"),
                            ("Guideline Value","guideline_value")]:
                 v = sec.get(fk,"")
                 if v:
                     rows.append([Paragraph(k, sMu), Paragraph(str(v), sBo)])
             if rows:
-                dt = Table(rows, colWidths=[W*0.55, W*0.45])
+                hdr_row = [
+                    Paragraph("SIGNAL", S("ch", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold")),
+                    Paragraph("VALUE", S("ch2", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
+                ]
+                dt = Table([hdr_row] + rows, colWidths=[W*0.55, W*0.45])
                 dt.setStyle(TableStyle([
+                    ("BACKGROUND",(0,0),(-1,0),C_BG),
                     ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
                     ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
-                    ("LINEBELOW",(0,0),(-1,-2),0.5,C_BORDER),
+                    ("LINEBELOW",(0,0),(-1,-1),0.5,C_BORDER),
                     ("BOX",(0,0),(-1,-1),1,C_BORDER),
                 ]))
                 story.append(dt)
 
-        # Section D data
+        # Section D data — components table with header
         elif letter == "D":
             rows = []
-            for k, fk in [("Land Value","land_value"),
-                           ("Building Value","building_value"),
-                           ("Adjustments","adjustments")]:
+            for k, fk in [("Land Value",     "land_value"),
+                           ("Building Value", "building_value"),
+                           ("Adjustments",    "adjustments")]:
                 v = sec.get(fk,"")
                 if v:
                     rows.append([Paragraph(k, sMu), Paragraph(str(v), sBo)])
             if rows:
-                dt = Table(rows, colWidths=[W*0.55, W*0.45])
+                hdr_row = [
+                    Paragraph("COMPONENT", S("dh", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold")),
+                    Paragraph("VALUE RANGE", S("dh2", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
+                ]
+                dt = Table([hdr_row] + rows, colWidths=[W*0.55, W*0.45])
                 dt.setStyle(TableStyle([
+                    ("BACKGROUND",(0,0),(-1,0),C_BG),
                     ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
                     ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
-                    ("LINEBELOW",(0,0),(-1,-2),0.5,C_BORDER),
+                    ("LINEBELOW",(0,0),(-1,-1),0.5,C_BORDER),
                     ("BOX",(0,0),(-1,-1),1,C_BORDER),
                 ]))
                 story.append(dt)
