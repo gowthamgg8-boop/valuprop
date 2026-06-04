@@ -48,7 +48,7 @@ ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 
 # Model config — cheap fast model for MVP
 OPENAI_MODEL    = os.getenv("OPENAI_MODEL",    "gpt-4o-mini")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5-20251022")
+ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
 
 # Dev mode uses cheaper/faster model
 DEV_MODE        = os.getenv("DEV_MODE", "false").lower() == "true"
@@ -380,8 +380,16 @@ async def call_llm_with_search(
                         sources.append({"url": result.url, "title": result.title})
 
         usage = message.usage
-        web_count = getattr(usage, "server_tool_use", None)
-        web_count = web_count.web_search_requests if web_count else searches_done
+        try:
+            web_count = getattr(usage, "server_tool_use", None)
+            if web_count and hasattr(web_count, "web_search_requests"):
+                web_count = web_count.web_search_requests
+            elif isinstance(web_count, dict):
+                web_count = web_count.get("web_search_requests", searches_done)
+            else:
+                web_count = searches_done
+        except Exception:
+            web_count = searches_done
         logger.info(
             f"Anthropic+search — input:{usage.input_tokens} output:{usage.output_tokens} "
             f"searches:{web_count} sources:{len(sources)}"
