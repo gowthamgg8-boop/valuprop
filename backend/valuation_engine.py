@@ -442,22 +442,22 @@ Locality database context:
     components = _calculate_components(prop, loc_data, lo, hi)
 
     return f"""
-Generate a valUProp.in paid valuation report. Use web search for real market data.
+CRITICAL: You MUST respond with ONLY the exact JSON structure shown below. Do NOT use any other JSON format. Do NOT add report_metadata, property_details, or any other wrapper. Start your response with {{ and end with }}.
 
-PROPERTY: {prop_desc}
-LOCALITY: {loc_ctx if loc_ctx else f"City: {prop.city}, Locality: {prop.locality}"}
-BASE RANGE: Rs.{lo}L - Rs.{hi}L | Land Rs.{components['land_lo']}-{components['land_hi']}L | Bldg Rs.{components['bldg_lo']}-{components['bldg_hi']}L | Adj Rs.{components['adj_lo']}-{components['adj_hi']}L
+Property: {prop_desc}
+Locality data: {loc_ctx if loc_ctx else f"{prop.locality}, {prop.city}"}
+Value anchor: Rs.{lo}L - Rs.{hi}L
 
-Search for current market rates, adjust value_lo/value_hi based on findings. Keep range within 10%.
+Use web search to find current market rates for {prop.locality}, {prop.city}. Then fill in the JSON below with real data.
 
-Respond ONLY with this JSON:
+YOUR RESPONSE MUST BE EXACTLY THIS JSON FORMAT — nothing before {{, nothing after }}:
 {{
-  "section_a": "Property type, size, configuration, locality character. 2-3 sentences.",
-  "section_b": "Micro-market: infrastructure projects nearby, connectivity, demand drivers. Specific names.",
-  "section_c": "Pricing signals: per-sqft rate found, appreciation trend, guideline value, 2-3 comparables with prices.",
-  "section_d": "Build-up: base rate source, area x rate, depreciation %, adjustments each on own line, rental yield check, sanity vs guideline.",
-  "section_e": "Value Rs.{lo}L - Rs.{hi}L. Transaction range after negotiation. Confidence %. Sanity check results.",
-  "section_f": "• Title/UDS check\n• Approval status (CMDA/DTCP/Avadi)\n• Age and OC status\n• Infrastructure timeline risk\n• Flooding/civic risk",
+  "section_a": "2-3 sentences about this property: type, size, config, locality character.",
+  "section_b": "Micro-market context: key infrastructure (metro/road/IT park), connectivity, demand drivers with specific names.",
+  "section_c": "Pricing signals from your search: per-sqft rate, appreciation trend, guideline value, 2-3 specific comparables.",
+  "section_d": "Valuation steps: base rate Rs.X/sqft, area calculation, age depreciation, adjustments, rental yield check, sanity checks.",
+  "section_e": "Final value Rs.{lo}L - Rs.{hi}L. Transaction range. Confidence. Sanity check pass/fail.",
+  "section_f": "• Verify title deed and UDS\n• Confirm CMDA/DTCP approval and OC\n• Check age and loan eligibility\n• Note any infrastructure timeline risks\n• Verify flooding/drainage risk",
   "section_g": "This AI-generated valuation is for informational purposes only and does not constitute a statutory or bank-certified valuation.",
   "value_lo": {lo},
   "value_hi": {hi},
@@ -469,9 +469,9 @@ Respond ONLY with this JSON:
   "adj_value_hi": {components['adj_hi']},
   "confidence": {loc_data.data_confidence if loc_data else 70},
   "comparables": [
-    {{"description": "specific comp 1 with size", "price_signal": "Rs.X/sqft", "source": "market signals"}},
-    {{"description": "specific comp 2", "price_signal": "Rs.XL", "source": "aggregator data"}},
-    {{"description": "specific comp 3", "price_signal": "Rs.XL", "source": "community observations"}}
+    {{"description": "comparable 1 from search", "price_signal": "Rs.X/sqft", "source": "market signals"}},
+    {{"description": "comparable 2 from search", "price_signal": "Rs.XL", "source": "aggregator data"}},
+    {{"description": "comparable 3 from search", "price_signal": "Rs.XL", "source": "community observations"}}
   ]
 }}
 """.strip()
