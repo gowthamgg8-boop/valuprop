@@ -303,21 +303,22 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                 ]))
                 story.append(dt)
 
-        # Section D data — components table with header
+        # Section D — components table + narrative (v2.4 style)
         elif letter == "D":
-            rows = []
+            # Components table (Land / Building / Adjustments)
+            comp_rows = []
             for k, fk in [("Land Value",     "land_value"),
                            ("Building Value", "building_value"),
                            ("Adjustments",    "adjustments")]:
                 v = sec.get(fk,"")
                 if v:
-                    rows.append([Paragraph(k, sMu), Paragraph(str(v), sBo)])
-            if rows:
-                hdr_row = [
+                    comp_rows.append([Paragraph(k, sMu), Paragraph(str(v), sBo)])
+            if comp_rows:
+                hdr = [
                     Paragraph("COMPONENT", S("dh", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold")),
                     Paragraph("VALUE RANGE", S("dh2", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
                 ]
-                dt = Table([hdr_row] + rows, colWidths=[W*0.55, W*0.45])
+                dt = Table([hdr] + comp_rows, colWidths=[W*0.55, W*0.45])
                 dt.setStyle(TableStyle([
                     ("BACKGROUND",(0,0),(-1,0),C_BG),
                     ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
@@ -326,6 +327,7 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                     ("BOX",(0,0),(-1,-1),1,C_BORDER),
                 ]))
                 story.append(dt)
+                story.append(Spacer(1, 4))
 
         # Section F risks
         elif letter == "F":
