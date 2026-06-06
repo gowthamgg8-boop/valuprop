@@ -255,10 +255,23 @@ async def call_llm_with_search(
 def parse_json_response(text: str) -> dict:
     """Safely parse JSON from LLM response."""
     text = text.strip()
-    if text.startswith("```"):
+
+    # Strip leading prose before a ```json block anywhere in the text
+    json_block_match = re.search(r'```(?:json)?\s*\n?([\s\S]*?)\n?```', text)
+    if json_block_match:
+        text = json_block_match.group(1).strip()
+    elif text.startswith("```"):
         lines = text.split("\n")
         text = "\n".join(lines[1:-1]) if len(lines) > 2 else text
+
     text = text.strip()
+
+    # If still not starting with {, try to find the first { ... } JSON object
+    if not text.startswith("{"):
+        brace_match = re.search(r'\{[\s\S]*\}', text)
+        if brace_match:
+            text = brace_match.group(0).strip()
+
     try:
         data = json.loads(text)
         if "section_a" in data or "section_b" in data:
