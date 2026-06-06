@@ -327,7 +327,10 @@ async def generate_detailed_report(
     report = _build_structured_report(prop, loc_data, lo, hi)
     # ── LLM enrichment (prose only — not tables)
     try:
+        print(f"[ENGINE] Starting LLM enrichment for val locality={prop.locality}", flush=True)
+        logger.info(f"Starting LLM enrichment for {prop.locality}")
         prose_prompt = _build_prose_prompt(prop, loc_data, lo, hi)
+        print(f"[ENGINE] Prose prompt built, calling LLM with search", flush=True)
         raw = await call_llm_with_search(
             VALUPROP_SYSTEM_PROMPT_WITH_SEARCH,
             prose_prompt,
@@ -350,8 +353,10 @@ async def generate_detailed_report(
             report.valuation_buildup = _apply_step5_connectivity(
                 report.valuation_buildup, prose["step5_adjustments"]
             )
+        print(f"[ENGINE] LLM enrichment SUCCEEDED for {prop.locality}", flush=True)
         logger.info(f"LLM prose enrichment succeeded for {prop.locality}")
     except Exception as e:
+        print(f"[ENGINE] LLM enrichment FAILED: {e}", flush=True)
         logger.warning(f"LLM prose enrichment failed (using structured fallback): {e}")
     # ── Consistency clamp: keep paid report close to free estimate
     if free_range is not None:
