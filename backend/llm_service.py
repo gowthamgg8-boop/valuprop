@@ -1,61 +1,45 @@
 """
 ValUprop.in — LLM Service (Abstracted)
 llm_service.py
-
 Abstracts the LLM provider so we can swap OpenAI → Claude → self-hosted
 without rewriting the rest of the backend.
-
 Current provider: Anthropic Claude (claude-sonnet-4-5)
-
 COST ESTIMATE (Anthropic Claude):
   Free estimate:   ~500 tokens → Rs.1–2 per request
   Detailed report: ~3000 tokens + web search → Rs.15–20 per request
   At Rs.199 price point: sustainable.
-
 SETUP:
   pip install anthropic
   Add ANTHROPIC_API_KEY to .env
-
 ═══════════════════════════════════════════════════════════════════
 LLM GUARDRAILS (added 2026-05-17)
 ═══════════════════════════════════════════════════════════════════
 Every LLM call routes through call_llm / call_llm_with_search, so the
 guardrails here cover the whole app:
-
   INPUT  — sanitize_user_input() neutralizes prompt-injection patterns
            in user-supplied free text (address, property name, etc.)
            and caps length.
-
   OUTPUT — validate_llm_output() scans the model response for unsafe
            claims and softens them in place.
 """
-
 import os
 import re
 import json
 import logging
 from typing import Optional
-
 logger = logging.getLogger("valuprop.llm")
-
 PROVIDER      = os.getenv("LLM_PROVIDER", "anthropic")     # "openai" | "anthropic"
 OPENAI_KEY    = os.getenv("OPENAI_API_KEY", "")
 ANTHROPIC_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-
 OPENAI_MODEL    = os.getenv("OPENAI_MODEL",    "gpt-4o-mini")
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5")
-
 DEV_MODE = os.getenv("DEV_MODE", "false").lower() == "true"
 if DEV_MODE:
     OPENAI_MODEL = "gpt-4o-mini"
-
-
 # ═══════════════════════════════════════════════════════════════════
 # LLM GUARDRAILS — input sanitization
 # ═══════════════════════════════════════════════════════════════════
-
 MAX_FIELD_LENGTH = 400
-
 _INJECTION_PATTERNS = [
     re.compile(r"ignore\s+(?:all\s+)?(?:previous|prior|above)\s+instructions", re.I),
     re.compile(r"disregard\s+(?:all\s+)?(?:previous|prior|the\s+above)", re.I),
@@ -69,8 +53,6 @@ _INJECTION_PATTERNS = [
     re.compile(r"pretend\s+(?:to\s+be|you)", re.I),
     re.compile(r"reveal\s+(?:your|the)\s+(?:system\s+)?(?:prompt|instructions)", re.I),
 ]
-
-
 def sanitize_user_input(text: str) -> str:
     if not text:
         return ""
@@ -87,12 +69,9 @@ def sanitize_user_input(text: str) -> str:
     if hit:
         logger.warning("LLM guardrail: prompt-injection pattern neutralized in user input")
     return cleaned.strip()
-
-
 # ═══════════════════════════════════════════════════════════════════
 # LLM GUARDRAILS — output validation
 # ═══════════════════════════════════════════════════════════════════
-
 _OUTPUT_SOFTEN_RULES = [
     (re.compile(r"\bguaranteed?\s+(?:to\s+)?(?:appreciate|return|profit|grow)\w*", re.I),
      "likely to appreciate based on past trends"),
@@ -109,16 +88,12 @@ _OUTPUT_SOFTEN_RULES = [
     (re.compile(r"\b(?:must|definitely)\s+(?:buy|invest|purchase)\s+(?:now|immediately|today)\b", re.I), "could be worth evaluating"),
     (re.compile(r"\bbest\s+time\s+to\s+buy\b", re.I), "a period worth evaluating"),
 ]
-
-
 def _tidy_after_soften(text: str) -> str:
     text = re.sub(r"\b(the)\s+(a|an|the)\b", r"\2", text, flags=re.I)
     text = re.sub(r"\b(a|an)\s+(a|an|the)\b", r"\2", text, flags=re.I)
     text = re.sub(r"  +", " ", text)
     text = re.sub(r"\s+([.,;:])", r"\1", text)
     return text
-
-
 def validate_llm_output(text: str) -> str:
     if not text:
         return text
@@ -131,12 +106,8 @@ def validate_llm_output(text: str) -> str:
         cleaned = _tidy_after_soften(cleaned)
         logger.warning(f"LLM guardrail: softened {softened} unsafe claim(s) in model output")
     return cleaned
-
-
 def _sanitize_prompt_pair(system_prompt: str, user_prompt: str) -> tuple:
     return system_prompt, sanitize_user_input(user_prompt)
-
-
 async def call_llm(
     system_prompt: str,
     user_prompt:   str,
@@ -152,8 +123,6 @@ async def call_llm(
     if not expect_json:
         result = validate_llm_output(result)
     return result
-
-
 async def _call_openai(
     system_prompt: str, user_prompt: str,
     max_tokens: int, temperature: float, expect_json: bool,
@@ -179,8 +148,6 @@ async def _call_openai(
     except Exception as e:
         logger.error(f"OpenAI call failed: {e}")
         raise RuntimeError(f"LLM call failed: {e}")
-
-
 async def _call_anthropic(
     system_prompt: str, user_prompt: str,
     max_tokens: int, temperature: float, expect_json: bool,
@@ -204,12 +171,9 @@ async def _call_anthropic(
     except Exception as e:
         logger.error(f"Anthropic call failed: {e}")
         raise RuntimeError(f"LLM call failed: {e}")
-
-
 # ═══════════════════════════════════════════════════════════════════
 # WEB SEARCH ENABLED LLM CALL — for paid reports only
 # ═══════════════════════════════════════════════════════════════════
-
 async def call_llm_with_search(
     system_prompt: str,
     user_prompt:   str,
@@ -226,20 +190,16 @@ async def call_llm_with_search(
         raise RuntimeError("Web search is only supported via Anthropic provider")
     if not ANTHROPIC_KEY:
         raise RuntimeError("ANTHROPIC_API_KEY not set")
-
     system_prompt, user_prompt = _sanitize_prompt_pair(system_prompt, user_prompt)
-
     try:
         import anthropic
         client = anthropic.AsyncAnthropic(api_key=ANTHROPIC_KEY)
-
         sys_content = system_prompt
         if expect_json:
             sys_content += (
                 "\n\nAfter completing your web research, provide your final answer "
                 "as valid JSON only. No markdown, no preamble, no backticks around the JSON."
             )
-
         message = await client.messages.create(
             model=ANTHROPIC_MODEL,
             max_tokens=max_tokens,
@@ -256,7 +216,6 @@ async def call_llm_with_search(
                 },
             }],
         )
-
         # Extract the final text block (after all tool uses)
         final_text = ""
         searches_done = 0
@@ -270,7 +229,6 @@ async def call_llm_with_search(
                 for result in (block.content or []):
                     if hasattr(result, "url") and hasattr(result, "title"):
                         sources.append({"url": result.url, "title": result.title})
-
         # ── FIXED: safe usage stats extraction ───────────────────
         # Previously crashed with: 'dict' object has no attribute 'web_search_requests'
         # because the Anthropic SDK may return usage as a dict or object depending on version.
@@ -285,19 +243,15 @@ async def call_llm_with_search(
         except Exception:
             web_count = searches_done
         # ─────────────────────────────────────────────────────────
-
         logger.info(
             f"Anthropic+search — input:{message.usage.input_tokens} "
             f"output:{message.usage.output_tokens} "
             f"searches:{web_count} sources:{len(sources)}"
         )
         return final_text.strip()
-
     except Exception as e:
         logger.error(f"Anthropic web search call failed: {e}")
         raise RuntimeError(f"LLM web search call failed: {e}")
-
-
 def parse_json_response(text: str) -> dict:
     """Safely parse JSON from LLM response."""
     text = text.strip()
@@ -330,8 +284,6 @@ def parse_json_response(text: str) -> dict:
         pass
     logger.error(f"JSON parse failed completely\nRaw text: {text[:500]}")
     raise ValueError("LLM returned invalid JSON — could not extract report fields")
-
-
 def _extract_report_fields(data: dict, depth: int = 0) -> dict:
     if depth > 5:
         return {}
@@ -354,8 +306,6 @@ def _extract_report_fields(data: dict, depth: int = 0) -> dict:
                     if k not in result:
                         result[k] = val
     return result
-
-
 def _repair_truncated_json(text: str) -> dict:
     opens  = text.count("{") - text.count("}")
     closes = text.count("[") - text.count("]")
@@ -367,8 +317,6 @@ def _repair_truncated_json(text: str) -> dict:
         except Exception:
             pass
     return {}
-
-
 def _regex_extract_fields(text: str) -> dict:
     result = {}
     pattern = re.compile(
@@ -378,8 +326,8 @@ def _regex_extract_fields(text: str) -> dict:
     for match in pattern.finditer(text):
         key = match.group(1)
         val = match.group(2)
-        if val.startswith('"'): 
-            val = val[1:-1].replace('\\"''"').replace("\\n", "\n")
+        if val.startswith('"'):
+            val = val[1:-1].replace('\\"', '"').replace("\\n", "\n")
         else:
             try:
                 val = float(val)
@@ -387,8 +335,6 @@ def _regex_extract_fields(text: str) -> dict:
                 pass
         result[key] = val
     return result
-
-
 def validate_report_dict(data):
     """Recursively soften unsafe claims in all string values of a parsed report dict."""
     if isinstance(data, dict):
