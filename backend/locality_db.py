@@ -1,10 +1,12 @@
 """
-ValUprop.in — Locality Price Database
+valUProp.in — Locality Price Database
 locality_db.py
 
-Rebuilt Jun 2026 from chennai_cma_locality_seed.csv (165 localities)
-+ curated rich entries for key markets
-+ Bangalore (unchanged)
+AUTO-GENERATED from chennai_cma_locality_seed.csv
+DO NOT EDIT MANUALLY — regenerate using scripts/generate_locality_db.py
+
+Source: chennai_cma_locality_seed.csv | Localities: 165
+Last generated: Jun 2026
 """
 
 from dataclasses import dataclass, field
@@ -28,7 +30,7 @@ class LocalityData:
 
 LOCALITY_DB: dict[str, LocalityData] = {
 
-    # ── Chennai (from CSV seed + curated) ───────────────────────────
+    # ── Chennai — 165 localities from CSV seed ──────────────────────
 
     "Chennai|Tiruvottiyur": LocalityData(
         city="Chennai", locality="Tiruvottiyur",
@@ -36,11 +38,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6000,  apt_rate_hi=9500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Tiruvottiyur is a residential locality in Chennai, Zone 1 - Thiruvottiyur.",
-        infra_notes="Pincode 600019. GCC zone.",
+        micro_context="Tiruvottiyur: North Chennai coastal locality with suburban rail connectivity. Industrial and port-adjacent demand.",
+        infra_notes="Pincode 600019. GCC zone. Zone 1 - Thiruvottiyur.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 1 - Thiruvottiyur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Kaladipet": LocalityData(
@@ -49,11 +51,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5800,  apt_rate_hi=8800,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Kaladipet is a residential locality in Chennai, Zone 1 - Thiruvottiyur.",
-        infra_notes="Pincode 600019. GCC zone.",
+        micro_context="Kaladipet: North Chennai coastal locality with suburban rail connectivity. Industrial and port-adjacent demand.",
+        infra_notes="Pincode 600019. GCC zone. Zone 1 - Thiruvottiyur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 1 - Thiruvottiyur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Ennore": LocalityData(
@@ -62,11 +64,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=7000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Ennore is a residential locality in Chennai, Zone 1 - Thiruvottiyur.",
-        infra_notes="Pincode 600057. GCC zone.",
+        micro_context="Ennore: North Chennai coastal locality with suburban rail connectivity. Industrial and port-adjacent demand.",
+        infra_notes="Pincode 600057. GCC zone. Zone 1 - Thiruvottiyur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 1 - Thiruvottiyur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Wimco Nagar": LocalityData(
@@ -75,11 +77,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4800,  apt_rate_hi=7200,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Wimco Nagar is a residential locality in Chennai, Zone 1 - Thiruvottiyur.",
-        infra_notes="Pincode 600057. GCC zone.",
+        micro_context="Wimco Nagar: North Chennai coastal locality with suburban rail connectivity. Industrial and port-adjacent demand.",
+        infra_notes="Pincode 600057. GCC zone. Zone 1 - Thiruvottiyur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 1 - Thiruvottiyur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Kathivakkam": LocalityData(
@@ -88,11 +90,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4200,  apt_rate_hi=6500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Kathivakkam is a residential locality in Chennai, Zone 1 - Thiruvottiyur.",
-        infra_notes="Pincode 600060. GCC zone.",
+        micro_context="Kathivakkam: North Chennai coastal locality with suburban rail connectivity. Industrial and port-adjacent demand.",
+        infra_notes="Pincode 600060. GCC zone. Zone 1 - Thiruvottiyur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 1 - Thiruvottiyur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Manali": LocalityData(
@@ -101,11 +103,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4200,  apt_rate_hi=6800,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Manali is a residential locality in Chennai, Zone 2 - Manali.",
-        infra_notes="Pincode 600068. GCC zone.",
+        micro_context="Manali: North Chennai industrial zone. Petrochemical and manufacturing belt. Limited residential premium.",
+        infra_notes="Pincode 600068. GCC zone. Zone 2 - Manali.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 2 - Manali", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Manali New Town": LocalityData(
@@ -114,11 +116,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4000,  apt_rate_hi=6500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Manali New Town is a residential locality in Chennai, Zone 2 - Manali.",
-        infra_notes="Pincode 600103. GCC zone.",
+        micro_context="Manali New Town: North Chennai industrial zone. Petrochemical and manufacturing belt. Limited residential premium.",
+        infra_notes="Pincode 600103. GCC zone. Zone 2 - Manali.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 2 - Manali", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Mathur": LocalityData(
@@ -127,11 +129,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4000,  apt_rate_hi=6200,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Mathur is a residential locality in Chennai, Zone 2 - Manali.",
-        infra_notes="Pincode 600068. GCC zone.",
+        micro_context="Mathur: North Chennai industrial zone. Petrochemical and manufacturing belt. Limited residential premium.",
+        infra_notes="Pincode 600068. GCC zone. Zone 2 - Manali.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 2 - Manali", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Sathangadu": LocalityData(
@@ -140,11 +142,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3800,  apt_rate_hi=6000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Sathangadu is a residential locality in Chennai, Zone 2 - Manali.",
-        infra_notes="Pincode 600019. GCC zone.",
+        micro_context="Sathangadu: North Chennai industrial zone. Petrochemical and manufacturing belt. Limited residential premium.",
+        infra_notes="Pincode 600019. GCC zone. Zone 2 - Manali.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 2 - Manali", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Madhavaram": LocalityData(
@@ -153,11 +155,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5500,  apt_rate_hi=8500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Madhavaram is a residential locality in Chennai, Zone 3 - Madhavaram.",
-        infra_notes="Pincode 600060. GCC zone.",
+        micro_context="Madhavaram: North Chennai growing corridor. Metro Phase 2 station proposed. Affordable mid-segment demand.",
+        infra_notes="Pincode 600060. GCC zone. Zone 3 - Madhavaram.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 3 - Madhavaram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Madhavaram Milk Colony": LocalityData(
@@ -166,11 +168,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5800,  apt_rate_hi=8800,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Madhavaram Milk Colony is a residential locality in Chennai, Zone 3 - Madhavaram.",
-        infra_notes="Pincode 600051. GCC zone.",
+        micro_context="Madhavaram Milk Colony: North Chennai growing corridor. Metro Phase 2 station proposed. Affordable mid-segment demand.",
+        infra_notes="Pincode 600051. GCC zone. Zone 3 - Madhavaram.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 3 - Madhavaram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Puzhal": LocalityData(
@@ -179,11 +181,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3800,  apt_rate_hi=5800,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Puzhal is a residential locality in Chennai, Zone 3 - Madhavaram.",
-        infra_notes="Pincode 600066. GCC zone.",
+        micro_context="Puzhal: North Chennai growing corridor. Metro Phase 2 station proposed. Affordable mid-segment demand.",
+        infra_notes="Pincode 600066. GCC zone. Zone 3 - Madhavaram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 3 - Madhavaram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Kodungaiyur": LocalityData(
@@ -192,11 +194,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=7800,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Kodungaiyur is a residential locality in Chennai, Zone 3 - Madhavaram.",
-        infra_notes="Pincode 600118. GCC zone.",
+        micro_context="Kodungaiyur: North Chennai growing corridor. Metro Phase 2 station proposed. Affordable mid-segment demand.",
+        infra_notes="Pincode 600118. GCC zone. Zone 3 - Madhavaram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 3 - Madhavaram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Surapet": LocalityData(
@@ -205,11 +207,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=7000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Surapet is a residential locality in Chennai, Zone 3 - Madhavaram.",
-        infra_notes="Pincode 600066. GCC zone.",
+        micro_context="Surapet: North Chennai growing corridor. Metro Phase 2 station proposed. Affordable mid-segment demand.",
+        infra_notes="Pincode 600066. GCC zone. Zone 3 - Madhavaram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 3 - Madhavaram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Tondiarpet": LocalityData(
@@ -218,11 +220,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7000,  apt_rate_hi=11500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Tondiarpet is a residential locality in Chennai, Zone 4 - Tondiarpet.",
-        infra_notes="Pincode 600081. GCC zone.",
+        micro_context="Tondiarpet: North Chennai established locality. Port Trust and warehouse proximity. Mixed residential-commercial.",
+        infra_notes="Pincode 600081. GCC zone. Zone 4 - Tondiarpet.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 4 - Tondiarpet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Old Washermanpet": LocalityData(
@@ -231,11 +233,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6000,  apt_rate_hi=9500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Old Washermanpet is a residential locality in Chennai, Zone 4 - Tondiarpet.",
-        infra_notes="Pincode 600021. GCC zone.",
+        micro_context="Old Washermanpet: North Chennai established locality. Port Trust and warehouse proximity. Mixed residential-commercial.",
+        infra_notes="Pincode 600021. GCC zone. Zone 4 - Tondiarpet.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 4 - Tondiarpet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Korukkupet": LocalityData(
@@ -244,11 +246,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5800,  apt_rate_hi=9000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Korukkupet is a residential locality in Chennai, Zone 4 - Tondiarpet.",
-        infra_notes="Pincode 600021. GCC zone.",
+        micro_context="Korukkupet: North Chennai established locality. Port Trust and warehouse proximity. Mixed residential-commercial.",
+        infra_notes="Pincode 600021. GCC zone. Zone 4 - Tondiarpet.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 4 - Tondiarpet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Vyasarpadi": LocalityData(
@@ -257,11 +259,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=7800,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Vyasarpadi is a residential locality in Chennai, Zone 4 - Tondiarpet.",
-        infra_notes="Pincode 600039. GCC zone.",
+        micro_context="Vyasarpadi: North Chennai established locality. Port Trust and warehouse proximity. Mixed residential-commercial.",
+        infra_notes="Pincode 600039. GCC zone. Zone 4 - Tondiarpet.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 4 - Tondiarpet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Tollgate": LocalityData(
@@ -270,11 +272,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6000,  apt_rate_hi=9200,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Tollgate is a residential locality in Chennai, Zone 4 - Tondiarpet.",
-        infra_notes="Pincode 600021. GCC zone.",
+        micro_context="Tollgate: North Chennai established locality. Port Trust and warehouse proximity. Mixed residential-commercial.",
+        infra_notes="Pincode 600021. GCC zone. Zone 4 - Tondiarpet.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 4 - Tondiarpet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Royapuram": LocalityData(
@@ -283,11 +285,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=10000,  apt_rate_hi=16500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Royapuram is a residential locality in Chennai, Zone 5 - Royapuram.",
-        infra_notes="Pincode 600013. GCC zone.",
+        micro_context="Royapuram: North Chennai heritage and commercial zone. Proximity to Chennai Port and George Town.",
+        infra_notes="Pincode 600013. GCC zone. Zone 5 - Royapuram.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 5 - Royapuram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Mannady": LocalityData(
@@ -296,11 +298,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9000,  apt_rate_hi=15000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Mannady is a residential locality in Chennai, Zone 5 - Royapuram.",
-        infra_notes="Pincode 600001. GCC zone.",
+        micro_context="Mannady: North Chennai heritage and commercial zone. Proximity to Chennai Port and George Town.",
+        infra_notes="Pincode 600001. GCC zone. Zone 5 - Royapuram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 5 - Royapuram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Parrys": LocalityData(
@@ -309,11 +311,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8500,  apt_rate_hi=14500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Parrys is a residential locality in Chennai, Zone 5 - Royapuram.",
-        infra_notes="Pincode 600001. GCC zone.",
+        micro_context="Parrys: North Chennai heritage and commercial zone. Proximity to Chennai Port and George Town.",
+        infra_notes="Pincode 600001. GCC zone. Zone 5 - Royapuram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 5 - Royapuram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Sowcarpet": LocalityData(
@@ -322,11 +324,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9500,  apt_rate_hi=16500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Sowcarpet is a residential locality in Chennai, Zone 5 - Royapuram.",
-        infra_notes="Pincode 600079. GCC zone.",
+        micro_context="Sowcarpet: North Chennai heritage and commercial zone. Proximity to Chennai Port and George Town.",
+        infra_notes="Pincode 600079. GCC zone. Zone 5 - Royapuram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 5 - Royapuram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Washermanpet": LocalityData(
@@ -335,11 +337,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=10500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Washermanpet is a residential locality in Chennai, Zone 5 - Royapuram.",
-        infra_notes="Pincode 600021. GCC zone.",
+        micro_context="Washermanpet: North Chennai heritage and commercial zone. Proximity to Chennai Port and George Town.",
+        infra_notes="Pincode 600021. GCC zone. Zone 5 - Royapuram.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 5 - Royapuram", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Perambur": LocalityData(
@@ -348,11 +350,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=10000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Perambur is a residential locality in Chennai, Zone 6 - Thiru Vi Ka Nagar.",
-        infra_notes="Pincode 600011. GCC zone.",
+        micro_context="Perambur: Mid-Chennai established residential. Perambur metro connectivity. Mid-segment demand.",
+        infra_notes="Pincode 600011. GCC zone. Zone 6 - Thiru Vi Ka Nagar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 6 - Thiru Vi Ka Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Ayanavaram": LocalityData(
@@ -361,11 +363,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7000,  apt_rate_hi=10500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Ayanavaram is a residential locality in Chennai, Zone 6 - Thiru Vi Ka Nagar.",
-        infra_notes="Pincode 600023. GCC zone.",
+        micro_context="Ayanavaram: Mid-Chennai established residential. Perambur metro connectivity. Mid-segment demand.",
+        infra_notes="Pincode 600023. GCC zone. Zone 6 - Thiru Vi Ka Nagar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 6 - Thiru Vi Ka Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Pulianthope": LocalityData(
@@ -374,11 +376,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5500,  apt_rate_hi=8500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Pulianthope is a residential locality in Chennai, Zone 6 - Thiru Vi Ka Nagar.",
-        infra_notes="Pincode 600012. GCC zone.",
+        micro_context="Pulianthope: Mid-Chennai established residential. Perambur metro connectivity. Mid-segment demand.",
+        infra_notes="Pincode 600012. GCC zone. Zone 6 - Thiru Vi Ka Nagar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 6 - Thiru Vi Ka Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Otteri": LocalityData(
@@ -387,11 +389,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=10000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Otteri is a residential locality in Chennai, Zone 6 - Thiru Vi Ka Nagar.",
-        infra_notes="Pincode 600012. GCC zone.",
+        micro_context="Otteri: Mid-Chennai established residential. Perambur metro connectivity. Mid-segment demand.",
+        infra_notes="Pincode 600012. GCC zone. Zone 6 - Thiru Vi Ka Nagar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 6 - Thiru Vi Ka Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Kosapet": LocalityData(
@@ -400,11 +402,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=10000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Kosapet is a residential locality in Chennai, Zone 6 - Thiru Vi Ka Nagar.",
-        infra_notes="Pincode 600012. GCC zone.",
+        micro_context="Kosapet: Mid-Chennai established residential. Perambur metro connectivity. Mid-segment demand.",
+        infra_notes="Pincode 600012. GCC zone. Zone 6 - Thiru Vi Ka Nagar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 6 - Thiru Vi Ka Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Choolai": LocalityData(
@@ -413,11 +415,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6800,  apt_rate_hi=10500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Choolai is a residential locality in Chennai, Zone 6 - Thiru Vi Ka Nagar.",
-        infra_notes="Pincode 600112. GCC zone.",
+        micro_context="Choolai: Mid-Chennai established residential. Perambur metro connectivity. Mid-segment demand.",
+        infra_notes="Pincode 600112. GCC zone. Zone 6 - Thiru Vi Ka Nagar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 6 - Thiru Vi Ka Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Sembium": LocalityData(
@@ -426,11 +428,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6000,  apt_rate_hi=9500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Sembium is a residential locality in Chennai, Zone 6 - Thiru Vi Ka Nagar.",
-        infra_notes="Pincode 600011. GCC zone.",
+        micro_context="Sembium: Mid-Chennai established residential. Perambur metro connectivity. Mid-segment demand.",
+        infra_notes="Pincode 600011. GCC zone. Zone 6 - Thiru Vi Ka Nagar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 6 - Thiru Vi Ka Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Erukkancherry": LocalityData(
@@ -439,11 +441,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4800,  apt_rate_hi=7500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Erukkancherry is a residential locality in Chennai, Zone 6 - Thiru Vi Ka Nagar.",
-        infra_notes="Pincode 600118. GCC zone.",
+        micro_context="Erukkancherry: Mid-Chennai established residential. Perambur metro connectivity. Mid-segment demand.",
+        infra_notes="Pincode 600118. GCC zone. Zone 6 - Thiru Vi Ka Nagar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 6 - Thiru Vi Ka Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Ambattur": LocalityData(
@@ -452,11 +454,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=7500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Ambattur is a residential locality in Chennai, Zone 7 - Ambattur.",
-        infra_notes="Pincode 600053. GCC zone.",
+        micro_context="Ambattur: West Chennai industrial-residential corridor. Ambattur Industrial Estate employment anchor.",
+        infra_notes="Pincode 600053. GCC zone. Zone 7 - Ambattur.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 7 - Ambattur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Korattur": LocalityData(
@@ -465,11 +467,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=9500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Korattur is a residential locality in Chennai, Zone 7 - Ambattur.",
-        infra_notes="Pincode 600080. GCC zone.",
+        micro_context="Korattur: West Chennai industrial-residential corridor. Ambattur Industrial Estate employment anchor.",
+        infra_notes="Pincode 600080. GCC zone. Zone 7 - Ambattur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 7 - Ambattur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Mogappair": LocalityData(
@@ -478,11 +480,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7500,  apt_rate_hi=11000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Mogappair is a residential locality in Chennai, Zone 7 - Ambattur.",
-        infra_notes="Pincode 600037. GCC zone.",
+        micro_context="Mogappair: West Chennai industrial-residential corridor. Ambattur Industrial Estate employment anchor.",
+        infra_notes="Pincode 600037. GCC zone. Zone 7 - Ambattur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 7 - Ambattur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Mogappair West": LocalityData(
@@ -491,11 +493,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7000,  apt_rate_hi=10500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Mogappair West is a residential locality in Chennai, Zone 7 - Ambattur.",
-        infra_notes="Pincode 600037. GCC zone.",
+        micro_context="Mogappair West: West Chennai industrial-residential corridor. Ambattur Industrial Estate employment anchor.",
+        infra_notes="Pincode 600037. GCC zone. Zone 7 - Ambattur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 7 - Ambattur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Nolambur": LocalityData(
@@ -504,11 +506,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7000,  apt_rate_hi=10000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Nolambur is a residential locality in Chennai, Zone 7 - Ambattur.",
-        infra_notes="Pincode 600095. GCC zone.",
+        micro_context="Nolambur: West Chennai industrial-residential corridor. Ambattur Industrial Estate employment anchor.",
+        infra_notes="Pincode 600095. GCC zone. Zone 7 - Ambattur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 7 - Ambattur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Padi": LocalityData(
@@ -517,11 +519,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6000,  apt_rate_hi=9000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Padi is a residential locality in Chennai, Zone 7 - Ambattur.",
-        infra_notes="Pincode 600050. GCC zone.",
+        micro_context="Padi: West Chennai industrial-residential corridor. Ambattur Industrial Estate employment anchor.",
+        infra_notes="Pincode 600050. GCC zone. Zone 7 - Ambattur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 7 - Ambattur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Anna Nagar West Extn": LocalityData(
@@ -530,11 +532,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8500,  apt_rate_hi=13000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Anna Nagar West Extn is a residential locality in Chennai, Zone 7 - Ambattur.",
-        infra_notes="Pincode 600101. GCC zone.",
+        micro_context="Anna Nagar West Extn: West Chennai industrial-residential corridor. Ambattur Industrial Estate employment anchor.",
+        infra_notes="Pincode 600101. GCC zone. Zone 7 - Ambattur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 7 - Ambattur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Ayappakkam": LocalityData(
@@ -543,11 +545,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=7000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Ayappakkam is a residential locality in Chennai, Zone 7 - Ambattur.",
-        infra_notes="Pincode 600077. GCC zone.",
+        micro_context="Ayappakkam: West Chennai industrial-residential corridor. Ambattur Industrial Estate employment anchor.",
+        infra_notes="Pincode 600077. GCC zone. Zone 7 - Ambattur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 7 - Ambattur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Anna Nagar": LocalityData(
@@ -556,11 +558,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=12000,  apt_rate_hi=18000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Anna Nagar is a residential locality in Chennai, Zone 8 - Anna Nagar.",
-        infra_notes="Pincode 600040. GCC zone.",
+        micro_context="Anna Nagar: Premium North-West Chennai. Anna Nagar metro (Green Line). Top schools, hospitals, and retail.",
+        infra_notes="Pincode 600040. GCC zone. Zone 8 - Anna Nagar.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 8 - Anna Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Anna Nagar West": LocalityData(
@@ -569,11 +571,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=10000,  apt_rate_hi=14500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Anna Nagar West is a residential locality in Chennai, Zone 8 - Anna Nagar.",
-        infra_notes="Pincode 600101. GCC zone.",
+        micro_context="Anna Nagar West: Premium North-West Chennai. Anna Nagar metro (Green Line). Top schools, hospitals, and retail.",
+        infra_notes="Pincode 600101. GCC zone. Zone 8 - Anna Nagar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 8 - Anna Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Shenoy Nagar": LocalityData(
@@ -582,11 +584,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=10000,  apt_rate_hi=14500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Shenoy Nagar is a residential locality in Chennai, Zone 8 - Anna Nagar.",
-        infra_notes="Pincode 600030. GCC zone.",
+        micro_context="Shenoy Nagar: Premium North-West Chennai. Anna Nagar metro (Green Line). Top schools, hospitals, and retail.",
+        infra_notes="Pincode 600030. GCC zone. Zone 8 - Anna Nagar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 8 - Anna Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Aminjikarai": LocalityData(
@@ -595,11 +597,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8500,  apt_rate_hi=12500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Aminjikarai is a residential locality in Chennai, Zone 8 - Anna Nagar.",
-        infra_notes="Pincode 600029. GCC zone.",
+        micro_context="Aminjikarai: Premium North-West Chennai. Anna Nagar metro (Green Line). Top schools, hospitals, and retail.",
+        infra_notes="Pincode 600029. GCC zone. Zone 8 - Anna Nagar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 8 - Anna Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Villivakkam": LocalityData(
@@ -608,11 +610,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7000,  apt_rate_hi=10500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Villivakkam is a residential locality in Chennai, Zone 8 - Anna Nagar.",
-        infra_notes="Pincode 600049. GCC zone.",
+        micro_context="Villivakkam: Premium North-West Chennai. Anna Nagar metro (Green Line). Top schools, hospitals, and retail.",
+        infra_notes="Pincode 600049. GCC zone. Zone 8 - Anna Nagar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 8 - Anna Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Kolathur": LocalityData(
@@ -621,11 +623,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5500,  apt_rate_hi=8000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Kolathur is a residential locality in Chennai, Zone 8 - Anna Nagar.",
-        infra_notes="Pincode 600099. GCC zone.",
+        micro_context="Kolathur: Premium North-West Chennai. Anna Nagar metro (Green Line). Top schools, hospitals, and retail.",
+        infra_notes="Pincode 600099. GCC zone. Zone 8 - Anna Nagar.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 8 - Anna Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Purasawalkam": LocalityData(
@@ -634,11 +636,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=11000,  apt_rate_hi=17500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Purasawalkam is a residential locality in Chennai, Zone 8 - Anna Nagar.",
-        infra_notes="Pincode 600084. GCC zone.",
+        micro_context="Purasawalkam: Premium North-West Chennai. Anna Nagar metro (Green Line). Top schools, hospitals, and retail.",
+        infra_notes="Pincode 600084. GCC zone. Zone 8 - Anna Nagar.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 8 - Anna Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Vepery": LocalityData(
@@ -647,11 +649,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=10000,  apt_rate_hi=16000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Vepery is a residential locality in Chennai, Zone 8 - Anna Nagar.",
-        infra_notes="Pincode 600007. GCC zone.",
+        micro_context="Vepery: Premium North-West Chennai. Anna Nagar metro (Green Line). Top schools, hospitals, and retail.",
+        infra_notes="Pincode 600007. GCC zone. Zone 8 - Anna Nagar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 8 - Anna Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Periyar Nagar": LocalityData(
@@ -660,11 +662,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=10000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Periyar Nagar is a residential locality in Chennai, Zone 8 - Anna Nagar.",
-        infra_notes="Pincode 600082. GCC zone.",
+        micro_context="Periyar Nagar: Premium North-West Chennai. Anna Nagar metro (Green Line). Top schools, hospitals, and retail.",
+        infra_notes="Pincode 600082. GCC zone. Zone 8 - Anna Nagar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 8 - Anna Nagar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Teynampet": LocalityData(
@@ -673,11 +675,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=15000,  apt_rate_hi=23000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Teynampet is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600018. GCC zone.",
+        micro_context="Teynampet: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600018. GCC zone. Zone 9 - Teynampet.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Alwarpet": LocalityData(
@@ -686,11 +688,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=18000,  apt_rate_hi=26000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Alwarpet is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600018. GCC zone.",
+        micro_context="Alwarpet: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600018. GCC zone. Zone 9 - Teynampet.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Nungambakkam": LocalityData(
@@ -699,11 +701,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=15000,  apt_rate_hi=22000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Nungambakkam is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600034. GCC zone.",
+        micro_context="Nungambakkam: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600034. GCC zone. Zone 9 - Teynampet.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|T Nagar": LocalityData(
@@ -712,11 +714,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=16000,  apt_rate_hi=21000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="T Nagar is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600017. GCC zone.",
+        micro_context="T Nagar: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600017. GCC zone. Zone 9 - Teynampet.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Chetpet": LocalityData(
@@ -725,11 +727,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=12000,  apt_rate_hi=17500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Chetpet is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600031. GCC zone.",
+        micro_context="Chetpet: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600031. GCC zone. Zone 9 - Teynampet.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Gopalapuram": LocalityData(
@@ -738,11 +740,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=16000,  apt_rate_hi=24000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Gopalapuram is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600086. GCC zone.",
+        micro_context="Gopalapuram: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600086. GCC zone. Zone 9 - Teynampet.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Egmore": LocalityData(
@@ -751,11 +753,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=11000,  apt_rate_hi=16500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Egmore is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600008. GCC zone.",
+        micro_context="Egmore: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600008. GCC zone. Zone 9 - Teynampet.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Triplicane": LocalityData(
@@ -764,11 +766,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8000,  apt_rate_hi=13000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Triplicane is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600005. GCC zone.",
+        micro_context="Triplicane: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600005. GCC zone. Zone 9 - Teynampet.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Royapettah": LocalityData(
@@ -777,11 +779,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=11000,  apt_rate_hi=16000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Royapettah is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600014. GCC zone.",
+        micro_context="Royapettah: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600014. GCC zone. Zone 9 - Teynampet.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Thousand Lights": LocalityData(
@@ -790,11 +792,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=14000,  apt_rate_hi=21000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Thousand Lights is a residential locality in Chennai, Zone 9 - Teynampet.",
-        infra_notes="Pincode 600006. GCC zone.",
+        micro_context="Thousand Lights: Prime Central Chennai. T.Nagar retail, Nungambakkam commercial. Highest value zone in GCC.",
+        infra_notes="Pincode 600006. GCC zone. Zone 9 - Teynampet.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 9 - Teynampet", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Kodambakkam": LocalityData(
@@ -803,11 +805,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9000,  apt_rate_hi=13500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Kodambakkam is a residential locality in Chennai, Zone 10 - Kodambakkam.",
-        infra_notes="Pincode 600024. GCC zone.",
+        micro_context="Kodambakkam: West Chennai established. Good metro access. Strong school and hospital belt.",
+        infra_notes="Pincode 600024. GCC zone. Zone 10 - Kodambakkam.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 10 - Kodambakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Vadapalani": LocalityData(
@@ -816,11 +818,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9500,  apt_rate_hi=14000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Vadapalani is a residential locality in Chennai, Zone 10 - Kodambakkam.",
-        infra_notes="Pincode 600026. GCC zone.",
+        micro_context="Vadapalani: West Chennai established. Good metro access. Strong school and hospital belt.",
+        infra_notes="Pincode 600026. GCC zone. Zone 10 - Kodambakkam.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 10 - Kodambakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Ashok Nagar": LocalityData(
@@ -829,11 +831,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=10000,  apt_rate_hi=14500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Ashok Nagar is a residential locality in Chennai, Zone 10 - Kodambakkam.",
-        infra_notes="Pincode 600083. GCC zone.",
+        micro_context="Ashok Nagar: West Chennai established. Good metro access. Strong school and hospital belt.",
+        infra_notes="Pincode 600083. GCC zone. Zone 10 - Kodambakkam.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 10 - Kodambakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|KK Nagar": LocalityData(
@@ -842,11 +844,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9000,  apt_rate_hi=13500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="KK Nagar is a residential locality in Chennai, Zone 10 - Kodambakkam.",
-        infra_notes="Pincode 600078. GCC zone.",
+        micro_context="KK Nagar: West Chennai established. Good metro access. Strong school and hospital belt.",
+        infra_notes="Pincode 600078. GCC zone. Zone 10 - Kodambakkam.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 10 - Kodambakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Saligramam": LocalityData(
@@ -855,11 +857,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8500,  apt_rate_hi=13000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Saligramam is a residential locality in Chennai, Zone 10 - Kodambakkam.",
-        infra_notes="Pincode 600093. GCC zone.",
+        micro_context="Saligramam: West Chennai established. Good metro access. Strong school and hospital belt.",
+        infra_notes="Pincode 600093. GCC zone. Zone 10 - Kodambakkam.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 10 - Kodambakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Choolaimedu": LocalityData(
@@ -868,11 +870,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8000,  apt_rate_hi=11500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Choolaimedu is a residential locality in Chennai, Zone 10 - Kodambakkam.",
-        infra_notes="Pincode 600094. GCC zone.",
+        micro_context="Choolaimedu: West Chennai established. Good metro access. Strong school and hospital belt.",
+        infra_notes="Pincode 600094. GCC zone. Zone 10 - Kodambakkam.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 10 - Kodambakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Nesapakkam": LocalityData(
@@ -881,11 +883,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8000,  apt_rate_hi=11500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Nesapakkam is a residential locality in Chennai, Zone 10 - Kodambakkam.",
-        infra_notes="Pincode 600078. GCC zone.",
+        micro_context="Nesapakkam: West Chennai established. Good metro access. Strong school and hospital belt.",
+        infra_notes="Pincode 600078. GCC zone. Zone 10 - Kodambakkam.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 10 - Kodambakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|MGR Nagar": LocalityData(
@@ -894,11 +896,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7500,  apt_rate_hi=11000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="MGR Nagar is a residential locality in Chennai, Zone 10 - Kodambakkam.",
-        infra_notes="Pincode 600078. GCC zone.",
+        micro_context="MGR Nagar: West Chennai established. Good metro access. Strong school and hospital belt.",
+        infra_notes="Pincode 600078. GCC zone. Zone 10 - Kodambakkam.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 10 - Kodambakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Valasaravakkam": LocalityData(
@@ -907,11 +909,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7000,  apt_rate_hi=10500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Valasaravakkam is a residential locality in Chennai, Zone 11 - Valasaravakkam.",
-        infra_notes="Pincode 600087. GCC zone.",
+        micro_context="Valasaravakkam: West Chennai residential corridor. NH-48 access. IT park proximity (Porur, Ramapuram).",
+        infra_notes="Pincode 600087. GCC zone. Zone 11 - Valasaravakkam.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 11 - Valasaravakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Porur": LocalityData(
@@ -920,11 +922,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7500,  apt_rate_hi=11000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Porur is a residential locality in Chennai, Zone 11 - Valasaravakkam.",
-        infra_notes="Pincode 600116. GCC zone.",
+        micro_context="Porur: West Chennai residential corridor. NH-48 access. IT park proximity (Porur, Ramapuram).",
+        infra_notes="Pincode 600116. GCC zone. Zone 11 - Valasaravakkam.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 11 - Valasaravakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Ramapuram": LocalityData(
@@ -933,11 +935,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7000,  apt_rate_hi=10500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Ramapuram is a residential locality in Chennai, Zone 11 - Valasaravakkam.",
-        infra_notes="Pincode 600089. GCC zone.",
+        micro_context="Ramapuram: West Chennai residential corridor. NH-48 access. IT park proximity (Porur, Ramapuram).",
+        infra_notes="Pincode 600089. GCC zone. Zone 11 - Valasaravakkam.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 11 - Valasaravakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Maduravoyal": LocalityData(
@@ -946,11 +948,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=9500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Maduravoyal is a residential locality in Chennai, Zone 11 - Valasaravakkam.",
-        infra_notes="Pincode 600095. GCC zone.",
+        micro_context="Maduravoyal: West Chennai residential corridor. NH-48 access. IT park proximity (Porur, Ramapuram).",
+        infra_notes="Pincode 600095. GCC zone. Zone 11 - Valasaravakkam.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 11 - Valasaravakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Virugambakkam": LocalityData(
@@ -959,11 +961,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8000,  apt_rate_hi=12000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Virugambakkam is a residential locality in Chennai, Zone 11 - Valasaravakkam.",
-        infra_notes="Pincode 600092. GCC zone.",
+        micro_context="Virugambakkam: West Chennai residential corridor. NH-48 access. IT park proximity (Porur, Ramapuram).",
+        infra_notes="Pincode 600092. GCC zone. Zone 11 - Valasaravakkam.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 11 - Valasaravakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Alwarthirunagar": LocalityData(
@@ -972,11 +974,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7000,  apt_rate_hi=10500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Alwarthirunagar is a residential locality in Chennai, Zone 11 - Valasaravakkam.",
-        infra_notes="Pincode 600087. GCC zone.",
+        micro_context="Alwarthirunagar: West Chennai residential corridor. NH-48 access. IT park proximity (Porur, Ramapuram).",
+        infra_notes="Pincode 600087. GCC zone. Zone 11 - Valasaravakkam.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 11 - Valasaravakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Iyyappanthangal": LocalityData(
@@ -985,11 +987,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5500,  apt_rate_hi=8500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Iyyappanthangal is a residential locality in Chennai, Zone 11 - Valasaravakkam.",
-        infra_notes="Pincode 600056. GCC zone.",
+        micro_context="Iyyappanthangal: West Chennai residential corridor. NH-48 access. IT park proximity (Porur, Ramapuram).",
+        infra_notes="Pincode 600056. GCC zone. Zone 11 - Valasaravakkam.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 11 - Valasaravakkam", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Alandur": LocalityData(
@@ -998,11 +1000,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9000,  apt_rate_hi=13500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Alandur is a residential locality in Chennai, Zone 12 - Alandur.",
-        infra_notes="Pincode 600016. GCC zone.",
+        micro_context="Alandur: South Chennai GCC zone. Airport adjacent. Good MRTS and GST Road access.",
+        infra_notes="Pincode 600016. GCC zone. Zone 12 - Alandur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 12 - Alandur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Nanganallur": LocalityData(
@@ -1011,11 +1013,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8000,  apt_rate_hi=12000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Nanganallur is a residential locality in Chennai, Zone 12 - Alandur.",
-        infra_notes="Pincode 600061. GCC zone.",
+        micro_context="Nanganallur: South Chennai GCC zone. Airport adjacent. Good MRTS and GST Road access.",
+        infra_notes="Pincode 600061. GCC zone. Zone 12 - Alandur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 12 - Alandur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Pazhavanthangal": LocalityData(
@@ -1024,11 +1026,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8000,  apt_rate_hi=12000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Pazhavanthangal is a residential locality in Chennai, Zone 12 - Alandur.",
-        infra_notes="Pincode 600114. GCC zone.",
+        micro_context="Pazhavanthangal: South Chennai GCC zone. Airport adjacent. Good MRTS and GST Road access.",
+        infra_notes="Pincode 600114. GCC zone. Zone 12 - Alandur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 12 - Alandur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|St Thomas Mount": LocalityData(
@@ -1037,11 +1039,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8500,  apt_rate_hi=12500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="St Thomas Mount is a residential locality in Chennai, Zone 12 - Alandur.",
-        infra_notes="Pincode 600016. GCC zone.",
+        micro_context="St Thomas Mount: South Chennai GCC zone. Airport adjacent. Good MRTS and GST Road access.",
+        infra_notes="Pincode 600016. GCC zone. Zone 12 - Alandur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 12 - Alandur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Meenambakkam": LocalityData(
@@ -1050,11 +1052,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=9500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Meenambakkam is a residential locality in Chennai, Zone 12 - Alandur.",
-        infra_notes="Pincode 600027. GCC zone.",
+        micro_context="Meenambakkam: South Chennai GCC zone. Airport adjacent. Good MRTS and GST Road access.",
+        infra_notes="Pincode 600027. GCC zone. Zone 12 - Alandur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 12 - Alandur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Adambakkam": LocalityData(
@@ -1063,11 +1065,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7500,  apt_rate_hi=11000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Adambakkam is a residential locality in Chennai, Zone 12 - Alandur.",
-        infra_notes="Pincode 600088. GCC zone.",
+        micro_context="Adambakkam: South Chennai GCC zone. Airport adjacent. Good MRTS and GST Road access.",
+        infra_notes="Pincode 600088. GCC zone. Zone 12 - Alandur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 12 - Alandur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Adyar": LocalityData(
@@ -1076,11 +1078,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=14500,  apt_rate_hi=19000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Adyar is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600020. GCC zone.",
+        micro_context="Adyar: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600020. GCC zone. Zone 13 - Adyar.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Besant Nagar": LocalityData(
@@ -1089,11 +1091,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=14000,  apt_rate_hi=18500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Besant Nagar is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600090. GCC zone.",
+        micro_context="Besant Nagar: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600090. GCC zone. Zone 13 - Adyar.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Thiruvanmiyur": LocalityData(
@@ -1102,11 +1104,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=12000,  apt_rate_hi=16500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Thiruvanmiyur is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600041. GCC zone.",
+        micro_context="Thiruvanmiyur: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600041. GCC zone. Zone 13 - Adyar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Kottivakkam": LocalityData(
@@ -1115,11 +1117,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=11000,  apt_rate_hi=15500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Kottivakkam is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600041. GCC zone.",
+        micro_context="Kottivakkam: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600041. GCC zone. Zone 13 - Adyar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Palavakkam": LocalityData(
@@ -1128,11 +1130,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=11000,  apt_rate_hi=16000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Palavakkam is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600041. GCC zone.",
+        micro_context="Palavakkam: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600041. GCC zone. Zone 13 - Adyar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Neelankarai": LocalityData(
@@ -1141,11 +1143,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=10000,  apt_rate_hi=15500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Neelankarai is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600115. GCC zone.",
+        micro_context="Neelankarai: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600115. GCC zone. Zone 13 - Adyar.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Injambakkam": LocalityData(
@@ -1154,11 +1156,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9500,  apt_rate_hi=14000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Injambakkam is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600115. GCC zone.",
+        micro_context="Injambakkam: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600115. GCC zone. Zone 13 - Adyar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Velachery": LocalityData(
@@ -1167,11 +1169,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=7850,  apt_rate_hi=13250,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Velachery is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600042. GCC zone.",
+        micro_context="Velachery: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600042. GCC zone. Zone 13 - Adyar.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Guindy": LocalityData(
@@ -1180,11 +1182,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9000,  apt_rate_hi=13500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Guindy is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600032. GCC zone.",
+        micro_context="Guindy: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600032. GCC zone. Zone 13 - Adyar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Kotturpuram": LocalityData(
@@ -1193,11 +1195,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=12000,  apt_rate_hi=17500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Kotturpuram is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600085. GCC zone.",
+        micro_context="Kotturpuram: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600085. GCC zone. Zone 13 - Adyar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Saidapet": LocalityData(
@@ -1206,11 +1208,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8000,  apt_rate_hi=12500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Saidapet is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600015. GCC zone.",
+        micro_context="Saidapet: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600015. GCC zone. Zone 13 - Adyar.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Akkarai": LocalityData(
@@ -1219,11 +1221,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9500,  apt_rate_hi=14000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Akkarai is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600119. GCC zone.",
+        micro_context="Akkarai: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600119. GCC zone. Zone 13 - Adyar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Uthandi": LocalityData(
@@ -1232,11 +1234,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8000,  apt_rate_hi=12500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Uthandi is a residential locality in Chennai, Zone 13 - Adyar.",
-        infra_notes="Pincode 600119. GCC zone.",
+        micro_context="Uthandi: Premium South Chennai. Beach proximity, Theosophical Society. HNI and premium demand.",
+        infra_notes="Pincode 600119. GCC zone. Zone 13 - Adyar.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Perungudi": LocalityData(
@@ -1245,11 +1247,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=13500,  apt_rate_hi=18000,
         guideline_value=4400,
         trend_12m="+5.5%",
-        micro_context="Perungudi is a residential locality in Chennai, Zone 14 - Perungudi.",
-        infra_notes="Pincode 600096. GCC zone.",
+        micro_context="Perungudi: OMR IT corridor. Premium apartments, IT park demand. High appreciation zone.",
+        infra_notes="Pincode 600096. GCC zone. Zone 14 - Perungudi.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 14 - Perungudi", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Thoraipakkam": LocalityData(
@@ -1258,11 +1260,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=11000,  apt_rate_hi=15500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Thoraipakkam is a residential locality in Chennai, Zone 14 - Perungudi.",
-        infra_notes="Pincode 600097. GCC zone.",
+        micro_context="Thoraipakkam: OMR IT corridor. Premium apartments, IT park demand. High appreciation zone.",
+        infra_notes="Pincode 600097. GCC zone. Zone 14 - Perungudi.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 14 - Perungudi", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Karapakkam": LocalityData(
@@ -1271,11 +1273,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9500,  apt_rate_hi=13000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Karapakkam is a residential locality in Chennai, Zone 14 - Perungudi.",
-        infra_notes="Pincode 600097. GCC zone.",
+        micro_context="Karapakkam: OMR IT corridor. Premium apartments, IT park demand. High appreciation zone.",
+        infra_notes="Pincode 600097. GCC zone. Zone 14 - Perungudi.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 14 - Perungudi", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Pallikaranai": LocalityData(
@@ -1284,11 +1286,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=9500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Pallikaranai is a residential locality in Chennai, Zone 14 - Perungudi.",
-        infra_notes="Pincode 600100. GCC zone.",
+        micro_context="Pallikaranai: OMR IT corridor. Premium apartments, IT park demand. High appreciation zone.",
+        infra_notes="Pincode 600100. GCC zone. Zone 14 - Perungudi.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 14 - Perungudi", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Madipakkam": LocalityData(
@@ -1297,11 +1299,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6000,  apt_rate_hi=8800,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Madipakkam is a residential locality in Chennai, Zone 14 - Perungudi.",
-        infra_notes="Pincode 600091. GCC zone.",
+        micro_context="Madipakkam: OMR IT corridor. Premium apartments, IT park demand. High appreciation zone.",
+        infra_notes="Pincode 600091. GCC zone. Zone 14 - Perungudi.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 14 - Perungudi", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Medavakkam": LocalityData(
@@ -1310,11 +1312,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5500,  apt_rate_hi=8200,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Medavakkam is a residential locality in Chennai, Zone 14 - Perungudi.",
-        infra_notes="Pincode 600100. GCC zone.",
+        micro_context="Medavakkam: OMR IT corridor. Premium apartments, IT park demand. High appreciation zone.",
+        infra_notes="Pincode 600100. GCC zone. Zone 14 - Perungudi.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 14 - Perungudi", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Keelkattalai": LocalityData(
@@ -1323,11 +1325,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5800,  apt_rate_hi=8000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Keelkattalai is a residential locality in Chennai, Zone 14 - Perungudi.",
-        infra_notes="Pincode 600117. GCC zone.",
+        micro_context="Keelkattalai: OMR IT corridor. Premium apartments, IT park demand. High appreciation zone.",
+        infra_notes="Pincode 600117. GCC zone. Zone 14 - Perungudi.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 14 - Perungudi", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Kovilambakkam": LocalityData(
@@ -1336,11 +1338,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5500,  apt_rate_hi=7800,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Kovilambakkam is a residential locality in Chennai, Zone 14 - Perungudi.",
-        infra_notes="Pincode 600129. GCC zone.",
+        micro_context="Kovilambakkam: OMR IT corridor. Premium apartments, IT park demand. High appreciation zone.",
+        infra_notes="Pincode 600129. GCC zone. Zone 14 - Perungudi.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 14 - Perungudi", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Taramani": LocalityData(
@@ -1349,11 +1351,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=10000,  apt_rate_hi=15000,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Taramani is a residential locality in Chennai, Zone 14 - Perungudi.",
-        infra_notes="Pincode 600113. GCC zone.",
+        micro_context="Taramani: OMR IT corridor. Premium apartments, IT park demand. High appreciation zone.",
+        infra_notes="Pincode 600113. GCC zone. Zone 14 - Perungudi.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 14 - Perungudi", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Sholinganallur": LocalityData(
@@ -1362,11 +1364,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8500,  apt_rate_hi=12500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Sholinganallur is a residential locality in Chennai, Zone 15 - Sholinganallur.",
-        infra_notes="Pincode 600119. GCC zone.",
+        micro_context="Sholinganallur: OMR South. Active IT corridor. Metro Phase 2 planned. Strong appreciation.",
+        infra_notes="Pincode 600119. GCC zone. Zone 15 - Sholinganallur.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 15 - Sholinganallur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Perumbakkam": LocalityData(
@@ -1375,11 +1377,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6500,  apt_rate_hi=9200,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Perumbakkam is a residential locality in Chennai, Zone 15 - Sholinganallur.",
-        infra_notes="Pincode 600100. GCC zone.",
+        micro_context="Perumbakkam: OMR South. Active IT corridor. Metro Phase 2 planned. Strong appreciation.",
+        infra_notes="Pincode 600100. GCC zone. Zone 15 - Sholinganallur.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 15 - Sholinganallur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Semmancheri": LocalityData(
@@ -1388,11 +1390,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5500,  apt_rate_hi=7800,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Semmancheri is a residential locality in Chennai, Zone 15 - Sholinganallur.",
-        infra_notes="Pincode 600119. GCC zone.",
+        micro_context="Semmancheri: OMR South. Active IT corridor. Metro Phase 2 planned. Strong appreciation.",
+        infra_notes="Pincode 600119. GCC zone. Zone 15 - Sholinganallur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 15 - Sholinganallur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Navalur": LocalityData(
@@ -1401,11 +1403,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6800,  apt_rate_hi=9500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Navalur is a residential locality in Chennai, Zone 15 - Sholinganallur.",
-        infra_notes="Pincode 600130. GCC zone.",
+        micro_context="Navalur: OMR South. Active IT corridor. Metro Phase 2 planned. Strong appreciation.",
+        infra_notes="Pincode 600130. GCC zone. Zone 15 - Sholinganallur.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 15 - Sholinganallur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Siruseri": LocalityData(
@@ -1414,11 +1416,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6000,  apt_rate_hi=8500,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Siruseri is a residential locality in Chennai, Zone 15 - Sholinganallur.",
-        infra_notes="Pincode 603103. GCC zone.",
+        micro_context="Siruseri: OMR South. Active IT corridor. Metro Phase 2 planned. Strong appreciation.",
+        infra_notes="Pincode 603103. GCC zone. Zone 15 - Sholinganallur.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 15 - Sholinganallur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Sithalapakkam": LocalityData(
@@ -1427,11 +1429,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=7200,
         guideline_value=0,
         trend_12m="+5.5%",
-        micro_context="Sithalapakkam is a residential locality in Chennai, Zone 15 - Sholinganallur.",
-        infra_notes="Pincode 600126. GCC zone.",
+        micro_context="Sithalapakkam: OMR South. Active IT corridor. Metro Phase 2 planned. Strong appreciation.",
+        infra_notes="Pincode 600126. GCC zone. Zone 15 - Sholinganallur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Zone 15 - Sholinganallur", "Chennai growth"],
+        risk_factors=["Verify GCC approvals before purchase"],
     ),
 
     "Chennai|Avadi": LocalityData(
@@ -1440,11 +1442,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4000,  apt_rate_hi=6200,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Avadi is a residential locality in Chennai, Avadi Corporation.",
-        infra_notes="Pincode 600054. Avadi Corp zone.",
+        micro_context="Avadi: Avadi Corp zone. North-West suburban belt. Affordable to mid-segment. Defence and SME workforce.",
+        infra_notes="Pincode 600054. Avadi Corp zone. Avadi Corporation.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Avadi Corporation", "Chennai growth"],
+        risk_factors=["Verify Avadi Corp approvals before purchase"],
     ),
 
     "Chennai|Pattabiram": LocalityData(
@@ -1453,11 +1455,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3800,  apt_rate_hi=5800,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Pattabiram is a residential locality in Chennai, Avadi Corporation.",
-        infra_notes="Pincode 600072. Avadi Corp zone.",
+        micro_context="Pattabiram: Avadi Corp zone. North-West suburban belt. Affordable to mid-segment. Defence and SME workforce.",
+        infra_notes="Pincode 600072. Avadi Corp zone. Avadi Corporation.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Avadi Corporation", "Chennai growth"],
+        risk_factors=["Verify Avadi Corp approvals before purchase"],
     ),
 
     "Chennai|Thirumullaivoyal": LocalityData(
@@ -1466,11 +1468,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4450,  apt_rate_hi=6250,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Thirumullaivoyal is a residential locality in Chennai, Avadi Corporation.",
-        infra_notes="Pincode 600062. Avadi Corp zone.",
+        micro_context="Thirumullaivoyal: Avadi Corp zone. North-West suburban belt. Affordable to mid-segment. Defence and SME workforce.",
+        infra_notes="Pincode 600062. Avadi Corp zone. Avadi Corporation.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Avadi Corporation", "Chennai growth"],
+        risk_factors=["Verify Avadi Corp approvals before purchase"],
     ),
 
     "Chennai|Ambattur OT": LocalityData(
@@ -1479,11 +1481,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=7000,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Ambattur OT is a residential locality in Chennai, Avadi Corporation.",
-        infra_notes="Pincode 600053. Avadi Corp zone.",
+        micro_context="Ambattur OT: Avadi Corp zone. North-West suburban belt. Affordable to mid-segment. Defence and SME workforce.",
+        infra_notes="Pincode 600053. Avadi Corp zone. Avadi Corporation.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Avadi Corporation", "Chennai growth"],
+        risk_factors=["Verify Avadi Corp approvals before purchase"],
     ),
 
     "Chennai|Paruthipattu": LocalityData(
@@ -1492,11 +1494,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4000,  apt_rate_hi=6000,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Paruthipattu is a residential locality in Chennai, Avadi Corporation.",
-        infra_notes="Pincode 600071. Avadi Corp zone.",
+        micro_context="Paruthipattu: Avadi Corp zone. North-West suburban belt. Affordable to mid-segment. Defence and SME workforce.",
+        infra_notes="Pincode 600071. Avadi Corp zone. Avadi Corporation.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Avadi Corporation", "Chennai growth"],
+        risk_factors=["Verify Avadi Corp approvals before purchase"],
     ),
 
     "Chennai|Kamaraj Nagar Avadi": LocalityData(
@@ -1505,11 +1507,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4000,  apt_rate_hi=6000,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Kamaraj Nagar Avadi is a residential locality in Chennai, Avadi Corporation.",
-        infra_notes="Pincode 600071. Avadi Corp zone.",
+        micro_context="Kamaraj Nagar Avadi: Avadi Corp zone. North-West suburban belt. Affordable to mid-segment. Defence and SME workforce.",
+        infra_notes="Pincode 600071. Avadi Corp zone. Avadi Corporation.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Avadi Corporation", "Chennai growth"],
+        risk_factors=["Verify Avadi Corp approvals before purchase"],
     ),
 
     "Chennai|Tambaram": LocalityData(
@@ -1518,11 +1520,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=8000,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Tambaram is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600045. Tambaram Corp zone.",
+        micro_context="Tambaram: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600045. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Tambaram West": LocalityData(
@@ -1531,11 +1533,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4800,  apt_rate_hi=7200,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Tambaram West is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600045. Tambaram Corp zone.",
+        micro_context="Tambaram West: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600045. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|East Tambaram": LocalityData(
@@ -1544,11 +1546,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4800,  apt_rate_hi=7200,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="East Tambaram is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600059. Tambaram Corp zone.",
+        micro_context="East Tambaram: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600059. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Selaiyur": LocalityData(
@@ -1557,11 +1559,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=7500,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Selaiyur is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600073. Tambaram Corp zone.",
+        micro_context="Selaiyur: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600073. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Chromepet": LocalityData(
@@ -1570,11 +1572,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6000,  apt_rate_hi=9000,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Chromepet is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600044. Tambaram Corp zone.",
+        micro_context="Chromepet: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600044. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Pallavaram": LocalityData(
@@ -1583,11 +1585,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=6000,  apt_rate_hi=9500,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Pallavaram is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600043. Tambaram Corp zone.",
+        micro_context="Pallavaram: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600043. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Pammal": LocalityData(
@@ -1596,11 +1598,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=7500,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Pammal is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600075. Tambaram Corp zone.",
+        micro_context="Pammal: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600075. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Anakaputhur": LocalityData(
@@ -1609,11 +1611,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=7000,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Anakaputhur is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600070. Tambaram Corp zone.",
+        micro_context="Anakaputhur: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600070. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Sembakkam": LocalityData(
@@ -1622,11 +1624,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=7500,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Sembakkam is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600073. Tambaram Corp zone.",
+        micro_context="Sembakkam: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600073. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Perungalathur": LocalityData(
@@ -1635,11 +1637,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4200,  apt_rate_hi=6200,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Perungalathur is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600063. Tambaram Corp zone.",
+        micro_context="Perungalathur: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600063. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Mudichur": LocalityData(
@@ -1648,11 +1650,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4200,  apt_rate_hi=6200,
         guideline_value=0,
         trend_12m="+7.5%",
-        micro_context="Mudichur is a residential locality in Chennai, Tambaram Corporation.",
-        infra_notes="Pincode 600048. Tambaram Corp zone.",
+        micro_context="Mudichur: South Chennai suburban. GST Road corridor. Airport proximity. First-home buyer zone.",
+        infra_notes="Pincode 600048. Tambaram Corp zone. Tambaram Corporation.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Tambaram Corporation", "Chennai growth"],
+        risk_factors=["Verify Tambaram Corp approvals before purchase"],
     ),
 
     "Chennai|Poonamallee": LocalityData(
@@ -1661,11 +1663,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=6800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Poonamallee is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 600056. CMA zone.",
+        micro_context="Poonamallee: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600056. CMA zone. CMA - Tiruvallur.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Thirumazhisai": LocalityData(
@@ -1674,11 +1676,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3800,  apt_rate_hi=5800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Thirumazhisai is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 600124. CMA zone.",
+        micro_context="Thirumazhisai: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600124. CMA zone. CMA - Tiruvallur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Thiruverkadu": LocalityData(
@@ -1687,11 +1689,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=6800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Thiruverkadu is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 600077. CMA zone.",
+        micro_context="Thiruverkadu: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600077. CMA zone. CMA - Tiruvallur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Thiruninravur": LocalityData(
@@ -1700,11 +1702,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=2000,  apt_rate_hi=3000,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Thiruninravur is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 602024. CMA zone.",
+        micro_context="Thiruninravur: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 602024. CMA zone. CMA - Tiruvallur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Veppampattu": LocalityData(
@@ -1713,11 +1715,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=1800,  apt_rate_hi=2900,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Veppampattu is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 602024. CMA zone.",
+        micro_context="Veppampattu: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 602024. CMA zone. CMA - Tiruvallur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Tiruvallur Town": LocalityData(
@@ -1726,11 +1728,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=2200,  apt_rate_hi=3800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Tiruvallur Town is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 602001. CMA zone.",
+        micro_context="Tiruvallur Town: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 602001. CMA zone. CMA - Tiruvallur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Ponneri": LocalityData(
@@ -1739,11 +1741,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=1800,  apt_rate_hi=3000,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Ponneri is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 601204. CMA zone.",
+        micro_context="Ponneri: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 601204. CMA zone. CMA - Tiruvallur.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Gummidipoondi": LocalityData(
@@ -1752,11 +1754,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=1800,  apt_rate_hi=3200,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Gummidipoondi is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 601201. CMA zone.",
+        micro_context="Gummidipoondi: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 601201. CMA zone. CMA - Tiruvallur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Periyapalayam": LocalityData(
@@ -1765,11 +1767,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=1600,  apt_rate_hi=2800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Periyapalayam is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 601102. CMA zone.",
+        micro_context="Periyapalayam: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 601102. CMA zone. CMA - Tiruvallur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Sevvapet": LocalityData(
@@ -1778,11 +1780,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=1500,  apt_rate_hi=2600,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Sevvapet is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 602025. CMA zone.",
+        micro_context="Sevvapet: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 602025. CMA zone. CMA - Tiruvallur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Uthukottai": LocalityData(
@@ -1791,11 +1793,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=1400,  apt_rate_hi=2500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Uthukottai is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 602026. CMA zone.",
+        micro_context="Uthukottai: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 602026. CMA zone. CMA - Tiruvallur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Minjur": LocalityData(
@@ -1804,11 +1806,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=2200,  apt_rate_hi=3800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Minjur is a residential locality in Chennai, CMA - Tiruvallur.",
-        infra_notes="Pincode 601203. CMA zone.",
+        micro_context="Minjur: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 601203. CMA zone. CMA - Tiruvallur.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Tiruvallur", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Sriperumbudur": LocalityData(
@@ -1817,11 +1819,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3500,  apt_rate_hi=5500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Sriperumbudur is a residential locality in Chennai, CMA - Kanchipuram.",
-        infra_notes="Pincode 602105. CMA zone.",
+        micro_context="Sriperumbudur: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 602105. CMA zone. CMA - Kanchipuram.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Kanchipuram", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Oragadam": LocalityData(
@@ -1830,11 +1832,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3500,  apt_rate_hi=5500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Oragadam is a residential locality in Chennai, CMA - Kanchipuram.",
-        infra_notes="Pincode 602105. CMA zone.",
+        micro_context="Oragadam: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 602105. CMA zone. CMA - Kanchipuram.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Kanchipuram", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Mangadu": LocalityData(
@@ -1843,11 +1845,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=6800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Mangadu is a residential locality in Chennai, CMA - Kanchipuram.",
-        infra_notes="Pincode 600122. CMA zone.",
+        micro_context="Mangadu: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600122. CMA zone. CMA - Kanchipuram.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Kanchipuram", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Kundrathur": LocalityData(
@@ -1856,11 +1858,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4200,  apt_rate_hi=6500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Kundrathur is a residential locality in Chennai, CMA - Kanchipuram.",
-        infra_notes="Pincode 600069. CMA zone.",
+        micro_context="Kundrathur: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600069. CMA zone. CMA - Kanchipuram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Kanchipuram", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Madanandapuram": LocalityData(
@@ -1869,11 +1871,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=7200,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Madanandapuram is a residential locality in Chennai, CMA - Kanchipuram.",
-        infra_notes="Pincode 600125. CMA zone.",
+        micro_context="Madanandapuram: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600125. CMA zone. CMA - Kanchipuram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Kanchipuram", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Thirumudivakkam": LocalityData(
@@ -1882,11 +1884,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4200,  apt_rate_hi=6500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Thirumudivakkam is a residential locality in Chennai, CMA - Kanchipuram.",
-        infra_notes="Pincode 600132. CMA zone.",
+        micro_context="Thirumudivakkam: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600132. CMA zone. CMA - Kanchipuram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Kanchipuram", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Irungattukottai": LocalityData(
@@ -1895,11 +1897,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=2800,  apt_rate_hi=4500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Irungattukottai is a residential locality in Chennai, CMA - Kanchipuram.",
-        infra_notes="Pincode 602117. CMA zone.",
+        micro_context="Irungattukottai: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 602117. CMA zone. CMA - Kanchipuram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Kanchipuram", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Walajabad": LocalityData(
@@ -1908,11 +1910,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=1600,  apt_rate_hi=2800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Walajabad is a residential locality in Chennai, CMA - Kanchipuram.",
-        infra_notes="Pincode 631605. CMA zone.",
+        micro_context="Walajabad: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 631605. CMA zone. CMA - Kanchipuram.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Kanchipuram", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Kanchipuram Town": LocalityData(
@@ -1921,11 +1923,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=2500,  apt_rate_hi=4500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Kanchipuram Town is a residential locality in Chennai, CMA - Kanchipuram.",
-        infra_notes="Pincode 631501. CMA zone.",
+        micro_context="Kanchipuram Town: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 631501. CMA zone. CMA - Kanchipuram.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Kanchipuram", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Vandalur": LocalityData(
@@ -1934,11 +1936,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3800,  apt_rate_hi=5800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Vandalur is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 600048. CMA zone.",
+        micro_context="Vandalur: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600048. CMA zone. CMA - Chengalpattu.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Urapakkam": LocalityData(
@@ -1947,11 +1949,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3800,  apt_rate_hi=5800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Urapakkam is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603210. CMA zone.",
+        micro_context="Urapakkam: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603210. CMA zone. CMA - Chengalpattu.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Guduvanchery": LocalityData(
@@ -1960,11 +1962,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3800,  apt_rate_hi=5800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Guduvanchery is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603202. CMA zone.",
+        micro_context="Guduvanchery: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603202. CMA zone. CMA - Chengalpattu.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Maraimalai Nagar": LocalityData(
@@ -1973,11 +1975,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3500,  apt_rate_hi=5500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Maraimalai Nagar is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603209. CMA zone.",
+        micro_context="Maraimalai Nagar: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603209. CMA zone. CMA - Chengalpattu.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Singaperumal Koil": LocalityData(
@@ -1986,11 +1988,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3500,  apt_rate_hi=6200,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Singaperumal Koil is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603204. CMA zone.",
+        micro_context="Singaperumal Koil: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603204. CMA zone. CMA - Chengalpattu.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Mahindra World City": LocalityData(
@@ -1999,11 +2001,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5600,  apt_rate_hi=7500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Mahindra World City is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603004. CMA zone.",
+        micro_context="Mahindra World City: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603004. CMA zone. CMA - Chengalpattu.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Kattankulathur": LocalityData(
@@ -2012,11 +2014,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3800,  apt_rate_hi=6000,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Kattankulathur is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603203. CMA zone.",
+        micro_context="Kattankulathur: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603203. CMA zone. CMA - Chengalpattu.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Potheri": LocalityData(
@@ -2025,11 +2027,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=7000,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Potheri is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603203. CMA zone.",
+        micro_context="Potheri: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603203. CMA zone. CMA - Chengalpattu.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Chengalpattu Town": LocalityData(
@@ -2038,11 +2040,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3000,  apt_rate_hi=5200,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Chengalpattu Town is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603001. CMA zone.",
+        micro_context="Chengalpattu Town: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603001. CMA zone. CMA - Chengalpattu.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Padappai": LocalityData(
@@ -2051,11 +2053,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=2800,  apt_rate_hi=4800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Padappai is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 601301. CMA zone.",
+        micro_context="Padappai: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 601301. CMA zone. CMA - Chengalpattu.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Mambakkam": LocalityData(
@@ -2064,11 +2066,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=6800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Mambakkam is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 600127. CMA zone.",
+        micro_context="Mambakkam: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600127. CMA zone. CMA - Chengalpattu.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Ottiambakkam": LocalityData(
@@ -2077,11 +2079,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4500,  apt_rate_hi=6800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Ottiambakkam is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 600130. CMA zone.",
+        micro_context="Ottiambakkam: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600130. CMA zone. CMA - Chengalpattu.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Ponmar": LocalityData(
@@ -2090,11 +2092,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=4000,  apt_rate_hi=6000,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Ponmar is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 600048. CMA zone.",
+        micro_context="Ponmar: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600048. CMA zone. CMA - Chengalpattu.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Thalambur": LocalityData(
@@ -2103,11 +2105,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5800,  apt_rate_hi=8000,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Thalambur is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 600130. CMA zone.",
+        micro_context="Thalambur: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 600130. CMA zone. CMA - Chengalpattu.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Padur": LocalityData(
@@ -2116,11 +2118,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5500,  apt_rate_hi=7800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Padur is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603103. CMA zone.",
+        micro_context="Padur: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603103. CMA zone. CMA - Chengalpattu.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Kelambakkam": LocalityData(
@@ -2129,11 +2131,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=7200,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Kelambakkam is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603103. CMA zone.",
+        micro_context="Kelambakkam: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603103. CMA zone. CMA - Chengalpattu.",
         data_confidence=72,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Thiruporur": LocalityData(
@@ -2142,11 +2144,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=3500,  apt_rate_hi=5500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Thiruporur is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603110. CMA zone.",
+        micro_context="Thiruporur: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603110. CMA zone. CMA - Chengalpattu.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Kovalam ECR": LocalityData(
@@ -2155,11 +2157,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=5000,  apt_rate_hi=8500,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Kovalam ECR is a residential locality in Chennai, CMA - Chengalpattu.",
-        infra_notes="Pincode 603112. CMA zone.",
+        micro_context="Kovalam ECR: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 603112. CMA zone. CMA - Chengalpattu.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Chengalpattu", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
     "Chennai|Arakkonam": LocalityData(
@@ -2168,15 +2170,27 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=2200,  apt_rate_hi=3800,
         guideline_value=0,
         trend_12m="+13.0%",
-        micro_context="Arakkonam is a residential locality in Chennai, CMA - Ranipet.",
-        infra_notes="Pincode 631001. CMA zone.",
+        micro_context="Arakkonam: Chennai Metropolitan Area outskirts. Peripheral growth zone. Infrastructure-driven appreciation.",
+        infra_notes="Pincode 631001. CMA zone. CMA - Ranipet.",
         data_confidence=60,
-        demand_drivers=["Residential demand", "Chennai growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "CMA - Ranipet", "Chennai growth"],
+        risk_factors=["Verify CMA approvals before purchase"],
     ),
 
+    # ── Bangalore ────────────────────────────────────────────────────
 
-    # ── Bangalore (unchanged) ───────────────────────────────────────
+    "Bangalore|Indiranagar": LocalityData(
+        city="Bangalore", locality="Indiranagar",
+        land_rate_lo=57000, land_rate_hi=67000,
+        apt_rate_lo=21200,  apt_rate_hi=24800,
+        guideline_value=15000,
+        trend_12m="+8.4%",
+        micro_context="Indiranagar is Bangalore's most lifestyle-driven premium locality. Vibrant F&B, expat demand.",
+        infra_notes="Indiranagar Metro Station (Purple Line). 100 Feet Road.",
+        data_confidence=89,
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
+    ),
 
     "Bangalore|Koramangala": LocalityData(
         city="Bangalore", locality="Koramangala",
@@ -2184,11 +2198,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=19300,  apt_rate_hi=22700,
         guideline_value=14000,
         trend_12m="+9.8%",
-        micro_context="Koramangala is Bangalore's most iconic residential-commercial locality.",
-        infra_notes="Forum Mall, 100 Feet Road. No Metro currently.",
+        micro_context="Koramangala is Bangalore's startup hub and premium residential nucleus. 1st-8th Block varying premiums.",
+        infra_notes="Forum Mall. No Metro currently (Phase 3 proposed).",
         data_confidence=90,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|Whitefield": LocalityData(
@@ -2197,24 +2211,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=12900,  apt_rate_hi=15100,
         guideline_value=9000,
         trend_12m="+12.2%",
-        micro_context="Whitefield is Bangalore's premier IT corridor destination.",
-        infra_notes="Whitefield Metro Station (Purple Line). ITPB, Bagmane Tech Park.",
+        micro_context="Whitefield is Bangalore's premier IT corridor. ITPB, Bagmane Tech Park, MNC campuses.",
+        infra_notes="Whitefield Metro Station (Purple Line extension opened 2023).",
         data_confidence=88,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
-    ),
-
-    "Bangalore|Indiranagar": LocalityData(
-        city="Bangalore", locality="Indiranagar",
-        land_rate_lo=57000, land_rate_hi=67000,
-        apt_rate_lo=21200,  apt_rate_hi=24800,
-        guideline_value=15000,
-        trend_12m="+8.4%",
-        micro_context="Indiranagar is Bangalore's most lifestyle-driven premium locality.",
-        infra_notes="Indiranagar Metro Station. 100 Feet Road.",
-        data_confidence=89,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|HSR Layout": LocalityData(
@@ -2223,11 +2224,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=14700,  apt_rate_hi=17300,
         guideline_value=11000,
         trend_12m="+10.9%",
-        micro_context="HSR Layout is a meticulously planned locality and second startup hub.",
+        micro_context="HSR Layout is Bangalore's second startup hub. Planned sector grid, ORR connectivity.",
         infra_notes="ORR frontage. Proposed Metro Phase 3.",
         data_confidence=86,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|Marathahalli": LocalityData(
@@ -2236,11 +2237,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=12000,  apt_rate_hi=14000,
         guideline_value=8500,
         trend_12m="+13.5%",
-        micro_context="Marathahalli is the highest-appreciating mid-segment locality in Bangalore.",
+        micro_context="Marathahalli is highest-appreciating mid-segment Bangalore locality. ORR-Whitefield-Varthur junction.",
         infra_notes="Marathahalli Bridge, ORR junction. Proposed Metro.",
         data_confidence=84,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|Electronic City": LocalityData(
@@ -2249,11 +2250,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=10100,  apt_rate_hi=11900,
         guideline_value=7000,
         trend_12m="+15.0%",
-        micro_context="Electronic City is Bangalore's original IT hub — home to Infosys, Wipro, HCL.",
-        infra_notes="Electronic City Metro Station (Green Line). Hosur Road NH-44.",
+        micro_context="Electronic City is Bangalore original IT hub. Infosys, Wipro, HCL. 200k+ jobs within 5km.",
+        infra_notes="Electronic City Metro Station (Green Line, opened 2024). Hosur Road NH-44.",
         data_confidence=83,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|JP Nagar": LocalityData(
@@ -2262,11 +2263,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=10500,  apt_rate_hi=13500,
         guideline_value=8000,
         trend_12m="+7.8%",
-        micro_context="JP Nagar is a well-established South Bangalore residential locality.",
-        infra_notes="NICE Road connectivity. Proposed Metro Phase 3.",
+        micro_context="JP Nagar is well-established South Bangalore residential. Good school belt.",
+        infra_notes="NICE Road. Proposed Metro Phase 3.",
         data_confidence=80,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|BTM Layout": LocalityData(
@@ -2275,11 +2276,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=9500,  apt_rate_hi=12500,
         guideline_value=7500,
         trend_12m="+12.1%",
-        micro_context="BTM Layout is a dense, active residential market near Koramangala.",
+        micro_context="BTM Layout is dense active residential near Koramangala. Young professional demand.",
         infra_notes="ORR access. Silk Board junction nearby.",
         data_confidence=78,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|Hebbal": LocalityData(
@@ -2288,11 +2289,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=11000,  apt_rate_hi=14000,
         guideline_value=8500,
         trend_12m="+11.3%",
-        micro_context="Hebbal is a North Bangalore locality with flyover and lake-front premium.",
+        micro_context="Hebbal is North Bangalore with flyover and lake-front premium. Airport road access.",
         infra_notes="Hebbal flyover. BIAL (airport) road access.",
         data_confidence=80,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|Yelahanka": LocalityData(
@@ -2301,11 +2302,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=8500,  apt_rate_hi=11500,
         guideline_value=6500,
         trend_12m="+14.2%",
-        micro_context="Yelahanka is a fast-growing North Bangalore suburb near the airport.",
+        micro_context="Yelahanka is fast-growing North Bangalore suburb near airport. Affordable to mid.",
         infra_notes="BIAL Airport: 15km. Proposed Metro extension.",
         data_confidence=76,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|Sarjapur Road": LocalityData(
@@ -2314,11 +2315,11 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=11500,  apt_rate_hi=14500,
         guideline_value=9000,
         trend_12m="+12.5%",
-        micro_context="Sarjapur Road is a major East Bangalore IT and residential corridor.",
-        infra_notes="ORR-Sarjapur junction. Active developer market.",
+        micro_context="Sarjapur Road is major East Bangalore IT and residential corridor. Active developer market.",
+        infra_notes="ORR-Sarjapur junction. Prestige, Sobha, Brigade active.",
         data_confidence=82,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
     "Bangalore|Bellandur": LocalityData(
@@ -2327,11 +2328,37 @@ LOCALITY_DB: dict[str, LocalityData] = {
         apt_rate_lo=12500,  apt_rate_hi=15500,
         guideline_value=9500,
         trend_12m="+12.0%",
-        micro_context="Bellandur is a premium East Bangalore locality near Outer Ring Road.",
-        infra_notes="ORR access. Bellandur lake (ecological concern).",
+        micro_context="Bellandur is premium East Bangalore near ORR. Strong IT demand. Lake ecology concern.",
+        infra_notes="ORR access. Bellandur lake nearby.",
         data_confidence=80,
-        demand_drivers=["Residential demand", "Bangalore growth"],
-        risk_factors=["Verify title and approvals before purchase"],
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
+    ),
+
+    "Bangalore|KR Puram": LocalityData(
+        city="Bangalore", locality="KR Puram",
+        land_rate_lo=18000, land_rate_hi=22000,
+        apt_rate_lo=9000,  apt_rate_hi=12000,
+        guideline_value=7000,
+        trend_12m="+13.5%",
+        micro_context="KR Puram is East Bangalore affordable corridor. Metro connectivity drives appreciation.",
+        infra_notes="KR Puram Metro Station (Purple Line). Old Madras Road.",
+        data_confidence=78,
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
+    ),
+
+    "Bangalore|Hennur": LocalityData(
+        city="Bangalore", locality="Hennur",
+        land_rate_lo=16000, land_rate_hi=20000,
+        apt_rate_lo=8500,  apt_rate_hi=11500,
+        guideline_value=6500,
+        trend_12m="+13.2%",
+        micro_context="Hennur is North-East Bangalore emerging corridor. IT and residential growth.",
+        infra_notes="Proposed Metro Phase 2. Outer Ring Road access.",
+        data_confidence=76,
+        demand_drivers=["Residential demand", "Bangalore IT growth"],
+        risk_factors=["Verify BBMP khata and E-khata before purchase"],
     ),
 
 }
@@ -2339,11 +2366,9 @@ LOCALITY_DB: dict[str, LocalityData] = {
 # ── Lookup helpers ────────────────────────────────────────────────
 
 def get_locality(city: str, locality: str) -> Optional[LocalityData]:
-    """Get locality data by city and locality name."""
     key = f"{city}|{locality}"
     data = LOCALITY_DB.get(key)
-    if data:
-        return data
+    if data: return data
     city_lower = city.lower()
     loc_lower  = locality.lower()
     for k, v in LOCALITY_DB.items():
@@ -2352,16 +2377,12 @@ def get_locality(city: str, locality: str) -> Optional[LocalityData]:
     return None
 
 def get_confidence_label(score: int) -> str:
-    if score >= 85: return "High"
+    if score >= 85: return "Strong"
     if score >= 70: return "Good"
-    if score >= 55: return "Moderate"
-    return "Low"
+    if score >= 60: return "Fair"
+    return "Weak"
 
 def list_localities(city: str) -> list[str]:
-    """Return all known localities for a city."""
-    return [
-        v.locality for k, v in LOCALITY_DB.items()
-        if v.city.lower() == city.lower()
-    ]
+    return [v.locality for k, v in LOCALITY_DB.items() if v.city.lower() == city.lower()]
 
 from typing import Optional

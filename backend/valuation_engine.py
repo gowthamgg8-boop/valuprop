@@ -667,15 +667,28 @@ def _calculate_base_range(
 
 
 def _age_depreciation(age_str: str) -> float:
-    """Return a multiplier for age-based depreciation (apartments)."""
+    """
+    Return a multiplier for age-based depreciation (apartments).
+    Per v2.4 prompt:
+      0-5 yrs: 0% depreciation
+      5-10 yrs: 10-15% discount vs new → use 12%
+      10-15 yrs: 25-35% discount vs new → use 30%
+      15-20 yrs: 35-45% discount vs new → use 40%
+      20+ yrs: 45-55% discount vs new → use 50%
+    """
     factors = {
         "Under construction": 1.05,   # UC premium
+        "0-5 years":          1.0,
         "0–5 years":          1.0,
-        "5–10 years":         0.95,
-        "10–20 years":        0.88,
-        "20+ years":          0.78,
+        "5-10 years":         0.88,
+        "5–10 years":         0.88,
+        "10-20 years":        0.70,
+        "10–20 years":        0.70,
+        "15-20 years":        0.60,
+        "15–20 years":        0.60,
+        "20+ years":          0.50,   # v2.4: 45-55% discount, use 50%
     }
-    return factors.get(age_str or "0–5 years", 0.95)
+    return factors.get(age_str or "0–5 years", 0.88)
 
 
 def _apply_floor_factor(lo: float, hi: float, floor_info: str) -> tuple[float, float]:
