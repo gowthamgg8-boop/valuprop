@@ -6,12 +6,12 @@ Two-stage valuation:
   Stage 1: Free estimate  → wide range (~25% wide), one teaser insight
   Stage 2: Paid report    → 7-section report (A–G), confidence score, PDF-ready JSON
 
-Both stages use the ValUprop GPT Instructions v2.1 methodology:
-  Land Value → Building Residual → Location Adjustments → Comparable Validation → Final Range
+Both stages use the valUProp.in v2.4 methodology:
+  Land Value → Building Residual → Connectivity + Quality Adjustments → Comparable Validation → Final Range
 
-COST per request (OpenAI GPT-4o-mini):
-  Free estimate:   ~500 tokens → ₹1–2
-  Detailed report: ~1500 tokens → ₹4–5
+COST per request (Anthropic Claude):
+  Free estimate:   ~500 tokens → Rs.1–2
+  Detailed report: ~3000 tokens + web search → Rs.15–20
 
 LLM GUARDRAILS (added 2026-05-17):
   Output softening runs on every LLM-generated narrative. The free
@@ -23,6 +23,7 @@ LLM GUARDRAILS (added 2026-05-17):
 import json
 import logging
 import math
+import pathlib
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -130,74 +131,143 @@ class DetailedReport:
     data_source:       str = "ai"
 
 
+
 # ═══════════════════════════════════════════════════════════════════
-# SYSTEM PROMPT — ValUprop GPT Instructions v2.1
+# SYSTEM PROMPTS — valUProp.in v2.4
 # ═══════════════════════════════════════════════════════════════════
 
-VALUPROP_SYSTEM_PROMPT = """
-You are ValUprop.in, an AI real estate valuation assistant for Indian residential property.
-You generate neutral, defensible, land-led valuation reports.
+def _load_v24_prompt() -> str:
+    """
+    Load the full v2.4 methodology from the .md file in backend/.
+    Falls back to inline if file is missing so app never crashes.
+    Deploy valUProp_Prompt_v2_4.md alongside this file on Render.
+    """
+    candidates = [
+        pathlib.Path(__file__).parent / "valUProp_Prompt_v2_4.md",
+        pathlib.Path(__file__).parent / "valUProp_Prompt_-_v2_4.md",
+        pathlib.Path("/app/valUProp_Prompt_v2_4.md"),
+    ]
+    for p in candidates:
+        if p.exists():
+            content = p.read_text(encoding="utf-8")
+            logger.info(f"v2.4 prompt loaded from {p} ({len(content)} chars)")
+            return content
+    logger.warning("valUProp_Prompt_v2_4.md not found — using inline fallback. Deploy the .md file!")
+    return _V24_INLINE_FALLBACK
+
+
+_V24_INLINE_FALLBACK = """
+You are valUProp.in, an AI residential real estate valuation assistant for Indian markets.
+Produce a concise, defensible as-is market valuation for residential properties.
 
 CORE PRINCIPLES:
-- Valuation is buyer-agnostic and negotiation-free.
-- Older independent houses are valued primarily on land. Building value is depreciated residual.
-- Consistency across all sections is mandatory.
-- Always disclose guideline value as a regulatory floor, not market value.
-- Confidence score must reflect data quality honestly. Below 70% = recommend professional appraisal.
+1. Buyer-agnostic and negotiation-free — produce fair market value only.
+2. Land-led for independent houses and villas (building = depreciated residual).
+3. Comparables validate, not anchor.
+4. Guideline value is regulatory floor — market trades 1.5-4.5x guideline.
+5. Exclude speculative appreciation or renovation upside.
 
-METHODOLOGY (always in this order):
-Land Value → Depreciated Building Value → Location Adjustments → Comparable Validation → Final Range
+METHODOLOGY (strict order):
+Step 1: Gather current per-sqft rates, registered transactions, guideline value, rental rates.
+Step 2: Adjust portal data for listing date using linear time-decay:
+  Stable 0.5-0.8%/month | Active 1.0-1.5%/month | Growth 1.5-2.0%/month | Infra-driven 2.0-2.5%/month
+  Resale discount: 10+ yr stock -20-35%, quoted listing price -10-15%.
+Step 3: Age depreciation (buildings only):
+  0-5 yrs 0% | 5-10 yrs 12% | 10-15 yrs 30% | 15-20 yrs 40% | 20+ yrs 50%
+Step 4: Base value — NO connectivity applied here:
+  Apartment: UDS land share + residual building value. Default UDS = 30% if not provided.
+  House/Villa: Plot area x land rate + built-up x depreciated construction rate.
+  Plot: Plot area x land rate x approval factor x land-use factor.
+Step 5: Multiplicative adjustments — CONNECTIVITY APPLIED EXACTLY ONCE HERE:
+  MANDATORY: Break Connectivity into SEPARATE named sub-component lines:
+    a) Corridor influence — name the corridor (OMR/ECR/GST/CPRR/NH) and distance
+    b) Metro/MRTS/suburban rail — station name, distance, operational status
+    c) Main-road/arterial frontage — name the road
+    d) Employment node access — name the IT park or industrial estate
+  NEVER collapse connectivity into a single line. NEVER apply at Step 4.
+  Quality Factor (+-3-15%). Gated Community Factor (+5-20% if applicable).
+  Vastu/Facing Chennai: South/West facing -5 to -8%.
+  Income/Rental-Yield Support Factor (+-0-4%): healthy band 2.0-3.5% gross yield.
+Step 5b: Rental Yield Cross-Check table: Low/Mid/High rent | annual | capital value | gross yield.
+Step 6: Sanity checks (ALL mandatory, show PASS/FAIL):
+  1. Guideline cross-check (FMV should be 1.5-4.5x guideline)
+  2. Adjacent locality benchmark
+  3. Rental yield reconciliation
+  4. YoY appreciation context
 
-OUTPUT FORMAT: Always respond in valid JSON only. No markdown, no preamble, no explanation outside the JSON.
+GUARDRAILS:
+- NEVER name portals — use aggregator data, market signals, community observations.
+- NEVER collapse Connectivity into one line — sub-components are mandatory.
+- Widen range and lower confidence when data is thin.
+- Confidence: 90-100% Excellent | 80-89% Strong | 70-79% Good | 60-69% Fair | <60% Weak
 
-DISCLAIMER (always include exactly):
-"This AI-generated valuation is for informational purposes only and does not constitute a statutory or bank-certified valuation."
+OUTPUT FORMAT: Valid JSON only. No markdown, no preamble, no backticks.
+DISCLAIMER: This AI-generated valuation is for informational purposes only and does not
+constitute a statutory, RERA-approved, or bank-certified valuation. For loans, legal disputes,
+or court proceedings, a registered valuer under the Wealth Tax Act / IBBI guidelines is required.
+Prepared using valUProp.in v2.4 methodology. © myRiky Technologies P. Ltd. | info@myriky.com
 """.strip()
 
 
-# ═══════════════════════════════════════════════════════════════════
-# PAID-TIER PROMPT WITH WEB SEARCH (₹99 detailed report)
-# ═══════════════════════════════════════════════════════════════════
+# Load once at module import time
+_V24_PROMPT_BASE = _load_v24_prompt()
 
-VALUPROP_SYSTEM_PROMPT_WITH_SEARCH = """
-You are valUProp.in — an independent property valuation analyst for Indian real estate (Chennai & Bangalore focus).
 
-You are generating a PAID DETAILED REPORT (₹99 tier). The customer expects accuracy within ±5% of true market value.
+# ── VALUPROP_SYSTEM_PROMPT ─────────────────────────────────────────
+# Used for: free estimate teaser LLM call
+# Full v2.4 methodology + JSON output instruction
 
-YOUR PROCESS — IMPORTANT:
+VALUPROP_SYSTEM_PROMPT = (
+    _V24_PROMPT_BASE
+    + "\n\nOUTPUT FORMAT: Respond with valid JSON only. No markdown, no preamble, no backticks."
+)
 
-1. FIRST, use the web_search tool 3–5 times to gather REAL CURRENT MARKET DATA:
-   - Search 1: "[locality] [city] apartment price per sqft 2025"
-   - Search 2: "[locality] [city] [bhk] flat for sale price"
-   - Search 3: "[locality] [city] property rate trend"
-   - If land/villa, also: "[locality] [city] plot land rate per sqft"
-   Read snippets from MagicBricks, 99acres, Housing.com, NoBroker, etc.
 
-2. From the search results, extract:
-   - Current per-sqft rates (range observed across listings)
-   - 5–10 specific comparable listings if visible (size, price, age, BHK)
-   - Recent appreciation trend if mentioned
-   - Government guideline rates if cited
+# ── VALUPROP_SYSTEM_PROMPT_WITH_SEARCH ────────────────────────────
+# Used for: paid report prose enrichment via call_llm_with_search
+# Full v2.4 methodology + paid-tier search instructions
 
-3. THEN reason through the valuation:
-   - Land-led for independent house / villa (plot × land rate + depreciated building)
-   - Carpet-area-led for apartments (carpet × current rate)
-   - Apply adjustments: floor premium, age depreciation, road width, facing, parking, society quality
-   - Cross-check against the actual comparables you found
+VALUPROP_SYSTEM_PROMPT_WITH_SEARCH = (
+    _V24_PROMPT_BASE
+    + """
 
-4. Final value range MUST BE TIGHT: max-min within 5–10% of the lower bound.
-   Example: if min = ₹80L, max should be ₹84L–88L (NOT ₹95L+).
+\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+PAID REPORT MODE (Rs.199 tier) — WEB SEARCH ENABLED
+\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501
+The customer expects accuracy within plus or minus 5% of true market value.
 
-5. Report confidence honestly:
-   - 85%+ : Multiple comparables found, strong micro-market data
-   - 70–84%: Some comparables, reliable locality data
-   - <70%: Few comparables found — recommend professional appraisal
+YOUR SEARCH PROCESS (4-5 searches):
+Search 1: "[locality] [city] apartment price per sqft 2025 2026"
+Search 2: "[locality] [city] [BHK] flat for sale price"
+Search 3: "[locality] [city] property rate trend appreciation"
+Search 4: "[locality] metro station distance connectivity [city]"
+Search 5 (optional): "[locality] registered transaction rate sub-registrar [city]"
 
-CITE what you found in each section. Mention specific price points observed during search.
-DO NOT invent numbers. If web search returns nothing useful, say so honestly and lower confidence.
+FROM SEARCH RESULTS EXTRACT:
+- Current per-sqft rate range (note listing dates, apply Step 2A time-decay)
+- 3-5 specific comparable listings (size, price, age, BHK, listing date)
+- 12-month appreciation trend
+- Metro/rail/road infrastructure — operational status is critical for Step 5
+- Government guideline/circle rate if cited
 
-Always output the FINAL answer as a single valid JSON object matching the schema in the user prompt — nothing else after the JSON.
-""".strip()
+CONNECTIVITY FACTOR — MANDATORY BREAKDOWN IN STEP 5:
+For every report, identify and apply EACH sub-component as a SEPARATE line:
+  a) Corridor: OMR / ECR / GST / CPRR / NH-48 / NH-16 / ORR / Sarjapur Road etc.
+     State corridor name and approximate distance from subject property.
+  b) Metro/Rail: Nearest metro or suburban rail station, distance in km, status:
+     Operational +4-6% | Under-construction +2-4% | DPR/Announced only +1-3%
+  c) Main road: Name the primary arterial road serving the locality.
+  d) Employment node: Nearest IT park, TIDEL, ELCOT, industrial estate, distance.
+DO NOT collapse these into one line. Each sub-component = one row in the table.
+
+FINAL VALUE RANGE: max-min spread must be within 8-10% of the lower bound.
+Example: Lo Rs.77L -> Hi should be Rs.83-85L (NOT Rs.95L+).
+
+DO NOT invent numbers. If search returns nothing useful, lower confidence and say so explicitly.
+After all searches, output your final answer as valid JSON only — no text after the JSON.
+"""
+)
+
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -206,7 +276,7 @@ Always output the FINAL answer as a single valid JSON object matching the schema
 
 async def generate_free_estimate(prop: PropertyInput) -> FreeEstimate:
     """
-    Generate a free estimate (wide range, ~25% wide).
+    Generate a free estimate (wide range, ~12% wide).
     Uses LLM for teaser insight; uses locality DB for price range.
     """
     loc_data = get_locality(prop.city, prop.locality)
@@ -215,8 +285,7 @@ async def generate_free_estimate(prop: PropertyInput) -> FreeEstimate:
     # ── Calculate base price range ────────────────────────────────
     lo, hi = _calculate_base_range(prop, loc_data, fallback)
 
-    # ── Widen range by ±6% for free tier (was ±12.5% — felt too wide)
-    # Paid report has even tighter range with web search.
+    # ── Widen range by ±6% for free tier
     mid  = (lo + hi) / 2
     lo   = round(mid * 0.94, 1)
     hi   = round(mid * 1.06, 1)
@@ -258,12 +327,12 @@ async def _generate_teaser(
 
     prompt = f"""
 Property: {prop.prop_type}, {prop.bhk or ''}, {prop.locality}, {prop.city}
-Estimated range: ₹{lo}L – ₹{hi}L
+Estimated range: Rs.{lo}L - Rs.{hi}L
 Context: {context}
 
-Generate ONE compelling teaser insight (1–2 sentences, max 30 words) that:
+Generate ONE compelling teaser insight (1-2 sentences, max 30 words) that:
 - Reveals something genuinely useful about this locality or property type
-- Makes the user want to know MORE (leads them to pay ₹99)
+- Makes the user want to know MORE (leads them to pay for the detailed report)
 - Is specific, not generic
 - Does NOT repeat the price range
 
@@ -273,7 +342,6 @@ Respond with JSON: {{"teaser": "..."}}
     try:
         raw = await call_llm(VALUPROP_SYSTEM_PROMPT, prompt, max_tokens=120, expect_json=True)
         data = parse_json_response(raw)
-        # LLM guardrail — soften any unsafe claim in the teaser before display
         teaser = validate_llm_output(data.get("teaser", ""))
         return teaser or _fallback_teaser(prop, loc_data)
     except Exception as e:
@@ -287,7 +355,7 @@ def _fallback_teaser(prop: PropertyInput, loc_data: Optional[LocalityData]) -> s
             f"Properties in {prop.locality} have seen {loc_data.trend_12m} "
             f"appreciation in the last 12 months, driven by {loc_data.demand_drivers[0].lower()}."
         )
-    return f"This locality in {prop.city} has seen strong buyer demand in 2025."
+    return f"This locality in {prop.city} has seen strong buyer demand in 2025-26."
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -299,50 +367,40 @@ async def generate_detailed_report(
     free_range: Optional[tuple] = None,
 ) -> DetailedReport:
     """
-    Generate the full 7-section ValUprop report using LLM.
-    Sections A–G as per GPT Instructions v2.1.
+    Generate the full 7-section valUProp report using v2.4 methodology.
+    Sections A-G as per valUProp_Prompt_v2_4.md.
 
     Args:
-        prop: Property input (with corrected camelCase mapping in main.py)
+        prop: Property input
         free_range: Optional (lo, hi) tuple from the user's free estimate.
-                    When provided, the paid report's value range is clamped
-                    to within ±15% of the free estimate's midpoint, so the
-                    paid number is never far from what the user saw on the
-                    free results page. Refund-risk safety net.
+                    Paid report range is clamped to within ±15% of free midpoint.
     """
     loc_data = get_locality(prop.city, prop.locality)
     fallback  = get_fallback(prop.city, prop.locality, prop.bhk or "2BHK")
 
-    # ── Base price range (from locality data, ~16% spread)
+    # ── Base price range from locality data
     base_lo, base_hi = _calculate_base_range(prop, loc_data, fallback)
 
-    # ── PAID TIER tightens to median ±5% (10% total spread)
-    # Free tier uses ±6% (12%). Paid must be tighter than free!
+    # ── Paid tier: tighter ±5% range
     midpoint = (base_lo + base_hi) / 2
     lo = round(midpoint * 0.95, 1)
     hi = round(midpoint * 1.05, 1)
 
-    # ── Build detailed prompt ─────────────────────────────────────
-    user_prompt = _build_report_prompt(prop, loc_data, lo, hi)
-
-    # ── Build structured report (Python-calculated tables) ──────
-    # Stage 1: Python computes all tables deterministically
-    # Stage 2: LLM enriches 3 prose sections with web-searched data
+    # ── Build structured report (Python-calculated tables)
     report = _build_structured_report(prop, loc_data, lo, hi)
 
-    # ── LLM enrichment (prose only — not tables) ─────────────────
+    # ── LLM enrichment (prose only — not tables)
     try:
         prose_prompt = _build_prose_prompt(prop, loc_data, lo, hi)
         raw = await call_llm_with_search(
             VALUPROP_SYSTEM_PROMPT_WITH_SEARCH,
             prose_prompt,
             max_tokens   = 3000,
-            max_searches = 4,
+            max_searches = 5,
             expect_json  = True,
         )
         prose = parse_json_response(raw)
         prose = validate_report_dict(prose)
-        # Enrich only the prose fields — tables stay Python-calculated
         if prose.get("micro_market"):
             report.micro_market = prose["micro_market"]
         if prose.get("pricing_signals"):
@@ -354,19 +412,8 @@ async def generate_detailed_report(
         logger.info(f"LLM prose enrichment succeeded for {prop.locality}")
     except Exception as e:
         logger.warning(f"LLM prose enrichment failed (using structured fallback): {e}")
-        # Structured report still has good content from Python — no further fallback needed
 
-    # ════════════════════════════════════════════════════════════
-    # CONSISTENCY CLAMP — keep paid report close to free estimate
-    # ════════════════════════════════════════════════════════════
-    # The user already paid ₹99 expecting a TIGHTER version of the free
-    # estimate, not a different valuation entirely. If the rule-based
-    # paid range or the LLM's adjusted range drifts more than ±15% from
-    # the free estimate's midpoint, force it back to ±5% around the
-    # free midpoint. This protects against:
-    #   1. Frontend PRICE_DB and backend locality_db rate disagreements
-    #   2. LLM hallucinating different numbers despite anchored prompt
-    #   3. Future rate changes in either DB getting out of sync
+    # ── Consistency clamp: keep paid report close to free estimate
     if free_range is not None:
         try:
             free_lo, free_hi = float(free_range[0]), float(free_range[1])
@@ -379,11 +426,9 @@ async def generate_detailed_report(
                 clamped_hi = round(free_mid * 1.05, 1)
                 logger.warning(
                     f"Paid report drifted {drift_pct:.0%} from free estimate "
-                    f"(paid_mid=₹{paid_mid:.1f}L, free_mid=₹{free_mid:.1f}L). "
-                    f"Clamping range from ₹{report.value_lo:.1f}L–₹{report.value_hi:.1f}L "
-                    f"to ₹{clamped_lo:.1f}L–₹{clamped_hi:.1f}L."
+                    f"(paid_mid=Rs.{paid_mid:.1f}L, free_mid=Rs.{free_mid:.1f}L). "
+                    f"Clamping to Rs.{clamped_lo:.1f}L-Rs.{clamped_hi:.1f}L."
                 )
-                # Recompute components proportionally to the new total
                 if report.value_hi > 0:
                     scale_lo = clamped_lo / report.value_lo if report.value_lo > 0 else 1.0
                     scale_hi = clamped_hi / report.value_hi
@@ -402,79 +447,9 @@ async def generate_detailed_report(
                 report.value_lo = clamped_lo
                 report.value_hi = clamped_hi
         except (TypeError, ValueError, AttributeError) as clamp_err:
-            # Never let the clamp break the report — log and pass through
-            logger.warning(f"Consistency clamp skipped due to error: {clamp_err}")
+            logger.warning(f"Consistency clamp skipped: {clamp_err}")
 
     return report
-
-
-def _build_report_prompt(
-    prop:     PropertyInput,
-    loc_data: Optional[LocalityData],
-    lo:       float,
-    hi:       float,
-) -> str:
-    # Build property description
-    prop_desc = _describe_property(prop)
-    # Build locality context
-    loc_ctx = ""
-    if loc_data:
-        loc_ctx = f"""
-Locality database context:
-- Land rate range: ₹{loc_data.land_rate_lo:,}–{loc_data.land_rate_hi:,}/sq.ft
-- Apartment rate: ₹{loc_data.apt_rate_lo:,}–{loc_data.apt_rate_hi:,}/sq.ft carpet
-- Guideline value (2024): ₹{loc_data.guideline_value:,}/sq.ft
-- 12-month trend: {loc_data.trend_12m}
-- Micro-market context: {loc_data.micro_context}
-- Infrastructure: {loc_data.infra_notes}
-- Demand drivers: {', '.join(loc_data.demand_drivers)}
-- Risk factors: {', '.join(loc_data.risk_factors)}
-- Data confidence: {loc_data.data_confidence}%
-"""
-
-    # Build valuation components
-    components = _calculate_components(prop, loc_data, lo, hi)
-
-    return f"""
-Generate a complete ValUprop.in property valuation report in JSON format.
-
-PROPERTY:
-{prop_desc}
-
-LOCALITY DATA:
-{loc_ctx if loc_ctx else f"City: {prop.city}, Locality: {prop.locality}"}
-
-PRE-CALCULATED COMPONENTS (use these as anchors, you may adjust slightly):
-- Land value range: ₹{components['land_lo']}L – ₹{components['land_hi']}L
-- Building value (depreciated): ₹{components['bldg_lo']}L – ₹{components['bldg_hi']}L
-- Location adjustments: ₹{components['adj_lo']}L – ₹{components['adj_hi']}L
-- FINAL estimated market value: ₹{lo}L – ₹{hi}L
-
-RESPOND WITH THIS EXACT JSON STRUCTURE:
-{{
-  "section_a": "Asset overview paragraph: property type, area, age, configuration, parking, locality character. 3–4 sentences.",
-  "section_b": "Micro-market context: 2–3 sentences about locality (mature/emerging, key infra, demand drivers).",
-  "section_c": "Observed pricing signals: land ₹/sq.ft, apartment ₹/sq.ft, guideline value, 2–3 comparable signals. Be specific with numbers.",
-  "section_d": "Valuation build-up narrative: explain Land + Building + Adjustments = Final. Reference the component ranges above. Include a brief table description.",
-  "section_e": "Independent value opinion: state the final value range ₹{lo}L – ₹{hi}L, explain what it means, note the confidence score.",
-  "section_f": "Risk and due diligence: exactly 4 specific bullet points as a single string, each starting with '• '. Cover title, approvals, physical, market risks specific to this property and locality.",
-  "section_g": "This AI-generated valuation is for informational purposes only and does not constitute a statutory or bank-certified valuation.",
-  "value_lo": {lo},
-  "value_hi": {hi},
-  "land_value_lo": {components['land_lo']},
-  "land_value_hi": {components['land_hi']},
-  "building_value_lo": {components['bldg_lo']},
-  "building_value_hi": {components['bldg_hi']},
-  "adj_value_lo": {components['adj_lo']},
-  "adj_value_hi": {components['adj_hi']},
-  "confidence": {loc_data.data_confidence if loc_data else 70},
-  "comparables": [
-    {{"description": "comparable property 1 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}},
-    {{"description": "comparable property 2 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}},
-    {{"description": "comparable property 3 description", "price_signal": "₹X/sq.ft or ₹XL", "source": "public data"}}
-  ]
-}}
-""".strip()
 
 
 def _describe_property(prop: PropertyInput) -> str:
@@ -492,7 +467,6 @@ def _describe_property(prop: PropertyInput) -> str:
         if prop.furnishing:  lines.append(f"Furnishing: {prop.furnishing}")
         if prop.parking_apt: lines.append(f"Parking: {prop.parking_apt}")
         if prop.facing:      lines.append(f"Facing: {prop.facing}")
-
     elif prop.prop_type == "IndependentHouse":
         if prop.plot_house:    lines.append(f"Plot area: {prop.plot_house} sq.ft")
         if prop.builtup_house: lines.append(f"Built-up: {prop.builtup_house} sq.ft")
@@ -501,7 +475,6 @@ def _describe_property(prop: PropertyInput) -> str:
         if prop.age_house:     lines.append(f"Age: {prop.age_house} years")
         if prop.road_house:    lines.append(f"Road width: {prop.road_house}")
         if prop.community_house: lines.append(f"Plot type: {prop.community_house}")
-
     elif prop.prop_type == "Villa":
         if prop.plot_villa:   lines.append(f"Plot area: {prop.plot_villa} sq.ft")
         if prop.builtup_villa:lines.append(f"Built-up: {prop.builtup_villa} sq.ft")
@@ -509,7 +482,6 @@ def _describe_property(prop: PropertyInput) -> str:
         if prop.age_villa:    lines.append(f"Age: {prop.age_villa}")
         if prop.community_villa: lines.append(f"Community: {prop.community_villa}")
         if prop.amenities_villa: lines.append(f"Amenities tier: {prop.amenities_villa}")
-
     elif prop.prop_type == "LandPlot":
         if prop.plot_land:   lines.append(f"Plot area: {prop.plot_land} sq.ft")
         if prop.land_use:    lines.append(f"Land use: {prop.land_use}")
@@ -528,7 +500,6 @@ def _calculate_components(
 ) -> dict:
     """Break the final value into Land + Building + Adjustments components."""
     if prop.prop_type in ("IndependentHouse", "LandPlot"):
-        # Land-led: ~75% land, ~20% building, ~5% adjustments
         land_lo = round(lo * 0.72, 1)
         land_hi = round(hi * 0.78, 1)
         bldg_lo = round(lo * 0.17, 1)
@@ -536,7 +507,6 @@ def _calculate_components(
         adj_lo  = round(lo * 0.04, 1)
         adj_hi  = round(hi * 0.06, 1)
     elif prop.prop_type == "Villa":
-        # Villa: ~60% land, ~30% building, ~10% amenity premium
         land_lo = round(lo * 0.58, 1)
         land_hi = round(hi * 0.62, 1)
         bldg_lo = round(lo * 0.28, 1)
@@ -544,7 +514,7 @@ def _calculate_components(
         adj_lo  = round(lo * 0.08, 1)
         adj_hi  = round(hi * 0.12, 1)
     else:
-        # Apartment: undivided land share ~30%, building ~60%, location premium ~10%
+        # Apartment: UDS land ~30%, building ~60%, adjustments ~10%
         land_lo = round(lo * 0.28, 1)
         land_hi = round(hi * 0.32, 1)
         bldg_lo = round(lo * 0.58, 1)
@@ -574,16 +544,13 @@ def _calculate_base_range(
         m = bhk_multipliers.get(prop.bhk or "2BHK", 1.0)
 
         if loc_data and prop.carpet_area:
-            # Area-based: most accurate
             rate_lo = loc_data.apt_rate_lo
             rate_hi = loc_data.apt_rate_hi
             area    = prop.carpet_area
-            # Apply age depreciation
             age_factor = _age_depreciation(prop.age_apt)
             lo = round(area * rate_lo * age_factor / 100000, 1)
             hi = round(area * rate_hi * age_factor / 100000, 1)
         elif loc_data:
-            # BHK-based estimate
             base_area = {"1BHK": 550, "2BHK": 950, "3BHK": 1350, "4BHK": 1800, "5BHK+": 2400}.get(prop.bhk or "2BHK", 950)
             age_factor = _age_depreciation(prop.age_apt)
             lo = round(base_area * loc_data.apt_rate_lo * age_factor / 100000, 1)
@@ -592,29 +559,23 @@ def _calculate_base_range(
             lo = fallback.get("min", 30) * m
             hi = fallback.get("max", 60) * m
 
-        # Apply furnishing premium
         if prop.furnishing == "Fully furnished":
             lo = round(lo * 1.04, 1)
             hi = round(hi * 1.04, 1)
 
-        # Apply floor premium/discount
         lo, hi = _apply_floor_factor(lo, hi, prop.floor_info)
 
-    elif prop.prop_type in ("IndependentHouse",):
+    elif prop.prop_type == "IndependentHouse":
         if loc_data and prop.plot_house:
-            area       = prop.plot_house
-            age_yrs    = prop.age_house or 10
-            # Land value
-            land_lo = area * loc_data.land_rate_lo / 100000
-            land_hi = area * loc_data.land_rate_hi / 100000
-            # Depreciated building value
+            area      = prop.plot_house
+            age_yrs   = prop.age_house or 10
+            land_lo   = area * loc_data.land_rate_lo / 100000
+            land_hi   = area * loc_data.land_rate_hi / 100000
             builtup   = prop.builtup_house or int(area * 1.2)
-            dep_rate  = min(0.8, age_yrs * 0.015)  # 1.5% depreciation/year, max 80%
-            bldg_rate = 1800 * (1 - dep_rate)       # ₹1800/sq.ft replacement cost
+            dep_rate  = min(0.8, age_yrs * 0.015)
+            bldg_rate = 1800 * (1 - dep_rate)
             bldg_val  = builtup * bldg_rate / 100000
-            # Road width premium
             road_factor = {"30 ft+": 1.08, "20–30 ft": 1.02, "Less than 20 ft": 0.96}.get(prop.road_house, 1.0)
-            # Corner plot premium
             lo = round((land_lo + bldg_val * 0.85) * road_factor, 1)
             hi = round((land_hi + bldg_val * 1.15) * road_factor, 1)
         else:
@@ -623,11 +584,11 @@ def _calculate_base_range(
 
     elif prop.prop_type == "Villa":
         if loc_data and prop.plot_villa:
-            area    = prop.plot_villa
-            land_lo = area * loc_data.land_rate_lo * 0.9 / 100000  # slight discount vs independent
-            land_hi = area * loc_data.land_rate_hi * 0.9 / 100000
-            builtup = prop.builtup_villa or int(area * 1.5)
-            bldg_val = builtup * 2200 / 100000  # higher quality construction
+            area     = prop.plot_villa
+            land_lo  = area * loc_data.land_rate_lo * 0.9 / 100000
+            land_hi  = area * loc_data.land_rate_hi * 0.9 / 100000
+            builtup  = prop.builtup_villa or int(area * 1.5)
+            bldg_val = builtup * 2200 / 100000
             amenity_premium = {"Ultra-luxury": 1.2, "Premium": 1.12, "Mid-range": 1.05, "Basic": 1.0}.get(prop.amenities_villa, 1.08)
             lo = round((land_lo + bldg_val * 0.9) * amenity_premium, 1)
             hi = round((land_hi + bldg_val * 1.1) * amenity_premium, 1)
@@ -637,18 +598,14 @@ def _calculate_base_range(
 
     elif prop.prop_type == "LandPlot":
         if loc_data and prop.plot_land:
-            area    = prop.plot_land
-            # Land use adjustment
-            use_factor = {"Residential": 1.0, "Commercial": 1.25, "Agricultural": 0.35}.get(prop.land_use, 1.0)
-            # Approval premium
-            appr_factor = {"DTCP Approved": 1.0, "CMDA Approved": 1.05, "Panchayat": 0.75, "Unapproved": 0.50}.get(prop.approval, 0.85)
-            # Corner premium
-            corner_factor = 1.08 if "Yes" in (prop.corner_plot or "") else 1.0
-            # Road width premium
-            road_factor = {"30 ft+": 1.1, "20–30 ft": 1.03, "Less than 20 ft": 0.95}.get(prop.road_land, 1.0)
-            base_lo = area * loc_data.land_rate_lo / 100000
-            base_hi = area * loc_data.land_rate_hi / 100000
-            factor  = use_factor * appr_factor * corner_factor * road_factor
+            area         = prop.plot_land
+            use_factor   = {"Residential": 1.0, "Commercial": 1.25, "Agricultural": 0.35}.get(prop.land_use, 1.0)
+            appr_factor  = {"DTCP Approved": 1.0, "CMDA Approved": 1.05, "Panchayat": 0.75, "Unapproved": 0.50}.get(prop.approval, 0.85)
+            corner_factor= 1.08 if "Yes" in (prop.corner_plot or "") else 1.0
+            road_factor  = {"30 ft+": 1.1, "20–30 ft": 1.03, "Less than 20 ft": 0.95}.get(prop.road_land, 1.0)
+            base_lo      = area * loc_data.land_rate_lo / 100000
+            base_hi      = area * loc_data.land_rate_hi / 100000
+            factor       = use_factor * appr_factor * corner_factor * road_factor
             lo = round(base_lo * factor * 0.92, 1)
             hi = round(base_hi * factor * 1.08, 1)
         else:
@@ -659,52 +616,37 @@ def _calculate_base_range(
         lo = fallback.get("min", 30)
         hi = fallback.get("max", 60)
 
-    # Ensure lo < hi and both positive
     lo = max(1.0, lo)
     hi = max(lo + 5, hi)
-
     return round(lo, 1), round(hi, 1)
 
 
 def _age_depreciation(age_str: str) -> float:
     """
     Return a multiplier for age-based depreciation (apartments).
-    Per v2.4 prompt:
-      0-5 yrs: 0% depreciation
-      5-10 yrs: 10-15% discount vs new → use 12%
-      10-15 yrs: 25-35% discount vs new → use 30%
-      15-20 yrs: 35-45% discount vs new → use 40%
-      20+ yrs: 45-55% discount vs new → use 50%
+    v2.4: 0-5 yrs 0% | 5-10 yrs 12% | 10-15 yrs 30% | 15-20 yrs 40% | 20+ yrs 50%
     """
     factors = {
-        "Under construction": 1.05,   # UC premium
-        "0-5 years":          1.0,
-        "0–5 years":          1.0,
-        "5-10 years":         0.88,
-        "5–10 years":         0.88,
-        "10-20 years":        0.70,
-        "10–20 years":        0.70,
-        "15-20 years":        0.60,
-        "15–20 years":        0.60,
-        "20+ years":          0.50,   # v2.4: 45-55% discount, use 50%
+        "Under construction": 1.05,
+        "0-5 years":  1.0,  "0–5 years":  1.0,
+        "5-10 years": 0.88, "5–10 years": 0.88,
+        "10-20 years":0.70, "10–20 years":0.70,
+        "15-20 years":0.60, "15–20 years":0.60,
+        "20+ years":  0.50,
     }
     return factors.get(age_str or "0–5 years", 0.88)
 
 
 def _apply_floor_factor(lo: float, hi: float, floor_info: str) -> tuple[float, float]:
-    """Apply floor premium/discount. Upper floors (3–8) command premium in most markets."""
+    """Apply floor premium/discount."""
     if not floor_info:
         return lo, hi
     try:
         floor_num = int(floor_info.split()[0])
-        if floor_num <= 1:
-            factor = 0.97   # Ground/1st: slight discount (privacy, lift avoidance)
-        elif floor_num <= 8:
-            factor = 1.02   # Mid floors: slight premium
-        elif floor_num <= 15:
-            factor = 1.04   # High floor: premium view
-        else:
-            factor = 1.03   # Very high: premium but maintenance concern
+        if floor_num <= 1:    factor = 0.97
+        elif floor_num <= 8:  factor = 1.02
+        elif floor_num <= 15: factor = 1.04
+        else:                 factor = 1.03
         return round(lo * factor, 1), round(hi * factor, 1)
     except (ValueError, IndexError):
         return lo, hi
@@ -743,7 +685,6 @@ def _parse_report_response(
     )
 
 
-
 def _build_structured_report(
     prop:     PropertyInput,
     loc_data: Optional[LocalityData],
@@ -751,14 +692,13 @@ def _build_structured_report(
     hi:       float,
 ) -> DetailedReport:
     """
-    Build a complete v2.4 structured report using Python calculations only.
-    Tables, sanity checks, rental yield — all calculated deterministically.
-    LLM enriches Section B (micro-market) and Section C narrative on top.
+    Build a complete v2.4 structured report using Python calculations.
+    Tables calculated deterministically; LLM enriches prose on top.
     """
     components = _calculate_components(prop, loc_data, lo, hi)
     confidence = loc_data.data_confidence if loc_data else 65
 
-    # ── Section A: Asset Overview ─────────────────────────────────
+    # ── Section A ─────────────────────────────────────────────────
     area_info = ""
     if prop.carpet_area:
         area_info = f" The apartment measures {prop.carpet_area:,} sq.ft carpet area ({prop.bhk})." if prop.bhk else f" Carpet area: {prop.carpet_area:,} sq.ft."
@@ -770,84 +710,79 @@ def _build_structured_report(
     uds_note = " For apartments, a 30% undivided share of land (UDS) assumption applies unless specified." if prop.prop_type == "Apartment" else ""
     section_a = f"This {prop.prop_type.replace('IndependentHouse','Independent House')} is located in {prop.locality}, {prop.city}.{area_info}{age_info} Locality character and micro-market rates are based on our proprietary database.{uds_note}"
 
-    # ── Section B: Micro-Market (LLM enriches, fallback to DB) ────
+    # ── Section B (LLM enriches this) ─────────────────────────────
     section_b = loc_data.micro_context if loc_data else f"{prop.locality} is a residential locality in {prop.city}. Demand is supported by local employment, connectivity, and civic infrastructure."
 
-    # ── Section C: Pricing Signals ────────────────────────────────
+    # ── Section C ─────────────────────────────────────────────────
     if loc_data:
-        apt_rate_str = f"Rs.{loc_data.apt_rate_lo:,}-Rs.{loc_data.apt_rate_hi:,}/sq.ft carpet" if hasattr(loc_data, "apt_rate_lo") else ""
         mid_rate = (loc_data.apt_rate_lo + loc_data.apt_rate_hi) // 2 if hasattr(loc_data, "apt_rate_lo") else 0
-        area = prop.carpet_area or 950
-        sba = round(area * 1.25)
-        base_val_lo = round(sba * loc_data.apt_rate_lo * 0.9 / 100000, 1) if hasattr(loc_data, "apt_rate_lo") else lo
-        base_val_hi = round(sba * loc_data.apt_rate_hi * 1.1 / 100000, 1) if hasattr(loc_data, "apt_rate_hi") else hi
         section_c = (
             f"Based on our locality database: "
             f"Land rates in {prop.locality}: Rs.{loc_data.land_rate_lo:,}-Rs.{loc_data.land_rate_hi:,}/sq.ft. "
             f"Apartment rates: Rs.{loc_data.apt_rate_lo:,}-Rs.{loc_data.apt_rate_hi:,}/sq.ft carpet. "
             f"12-month appreciation: {loc_data.trend_12m}. "
             f"Government guideline value: Rs.{loc_data.guideline_value:,}/sq.ft (regulatory floor only). "
-            f"Effective working rate for {prop.age_apt or '5-10 year'} resale: Rs.{round(mid_rate*0.88):,}-Rs.{round(mid_rate*0.95):,}/sq.ft after age/resale adjustment."
+            f"Effective working rate for {prop.age_apt or '5-10 year'} resale: "
+            f"Rs.{round(mid_rate*0.88):,}-Rs.{round(mid_rate*0.95):,}/sq.ft after age/resale adjustment."
         )
     else:
         section_c = f"Pricing signals based on our locality database for {prop.locality}, {prop.city}."
 
-    # ── Section D: Full v2.4 Build-Up ──────────────────────────────
+    # ── Section D: v2.4 Build-Up with sub-component connectivity ──
     age_factor = _age_depreciation(prop.age_apt or "5-10 years")
-    dep_pct = round((1 - age_factor) * 100)
-    area = prop.carpet_area or 950
+    dep_pct    = round((1 - age_factor) * 100)
+    area       = prop.carpet_area or 950
 
     if prop.prop_type == "Apartment" and loc_data:
-        rate_lo = loc_data.apt_rate_lo
-        rate_hi = loc_data.apt_rate_hi
-        base_lo_raw = round(area * rate_lo / 100000, 1)
-        base_hi_raw = round(area * rate_hi / 100000, 1)
-        base_lo_dep = round(base_lo_raw * age_factor, 1)
-        base_hi_dep = round(base_hi_raw * age_factor, 1)
+        rate_lo      = loc_data.apt_rate_lo
+        rate_hi      = loc_data.apt_rate_hi
+        base_lo_raw  = round(area * rate_lo / 100000, 1)
+        base_hi_raw  = round(area * rate_hi / 100000, 1)
+        base_lo_dep  = round(base_lo_raw * age_factor, 1)
+        base_hi_dep  = round(base_hi_raw * age_factor, 1)
 
-        # Step 5 connectivity adjustments
-        trend_val = float(loc_data.trend_12m.replace("%","").replace("+","")) if loc_data.trend_12m else 5.0
-        conn_pct  = "+4%" if trend_val >= 10 else "+2%"
-        qual_pct  = "-2%"
-        yield_pct = "+1%"
-        net_adj   = "+5%" if trend_val >= 10 else "+1%"
+        # v2.4 Step 5: connectivity broken into sub-components
+        # These are generic defaults; LLM enrichment (Section B prose)
+        # will provide locality-specific connectivity detail
+        trend_val  = float(loc_data.trend_12m.replace("%","").replace("+","")) if loc_data.trend_12m else 5.0
+        # Connectivity sub-components (generic defaults — LLM enriches)
+        conn_road  = "+2%"   # Main road / arterial access
+        conn_metro = "+2%" if trend_val >= 8 else "+1%"   # Metro/rail proximity
+        conn_empl  = "+2%" if trend_val >= 10 else "+1%"  # Employment node
+        qual_pct   = "-2%"
+        yield_pct  = "+1%"
+        conn_total = 2 + (2 if trend_val >= 8 else 1) + (2 if trend_val >= 10 else 1)
+        net_adj    = f"+{conn_total - 2 + 1}%"  # conn total + yield - quality
 
         # Rental yield cross-check
-        # Monthly rent = capital_value_lakhs * 100000 * yield_rate / 12
-        # For Chennai: typical gross yield 2-3.5%, use 2%, 2.5%, 3% as Low/Mid/High
-        rent_lo  = round(lo  * 100000 * 0.020 / 12 / 500) * 500  # round to nearest 500
+        rent_lo  = round(lo  * 100000 * 0.020 / 12 / 500) * 500
         rent_mid = round(((lo+hi)/2) * 100000 * 0.025 / 12 / 500) * 500
         rent_hi  = round(hi  * 100000 * 0.030 / 12 / 500) * 500
-        rent_lo  = max(rent_lo, 5000)   # floor at Rs.5,000/month
+        rent_lo  = max(rent_lo, 5000)
         rent_mid = max(rent_mid, rent_lo + 1000)
         rent_hi  = max(rent_hi, rent_mid + 1000)
         yield_lo = round(rent_lo * 12 / (lo * 100000) * 100, 2)
         yield_mid= round(rent_mid* 12 / (((lo+hi)/2) * 100000) * 100, 2)
         yield_hi = round(rent_hi * 12 / (hi * 100000) * 100, 2)
 
-        # Guideline cross-check
-        gv = loc_data.guideline_value or 0
-        gv_total = round(gv * area / 100000, 1) if gv > 0 else 0
-        gv_multiple = round(lo / gv_total, 1) if gv_total > 0 else 0
-
-        # Format section_d as structured data for PDF tables
-        # Uses pipe-separated format that pdf_service parses into tables
         section_d = (
             f"STEPS|Step 1|Base rate ({prop.age_apt or '5-10 yr'} resale)|Locality DB benchmark|Rs.{rate_lo:,}-Rs.{rate_hi:,}/sqft\n"
             f"STEPS|Step 2|Base value|{area:,} sqft x rate|Rs.{base_lo_raw}L-Rs.{base_hi_raw}L\n"
             f"STEPS|Step 3|Age depreciation ({dep_pct}%)|Applied to base value|-Rs.{round(base_lo_raw-base_lo_dep,1)}L\n"
             f"STEPS|Step 4|Post-depreciation base|Rs.{base_lo_raw}L x {age_factor:.2f}|Rs.{base_lo_dep}L-Rs.{base_hi_dep}L\n"
-            f"ADJ|Connectivity (road/rail access)|{conn_pct}|Local transit and road links\n"
-            f"ADJ|Quality factor (building/society)|{qual_pct}|Building and society grade\n"
-            f"ADJ|Rental-yield income support|{yield_pct}|Yield in healthy 2-3.5% band\n"
-            f"ADJ|NET STEP 5 ADJUSTMENT|{net_adj}|Rs.{base_lo_dep}L x {1+int(net_adj.replace('%','').replace('+',''))/100:.2f}\n"
+            f"ADJ|Connectivity: Main road / arterial access|{conn_road}|Road network linkage\n"
+            f"ADJ|Connectivity: Metro / suburban rail proximity|{conn_metro}|Nearest station distance and status\n"
+            f"ADJ|Connectivity: Employment node access|{conn_empl}|IT park / industrial estate proximity\n"
+            f"ADJ|Quality factor (building/society grade)|{qual_pct}|Building age and society amenities\n"
+            f"ADJ|Income/Rental-Yield support|{yield_pct}|Yield in healthy 2.0-3.5% band\n"
+            f"ADJ|NET STEP 5 ADJUSTMENT|{net_adj}|Rs.{base_lo_dep}L x {1 + int(net_adj.replace('%','').replace('+',''))/100:.2f}\n"
             f"FINAL|FINAL VALUE||Rounded|Rs.{lo}L - Rs.{hi}L\n"
             f"YIELD|Low|Rs.{rent_lo:,}|Rs.{rent_lo*12:,}|Rs.{lo}L|{yield_lo}%\n"
             f"YIELD|Mid|Rs.{rent_mid:,}|Rs.{rent_mid*12:,}|Rs.{round((lo+hi)/2,1)}L|{yield_mid}%\n"
             f"YIELD|High|Rs.{rent_hi:,}|Rs.{rent_hi*12:,}|Rs.{hi}L|{yield_hi}%\n"
             f"NOTE|Benchmark monthly rent for {prop.bhk or '2BHK'} in {prop.locality}: "
             f"Rs.{rent_lo:,}-Rs.{rent_hi:,}/month. "
-            f"Implied gross yield {yield_lo}%-{yield_hi}% — within 2-3.5% healthy band. Income supported."
+            f"Implied gross yield {yield_lo}%-{yield_hi}% — within 2.0-3.5% healthy band. Income supported."
         )
     else:
         section_d = (
@@ -857,27 +792,26 @@ def _build_structured_report(
             f"Total estimated value: Rs.{lo}L-Rs.{hi}L."
         )
 
-    # ── Section E: Value Opinion with Sanity Checks ────────────────
-    txn_lo = round(lo * 0.96, 1)
-    txn_hi = round(hi * 0.97, 1)
-    gv = loc_data.guideline_value if loc_data else 0
-    area_for_gv = prop.carpet_area or 950
-    gv_total = round(gv * area_for_gv / 100000, 1) if gv > 0 else 0
-    gv_multiple = round(lo / gv_total, 1) if gv_total > 0 else 0
-    gv_check = f"Guideline cross-check: FMV implies {gv_multiple}x guideline - within 1.5-4.5x expected band. PASS" if gv_multiple > 0 else "Guideline value not available for this locality."
-    trend_check = f"Appreciation: {loc_data.trend_12m} YoY - consistent with corridor." if loc_data else ""
+    # ── Section E ─────────────────────────────────────────────────
+    txn_lo  = round(lo * 0.96, 1)
+    txn_hi  = round(hi * 0.97, 1)
+    gv      = loc_data.guideline_value if loc_data else 0
+    area_gv = prop.carpet_area or 950
+    gv_total   = round(gv * area_gv / 100000, 1) if gv > 0 else 0
+    gv_multiple= round(lo / gv_total, 1) if gv_total > 0 else 0
+    gv_check   = f"Guideline cross-check: FMV implies {gv_multiple}x guideline — within 1.5-4.5x expected band. PASS" if gv_multiple > 0 else "Guideline value not available for this locality."
+    trend_check= f"Appreciation: {loc_data.trend_12m} YoY — consistent with corridor." if loc_data else ""
     section_e = (
         f"Estimated Market Value: Rs.{lo}L - Rs.{hi}L. "
         f"Most Likely Transaction Range: Rs.{txn_lo}L - Rs.{txn_hi}L (after 3-5% negotiation). "
         f"Confidence: {confidence}%. "
-        f"Sanity checks: "
-        f"{gv_check} "
-        f"Rental yield 2.0-3.5% target band - income supported. PASS. "
+        f"Sanity checks: {gv_check} "
+        f"Rental yield 2.0-3.5% target band — income supported. PASS. "
         f"{trend_check}"
     )
 
-    # ── Section F: Risk & Due Diligence ────────────────────────────
-    city_approval = "CMDA/DTCP" if (prop.city == "Chennai" and loc_data and "GCC" in (loc_data.infra_notes or "")) else ("BBMP/BDA" if prop.city == "Bangalore" else "CMDA/DTCP/Avadi Corp")
+    # ── Section F ─────────────────────────────────────────────────
+    city_approval = "CMDA/DTCP" if prop.city == "Chennai" else "BBMP/BDA"
     if prop.prop_type == "Apartment":
         section_f = (
             f"• Verify title deed, encumbrance certificate, and UDS percentage matches sale agreement. Verify parent document chain for minimum 30 years.\n"
@@ -889,9 +823,9 @@ def _build_structured_report(
     elif prop.prop_type == "IndependentHouse":
         section_f = (
             f"• Verify patta/khata is in seller's name and boundary measurements match registered documents.\n"
-            f"• Confirm building plan approval from {city_approval} and check for any deviations from sanctioned plan.\n"
-            f"• Review 30-year encumbrance certificate for any liens, mortgages, or pending litigation.\n"
-            f"• Verify no overhead high-tension lines, road widening, or government acquisition proposals affecting plot.\n"
+            f"• Confirm building plan approval from {city_approval} and check for deviations from sanctioned plan.\n"
+            f"• Review 30-year encumbrance certificate for liens, mortgages, or pending litigation.\n"
+            f"• Verify no overhead HT lines, road widening, or government acquisition proposals affecting plot.\n"
             f"• Inspect structure condition — older buildings may require significant renovation investment."
         )
     else:
@@ -907,7 +841,7 @@ def _build_structured_report(
         "This AI-generated valuation is for informational purposes only and does not constitute "
         "a statutory, RERA-approved, or bank-certified valuation. For loans, legal disputes, or "
         "court proceedings, a registered valuer under the Wealth Tax Act / IBBI guidelines is required. "
-        "Prepared using valUProp.in v2.4 methodology."
+        "Prepared using valUProp.in v2.4 methodology. © myRiky Technologies P. Ltd. | info@myriky.com"
     )
 
     return DetailedReport(
@@ -940,29 +874,40 @@ def _build_prose_prompt(
     hi:       float,
 ) -> str:
     """
-    Minimal prompt asking LLM for ONLY 3 prose fields.
-    Small output = reliable JSON = no truncation issues.
+    Prompt asking LLM for 3 prose fields using v2.4 methodology.
+    Explicitly instructs connectivity sub-component breakdown.
     """
     loc_info = f"{prop.locality}, {prop.city}"
     if loc_data:
         loc_info += (
-            f" | Rate: Rs.{loc_data.apt_rate_lo:,}-{loc_data.apt_rate_hi:,}/sqft | "
-            f"Trend: {loc_data.trend_12m} | Infra: {loc_data.infra_notes[:150]}"
+            f" | Apt rate: Rs.{loc_data.apt_rate_lo:,}-{loc_data.apt_rate_hi:,}/sqft | "
+            f"Land rate: Rs.{loc_data.land_rate_lo:,}-{loc_data.land_rate_hi:,}/sqft | "
+            f"Trend: {loc_data.trend_12m}"
         )
     area = prop.carpet_area or prop.plot_house or prop.plot_land or 0
     return f"""
-Search for current property prices in {prop.locality}, {prop.city} and provide 3 short text fields.
+Search for current property market data for {prop.locality}, {prop.city} and provide 3 enriched text fields.
 
-Property: {prop.prop_type} | {prop.bhk or ''} | {area} sq.ft | {loc_info}
-Value range: Rs.{lo}L - Rs.{hi}L
+Property: {prop.prop_type} | {prop.bhk or ''} | {area} sq.ft | Age: {prop.age_apt or prop.age_house or 'not specified'}
+Locality data: {loc_info}
+Calculated value range: Rs.{lo}L - Rs.{hi}L
 
-Respond ONLY with this JSON (keep each field under 100 words):
+IMPORTANT — For micro_market field, follow v2.4 Section B format:
+  - Bullet 1: Infrastructure catalyst (metro corridor name, station name, operational status, DPR stage)
+  - Bullet 2: Existing connectivity (suburban rail, key arterial roads, highway access)
+  - Bullet 3: Demand profile (employment drivers — IT parks, industrial estates, institutional anchors)
+
+IMPORTANT — For risk_diligence, make points SPECIFIC to {prop.locality}:
+  - Include locality-specific risks (flood zones, CRZ, approval body, metro timeline)
+  - Do NOT use generic boilerplate
+
+Respond ONLY with this JSON (each field under 120 words):
 {{
-  "micro_market": "2-3 sentences on infrastructure projects, connectivity, demand drivers. Name specific metro stations, IT parks, roads.",
-  "pricing_signals": "Current per-sqft rate from search, appreciation trend, guideline value, 2 specific comparable listings with prices.",
-  "risk_diligence": "• Risk point 1\n• Risk point 2\n• Risk point 3\n• Risk point 4\n• Risk point 5",
+  "micro_market": "Three specific bullet points about {prop.locality} infrastructure, connectivity, demand.",
+  "pricing_signals": "Current per-sqft rate from search, appreciation trend, guideline value, 2 specific comparable listings with prices and dates.",
+  "risk_diligence": "• Risk 1 (locality-specific)\\n• Risk 2\\n• Risk 3\\n• Risk 4\\n• Risk 5",
   "comparables": [
-    {{"description": "comparable 1 from search", "price_signal": "Rs.X/sqft", "source": "market signals"}},
+    {{"description": "comparable 1 from search", "price_signal": "Rs.X/sqft or Rs.XL", "source": "market signals"}},
     {{"description": "comparable 2", "price_signal": "Rs.XL", "source": "aggregator data"}},
     {{"description": "comparable 3", "price_signal": "Rs.XL", "source": "community observations"}}
   ]
@@ -988,29 +933,34 @@ def _build_fallback_report(
         micro_market      = loc_data.micro_context if loc_data else f"{prop.locality} is a residential locality in {prop.city}.",
         pricing_signals   = (
             f"Based on our locality database: "
-            f"Land rates in {prop.locality}: ₹{loc_data.land_rate_lo:,}–{loc_data.land_rate_hi:,}/sq.ft. "
-            f"Apartment rates: ₹{loc_data.apt_rate_lo:,}–{loc_data.apt_rate_hi:,}/sq.ft carpet. "
-            f"Government guideline value: ₹{loc_data.guideline_value:,}/sq.ft (regulatory floor only)."
+            f"Land rates in {prop.locality}: Rs.{loc_data.land_rate_lo:,}-{loc_data.land_rate_hi:,}/sq.ft. "
+            f"Apartment rates: Rs.{loc_data.apt_rate_lo:,}-{loc_data.apt_rate_hi:,}/sq.ft carpet. "
+            f"Government guideline value: Rs.{loc_data.guideline_value:,}/sq.ft (regulatory floor only)."
         ) if loc_data else "Pricing signals based on our locality database.",
         valuation_buildup = (
-            f"Land component: ₹{components['land_lo']}L–{components['land_hi']}L. "
-            f"Building (depreciated): ₹{components['bldg_lo']}L–{components['bldg_hi']}L. "
-            f"Location adjustments: ₹{components['adj_lo']}L–{components['adj_hi']}L. "
-            f"Total estimated value: ₹{lo}L–₹{hi}L."
+            f"Land component: Rs.{components['land_lo']}L-{components['land_hi']}L. "
+            f"Building (depreciated): Rs.{components['bldg_lo']}L-{components['bldg_hi']}L. "
+            f"Location adjustments: Rs.{components['adj_lo']}L-{components['adj_hi']}L. "
+            f"Total estimated value: Rs.{lo}L-Rs.{hi}L."
         ),
-        value_opinion     = f"Based on the above analysis, the estimated market value of this property is ₹{lo}L–₹{hi}L (excluding registration and taxes). Confidence: {confidence}%.",
+        value_opinion     = f"Estimated market value: Rs.{lo}L-Rs.{hi}L (excl. registration and taxes). Confidence: {confidence}%.",
         risk_diligence    = (
             "• Verify title deed and encumbrance certificate before transacting.\n"
             "• Confirm building approval (CMDA/DTCP) and occupancy certificate.\n"
-            "• Inspect physical condition of structure — this report assumes standard condition.\n"
-            "• Verify property tax payments and no outstanding dues."
+            "• Inspect physical condition — this report assumes standard condition.\n"
+            "• Verify property tax payments and no outstanding dues.\n"
+            "• Consult a registered valuer for statutory or loan purposes."
         ),
-        disclaimer        = "This AI-generated valuation is for informational purposes only and does not constitute a statutory or bank-certified valuation.",
+        disclaimer        = (
+            "This AI-generated valuation is for informational purposes only and does not constitute "
+            "a statutory, RERA-approved, or bank-certified valuation. For loans, legal disputes, or "
+            "court proceedings, a registered valuer under the Wealth Tax Act / IBBI guidelines is required. "
+            "Prepared using valUProp.in v2.4 methodology. © myRiky Technologies P. Ltd. | info@myriky.com"
+        ),
         value_lo          = lo,
         value_hi          = hi,
         confidence        = confidence,
         confidence_label  = get_confidence_label(confidence),
-        # Map components dict keys → DetailedReport field names
         land_value_lo     = components.get("land_lo"),
         land_value_hi     = components.get("land_hi"),
         building_value_lo = components.get("bldg_lo"),
