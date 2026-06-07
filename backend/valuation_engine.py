@@ -382,8 +382,40 @@ async def generate_detailed_report(
                     return v
             return None
 
+        # ── Post-processing helpers (applied regardless of LLM format) ───────
+        def _force_bullets(text: str, n: int = 3, max_words: int = 15) -> str:
+            """Reduce any text to n bullet lines, max_words each.
+            Filters out short 'header' lines (city names, numbers, etc.)."""
+            if not text:
+                return text
+            text = str(text)
+            # Split on newlines; also split embedded bullet markers
+            lines = re.split(r'\n|(?<=[a-z0-9])\s*•\s*', text)
+            # Filter: keep only lines with ≥12 chars (skip "Adyar", "8.5", etc.)
+            lines = [l.strip().lstrip("•-– ") for l in lines if len(l.strip()) >= 12]
+            if not lines:
+                return text[:200]
+            # Take first n, limit to max_words each
+            out = []
+            for l in lines[:n]:
+                words = l.split()
+                out.append("• " + " ".join(words[:max_words]))
+            return "\n".join(out)
+
+        def _force_sentences(text: str, n: int = 3, max_chars: int = 120) -> str:
+            """Reduce text to n short clauses (split on '; ' then '. ')."""
+            if not text:
+                return text
+            text = str(text)
+            parts = re.split(r';\s+', text)
+            if len(parts) < 2:
+                parts = re.split(r'\.\s+', text)
+            parts = [p.strip().rstrip(";.,") for p in parts if p.strip()]
+            return ". ".join(p[:max_chars] for p in parts[:n]) + "."
+
         mm_raw = _first(_MICRO_KEYS) or ""
         mm = _to_str(mm_raw)
+        mm = _force_bullets(mm, 3, 15)   # enforce 3-bullet format always
         print(f"[ENGINE] micro_market val={repr(mm[:120])}", flush=True)
         if mm and mm.strip():
             report.micro_market = mm
@@ -393,6 +425,7 @@ async def generate_detailed_report(
 
         ps_raw = _first(_PRICE_KEYS) or ""
         ps = _to_str(ps_raw)
+        ps = _force_sentences(ps, 3, 120)   # enforce 3-sentence format always
         print(f"[ENGINE] pricing_signals val={repr(ps[:120])}", flush=True)
         if ps and ps.strip():
             report.pricing_signals = ps
@@ -434,16 +467,13 @@ async def generate_detailed_report(
                     print(f"[ENGINE] step5_raw extracted inner list len={len(step5_raw)}", flush=True)
                 else:
                     # Convert dict keys/values into synthetic connectivity items.
-                    # Extract just the first +/-% token for "factor"; keep "applied" short.
                     def _pct_from(text):
                         m = re.search(r'([+-]?\d+(?:\.\d+)?%)', str(text))
                         return m.group(1) if m else "+0%"
                     def _short_note(text):
-                        text = str(text)
-                        m = re.match(r'([^.!?\n]{10,120}[.!?])', text)
-                        if m:
-                            return m.group(1).strip()
-                        return text[:100] + ("…" if len(text) > 100 else "")
+                        # Max 6 words only — no long sentences in table cells
+                        tokens = re.split(r'\s+', re.sub(r'[;:,]', ' ', str(text).strip()))
+                        return " ".join(t for t in tokens if t)[:6 * 15][:40]
                     step5_raw = [
                         {"label": str(k).replace("_", " ").title(),
                          "factor": _pct_from(v),
@@ -455,7 +485,28 @@ async def generate_detailed_report(
                         step5_raw = None
                     print(f"[ENGINE] step5_raw dict converted to list len={len(step5_raw) if step5_raw else 0}", flush=True)
             if step5_raw and isinstance(step5_raw, list):
-                print(f"[ENGINE] applying step5 connectivity, {len(step5_raw)} adjustments", flush=True)
+                # ── Sanity guards on step5 list ──────────────────────────────
+                # 1. Truncate applied text to max 6 words for each item
+                def _short_note_6w(text):
+                    tokens = re.split(r'\s+', re.sub(r'[;:,]', ' ', str(text).strip()))
+                    return " ".join(t for t in tokens if t)[:40]
+                for item in step5_raw:
+                    if isinstance(item, dict):
+                        item["applied"] = _short_note_6w(item.get("applied", ""))
+                # 2. Cap to max 4 items (LLM sometimes returns 8+)
+                step5_raw = step5_raw[:4]
+                # 3. If ALL factors are negative, the LLM returned "downside only"
+                #    adjustments — skip them (default connectivity labels are better)
+                factors_sum = sum(
+                    int(str(i.get("factor", "0")).replace("%", "").replace("+", "") or 0)
+                    for i in step5_raw if isinstance(i, dict)
+                )
+                if factors_sum < -10:
+                    print(f"[ENGINE] step5 all-negative ({factors_sum}%) — skipping LLM step5", flush=True)
+                    step5_raw = None
+                else:
+                    print(f"[ENGINE] applying step5 connectivity, {len(step5_raw)} adjustments, net={factors_sum}%", flush=True)
+            if step5_raw and isinstance(step5_raw, list):
                 report.valuation_buildup = _apply_step5_connectivity(
                     report.valuation_buildup, step5_raw
                 )
