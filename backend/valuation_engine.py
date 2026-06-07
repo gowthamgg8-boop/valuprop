@@ -340,6 +340,12 @@ async def generate_detailed_report(
         )
         prose = parse_json_response(raw)
         prose = validate_report_dict(prose)
+        # ── DEBUG: log what the LLM actually returned ─────────────
+        print(f"[ENGINE] prose keys: {list(prose.keys())}", flush=True)
+        print(f"[ENGINE] micro_market type={type(prose.get('micro_market')).__name__} val={repr(str(prose.get('micro_market',''))[:150])}", flush=True)
+        print(f"[ENGINE] risk_diligence type={type(prose.get('risk_diligence')).__name__} val={repr(str(prose.get('risk_diligence',''))[:150])}", flush=True)
+        print(f"[ENGINE] pricing_signals type={type(prose.get('pricing_signals')).__name__} val={repr(str(prose.get('pricing_signals',''))[:150])}", flush=True)
+        # ─────────────────────────────────────────────────────────
         def _to_str(val):
             """Coerce LLM value to string — LLM sometimes returns a list instead of a string."""
             if isinstance(val, list):
@@ -349,12 +355,27 @@ async def generate_detailed_report(
                 )
             return str(val) if val is not None else ""
 
-        if prose.get("micro_market"):
-            report.micro_market = _to_str(prose["micro_market"])
-        if prose.get("pricing_signals"):
-            report.pricing_signals = _to_str(prose["pricing_signals"])
-        if prose.get("risk_diligence"):
-            report.risk_diligence = _to_str(prose["risk_diligence"])
+        mm = _to_str(prose.get("micro_market") or "")
+        if mm and mm.strip():
+            report.micro_market = mm
+            print(f"[ENGINE] micro_market UPDATED ({len(mm)} chars)", flush=True)
+        else:
+            print(f"[ENGINE] micro_market SKIPPED (empty/falsy)", flush=True)
+
+        ps = _to_str(prose.get("pricing_signals") or "")
+        if ps and ps.strip():
+            report.pricing_signals = ps
+            print(f"[ENGINE] pricing_signals UPDATED ({len(ps)} chars)", flush=True)
+        else:
+            print(f"[ENGINE] pricing_signals SKIPPED (empty/falsy)", flush=True)
+
+        rd = _to_str(prose.get("risk_diligence") or "")
+        if rd and rd.strip():
+            report.risk_diligence = rd
+            print(f"[ENGINE] risk_diligence UPDATED ({len(rd)} chars)", flush=True)
+        else:
+            print(f"[ENGINE] risk_diligence SKIPPED (empty/falsy)", flush=True)
+
         if prose.get("comparables"):
             report.comparables = prose["comparables"]
         # ── Apply LLM-enriched Step 5 connectivity labels ─────────
