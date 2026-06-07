@@ -422,7 +422,7 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                 _strip    = "•- "
                 risk_text = "<br/>".join(
                     f"• {_tc(r.lstrip(_strip), 300)}"
-                    for r in risks[:12] if r.strip()
+                    for r in risks[:5] if r.strip()
                 )
                 # Use Paragraph (not single-row Table) so content can flow across pages
                 sec_items.append(Paragraph(risk_text, sCont))

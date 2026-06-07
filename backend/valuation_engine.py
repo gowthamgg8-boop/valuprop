@@ -471,9 +471,9 @@ async def generate_detailed_report(
                         m = re.search(r'([+-]?\d+(?:\.\d+)?%)', str(text))
                         return m.group(1) if m else "+0%"
                     def _short_note(text):
-                        # Max 6 words only — no long sentences in table cells
+                        # Max 6 whole words — slice tokens not chars to avoid mid-word cuts
                         tokens = re.split(r'\s+', re.sub(r'[;:,]', ' ', str(text).strip()))
-                        return " ".join(t for t in tokens if t)[:6 * 15][:40]
+                        return " ".join(t for t in tokens if t)[:6]
                     step5_raw = [
                         {"label": str(k).replace("_", " ").title(),
                          "factor": _pct_from(v),
@@ -486,14 +486,20 @@ async def generate_detailed_report(
                     print(f"[ENGINE] step5_raw dict converted to list len={len(step5_raw) if step5_raw else 0}", flush=True)
             if step5_raw and isinstance(step5_raw, list):
                 # ── Sanity guards on step5 list ──────────────────────────────
-                # 1. Truncate applied text to max 6 words for each item
+                # 1. Drop +0% items — informational rows, not real adjustments
+                step5_raw = [
+                    i for i in step5_raw
+                    if isinstance(i, dict) and
+                       str(i.get("factor", "+0%")).replace("+", "").replace("%", "").strip() not in ("0", "0.0", "")
+                ]
+                # 2. Truncate applied text to max 6 whole words (no mid-word cuts)
                 def _short_note_6w(text):
                     tokens = re.split(r'\s+', re.sub(r'[;:,]', ' ', str(text).strip()))
-                    return " ".join(t for t in tokens if t)[:40]
+                    return " ".join(t for t in tokens if t)[:6]
                 for item in step5_raw:
                     if isinstance(item, dict):
                         item["applied"] = _short_note_6w(item.get("applied", ""))
-                # 2. Cap to max 4 items (LLM sometimes returns 8+)
+                # 3. Cap to max 4 items (LLM sometimes returns 8+)
                 step5_raw = step5_raw[:4]
                 # 3. If ALL factors are negative, the LLM returned "downside only"
                 #    adjustments — skip them (default connectivity labels are better)
