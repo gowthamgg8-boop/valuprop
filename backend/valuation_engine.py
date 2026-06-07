@@ -314,7 +314,7 @@ async def generate_detailed_report(
         raw = await call_llm_with_search(
             VALUPROP_SYSTEM_PROMPT_WITH_SEARCH,
             prose_prompt,
-            max_tokens   = 4500,
+            max_tokens   = 8000,
             max_searches = 5,
             expect_json  = True,
         )
@@ -324,12 +324,25 @@ async def generate_detailed_report(
         print(f"[ENGINE] prose keys: {list(prose.keys())}", flush=True)
         # ─────────────────────────────────────────────────────────
         def _to_str(val):
-            """Coerce LLM value to string — LLM sometimes returns a list instead of a string."""
+            """Coerce LLM value to string — handles str, list, or nested dict."""
             if isinstance(val, list):
                 return "\n".join(
                     str(item) if str(item).startswith(("•", "*", "-")) else f"• {item}"
                     for item in val
                 )
+            if isinstance(val, dict):
+                # LLM returned nested object — extract the most useful string fields
+                # Common patterns: {overview: ..., demand_drivers: ...} or {summary: ..., details: ...}
+                parts = []
+                for k in ("overview", "summary", "description", "context", "analysis",
+                          "demand_drivers", "highlights", "details", "points", "notes"):
+                    v = val.get(k)
+                    if v:
+                        parts.append(_to_str(v))
+                if parts:
+                    return "\n".join(parts)
+                # Fallback: join all string values
+                return "\n".join(_to_str(v) for v in val.values() if v)
             return str(val) if val is not None else ""
 
         # ── Normalise whatever keys the LLM returned → our 5 keys ──
