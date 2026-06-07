@@ -457,6 +457,17 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
     # ── COMPARABLES ──────────────────────────────────────────────
     comps = comps[:3]   # always cap at 3 regardless of LLM output
     if comps:
+        _PORTAL_RE = re.compile(
+            r'\b(NoBroker|99acres|MagicBricks|Housing\.com|Housing|PropTiger|'
+            r'Square\s*Yards|Squareyards|CommonFloor|Makaan|Sulekha|JustDial)\b',
+            re.IGNORECASE
+        )
+        def _clean_source(src: str) -> str:
+            """Strip third-party portal names; keep date/locality info."""
+            src = _PORTAL_RE.sub("", str(src)).strip("/,. ")
+            src = re.sub(r'\s{2,}', ' ', src).strip()
+            return src or "Market data"
+
         def _comp_fields(c):
             """Extract (desc, signal, source) from a comparable dict using flexible key lookup."""
             if isinstance(c, str):
@@ -485,10 +496,10 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                 signal = (c.get("price_signal") or c.get("total_price") or
                           c.get("price")         or c.get("rate")        or
                           c.get("pricing")       or c.get("value")       or "")
-            # Source
+            # Source — strip portal names
             source = (c.get("source")   or c.get("portal")    or
                       c.get("area")     or c.get("reference")  or "")
-            return str(desc), str(signal), str(source)
+            return str(desc), str(signal), _clean_source(source)
 
         sCs = S("cs", fontSize=9, leading=14, textColor=C_BLUE, fontName="Helvetica-Bold")
         hdr_row = [Paragraph("Property", sBo),
@@ -579,6 +590,13 @@ def _build_html(report: dict, area: dict, val_id: int) -> str:
             signal = (c.get("price_signal") or c.get("total_price") or
                       c.get("price") or c.get("rate") or "")
         source = (c.get("source") or c.get("portal") or c.get("area") or "")
+        _pr = re.compile(
+            r'\b(NoBroker|99acres|MagicBricks|Housing\.com|Housing|PropTiger|'
+            r'Square\s*Yards|Squareyards|CommonFloor|Makaan|Sulekha|JustDial)\b',
+            re.IGNORECASE
+        )
+        source = _pr.sub("", str(source)).strip("/,. ")
+        source = re.sub(r'\s{2,}', ' ', source).strip() or "Market data"
         return str(desc), str(signal), str(source)
 
     comp_html = ""

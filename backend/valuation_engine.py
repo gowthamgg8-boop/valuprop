@@ -403,25 +403,41 @@ async def generate_detailed_report(
             return "\n".join(out)
 
         def _force_sentences(text: str, n: int = 3, max_chars: int = 120) -> str:
-            """Reduce text to n short clauses (split on '; ' then '. ')."""
+            """Reduce text to n short clauses. Handles newline-separated data dumps."""
             if not text:
                 return text
             text = str(text)
+            # Try '; ' first, then '. ', then '\n'
             parts = re.split(r';\s+', text)
             if len(parts) < 2:
                 parts = re.split(r'\.\s+', text)
-            parts = [p.strip().rstrip(";.,") for p in parts if p.strip()]
+            if len(parts) < 2:
+                parts = text.split('\n')
+            # Filter: keep only lines ≥ 20 chars that look like narrative (contain a letter word)
+            parts = [
+                p.strip().rstrip(";.,")
+                for p in parts
+                if len(p.strip()) >= 20 and re.search(r'[a-zA-Z]{3,}', p)
+            ]
+            if not parts:
+                # Last resort: take first max_chars*n chars as one sentence
+                return text[:max_chars] + "."
             return ". ".join(p[:max_chars] for p in parts[:n]) + "."
 
         mm_raw = _first(_MICRO_KEYS) or ""
         mm = _to_str(mm_raw)
-        mm = _force_bullets(mm, 3, 15)   # enforce 3-bullet format always
+        mm_bullets = _force_bullets(mm, 3, 15)
+        # Only override if we got at least 2 bullets — otherwise LLM returned
+        # a single-sentence description which looks bad as a bullet section
+        if mm_bullets.count('•') >= 2:
+            mm = mm_bullets
+            print(f"[ENGINE] micro_market UPDATED ({len(mm)} chars)", flush=True)
+        else:
+            mm = ""   # keep the engine-generated section_b
+            print(f"[ENGINE] micro_market SKIPPED — only {mm_bullets.count('•')} bullet(s) from LLM", flush=True)
         print(f"[ENGINE] micro_market val={repr(mm[:120])}", flush=True)
         if mm and mm.strip():
             report.micro_market = mm
-            print(f"[ENGINE] micro_market UPDATED ({len(mm)} chars)", flush=True)
-        else:
-            print(f"[ENGINE] micro_market SKIPPED (empty)", flush=True)
 
         ps_raw = _first(_PRICE_KEYS) or ""
         ps = _to_str(ps_raw)
@@ -471,9 +487,9 @@ async def generate_detailed_report(
                         m = re.search(r'([+-]?\d+(?:\.\d+)?%)', str(text))
                         return m.group(1) if m else "+0%"
                     def _short_note(text):
-                        # Max 6 whole words — slice tokens not chars to avoid mid-word cuts
+                        # Max 6 whole words — slice the token LIST, not the joined string
                         tokens = re.split(r'\s+', re.sub(r'[;:,]', ' ', str(text).strip()))
-                        return " ".join(t for t in tokens if t)[:6]
+                        return " ".join([t for t in tokens if t][:6])
                     step5_raw = [
                         {"label": str(k).replace("_", " ").title(),
                          "factor": _pct_from(v),
@@ -494,8 +510,9 @@ async def generate_detailed_report(
                 ]
                 # 2. Truncate applied text to max 6 whole words (no mid-word cuts)
                 def _short_note_6w(text):
+                    # Slice the token LIST (not the joined string) to get max 6 WORDS
                     tokens = re.split(r'\s+', re.sub(r'[;:,]', ' ', str(text).strip()))
-                    return " ".join(t for t in tokens if t)[:6]
+                    return " ".join([t for t in tokens if t][:6])
                 for item in step5_raw:
                     if isinstance(item, dict):
                         item["applied"] = _short_note_6w(item.get("applied", ""))
@@ -1046,14 +1063,14 @@ Value range: Rs.{lo}L - Rs.{hi}L
 "step5_adjustments": EXACTLY 4 objects. "factor" = percent string only. "applied" = max 6 words. NO sentences.
 [{{"label":"[label1]","factor":"+2%","applied":"[4-6 words]"}},{{"label":"[label2]","factor":"+1%","applied":"[4-6 words]"}},{{"label":"[label3]","factor":"-1%","applied":"[4-6 words]"}},{{"label":"[label4]","factor":"+1%","applied":"[4-6 words]"}}]
 
-"pricing_signals": EXACTLY 3 sentences. Max 25 words each. Total under 75 words. No semicolons or lists.
-Sentence 1: rate range Rs.X,XXX-X,XXX/sqft (cite source portal).
+"pricing_signals": EXACTLY 3 sentences. Max 25 words each. Total under 75 words. No semicolons or lists. Do NOT mention any portal or website name.
+Sentence 1: current rate range Rs.X,XXX-X,XXX/sqft in {prop.locality}.
 Sentence 2: X% appreciation in 12 months (rising/flat/declining trend).
 Sentence 3: one specific buyer tip for {prop.locality}.
 
 "comparables": MUST be a JSON array (NOT a string). EXACTLY 3 objects with keys "description", "price_signal", "source".
-"description" = project name + config, max 8 words. "price_signal" = rate or price. "source" = portal name only.
-[{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.X,XXX/sqft","source":"99acres"}},{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"MagicBricks"}},{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Housing"}}]
+"description" = project name + config, max 8 words. "price_signal" = rate or price. "source" = month and year only (e.g. "May 2026"). Do NOT include any portal or website name in "source".
+[{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.X,XXX/sqft","source":"May 2026"}},{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Jun 2026"}},{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Jun 2026"}}]
 
 JSON:""".strip()
 def _build_fallback_report(
