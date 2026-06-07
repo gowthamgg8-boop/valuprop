@@ -4,7 +4,7 @@
  */
 
 const BACKEND_URL = window.BACKEND_URL || 'https://valuprop-api.onrender.com';
-const MAX_POLLS   = 60;
+const MAX_POLLS   = 90;   // 90 × 3 s = 270 s (4.5 min) max wait
 let   pollCount   = 0;
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -23,8 +23,8 @@ async function pollForReport(valuation_id) {
     if (resp.status === 401 || resp.status === 403) { showError('Access denied. Please email info@myriky.com with ref: VUP-' + valuation_id); return; }
     if (data.status === 'pending') {
       pollCount++;
-      if (pollCount >= MAX_POLLS) { showError('Report taking longer than expected. Email info@myriky.com ref: VUP-' + valuation_id); return; }
-      setTimeout(() => pollForReport(valuation_id), 2000); return;
+      if (pollCount >= MAX_POLLS) { showError('Report taking longer than expected. Please email info@myriky.com with ref: VUP-' + valuation_id); return; }
+      setTimeout(() => pollForReport(valuation_id), 3000); return;
     }
     if (data.status === 'error') { showError(data.message || 'Report failed. Contact info@myriky.com'); return; }
     if (data.status === 'ready') { renderReport(data.report, data.value_min, data.value_max, data.confidence, valuation_id); }
