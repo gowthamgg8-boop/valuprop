@@ -81,7 +81,7 @@ def _normalise(report_data: dict) -> dict:
         "value_min":       report_data.get("value_lo", 0),
         "value_max":       report_data.get("value_hi", 0),
         "confidence_score": report_data.get("confidence", 70),
-        "comparables":     report_data.get("comparables", []) if isinstance(report_data.get("comparables"), list) else [],
+        "comparables":     (report_data.get("comparables", []) if isinstance(report_data.get("comparables"), list) else [])[:3],
     }
 
 def _fmt_range(lo, hi, prefix="Rs.", suffix="L") -> str:
@@ -455,31 +455,54 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
         story.append(Spacer(1, 4))
 
     # ── COMPARABLES ──────────────────────────────────────────────
+    comps = comps[:3]   # always cap at 3 regardless of LLM output
     if comps:
-        comp_rows = [[Paragraph("Property", sBo),
-                      Paragraph("Price Signal", sBo),
-                      Paragraph("Source", sBo)]]
-        for c in comps:
+        def _comp_fields(c):
+            """Extract (desc, signal, source) from a comparable dict using flexible key lookup."""
             if isinstance(c, str):
-                # Handle plain-string comparables
-                comp_rows.append([Paragraph(c, sN), Paragraph("", sN), Paragraph("", sMu)])
-                continue
-            # Try multiple key variants the LLM may return
-            desc   = (c.get("description") or c.get("property") or
-                      c.get("address")     or c.get("project")  or
-                      c.get("name")        or str(c))
-            signal = (c.get("price_signal") or c.get("price")   or
-                      c.get("rate")         or c.get("pricing") or
-                      c.get("value")        or "")
-            source = (c.get("source")   or c.get("location") or
-                      c.get("area")     or c.get("reference") or "")
-            comp_rows.append([
-                Paragraph(_tc(desc,   250), sN),
-                Paragraph(_tc(signal,  80), S("cs", fontSize=9, leading=14,
-                                              textColor=C_BLUE, fontName="Helvetica-Bold")),
+                return c, "", ""
+            # Description: prefer structured build over raw str(c)
+            project = (c.get("description") or c.get("project_name") or
+                       c.get("property")    or c.get("address")      or
+                       c.get("project")     or c.get("name"))
+            if project:
+                config = c.get("configuration") or c.get("bhk") or ""
+                size   = c.get("size_sqft") or c.get("area_sqft") or ""
+                parts  = [str(project)]
+                if config: parts.append(str(config))
+                if size:   parts.append(f"{size} sqft")
+                desc = " ".join(parts)
+            else:
+                desc = str(c)   # last resort — raw dict repr
+            # Price signal: prefer per-sqft rate, then total price
+            ppsf = c.get("price_per_sqft") or c.get("rate_per_sqft")
+            if ppsf:
+                try:
+                    signal = f"Rs.{int(ppsf):,}/sqft"
+                except Exception:
+                    signal = str(ppsf)
+            else:
+                signal = (c.get("price_signal") or c.get("total_price") or
+                          c.get("price")         or c.get("rate")        or
+                          c.get("pricing")       or c.get("value")       or "")
+            # Source
+            source = (c.get("source")   or c.get("portal")    or
+                      c.get("area")     or c.get("reference")  or "")
+            return str(desc), str(signal), str(source)
+
+        sCs = S("cs", fontSize=9, leading=14, textColor=C_BLUE, fontName="Helvetica-Bold")
+        hdr_row = [Paragraph("Property", sBo),
+                   Paragraph("Price Signal", sBo),
+                   Paragraph("Source", sBo)]
+        data_rows = []
+        for c in comps:
+            desc, signal, source = _comp_fields(c)
+            data_rows.append([
+                Paragraph(_tc(desc,   200), sN),
+                Paragraph(_tc(signal,  80), sCs),
                 Paragraph(_tc(source,  80), sMu),
             ])
-        ct = Table(comp_rows, colWidths=[W*0.5, W*0.28, W*0.22])
+        ct = Table([hdr_row] + data_rows, colWidths=[W*0.5, W*0.28, W*0.22])
         ct.setStyle(TableStyle([
             ("BACKGROUND",(0,0),(-1,0),C_BG),
             ("LINEBELOW",(0,0),(-1,0),1.5,C_BORDER),
@@ -487,7 +510,8 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
             ("LEFTPADDING",(0,0),(-1,-1),8),("RIGHTPADDING",(0,0),(-1,-1),8),
             ("TOPPADDING",(0,0),(-1,-1),5),("BOTTOMPADDING",(0,0),(-1,-1),5),
         ]))
-        story.append(ct)
+        # KeepTogether prevents the header row from stranding on its own page
+        story.append(KeepTogether([ct]))
         story.append(Spacer(1, 8))
 
     # ── FOOTER NOTE ──────────────────────────────────────────────
@@ -526,19 +550,44 @@ def _build_html(report: dict, area: dict, val_id: int) -> str:
     conf_label  = "Good" if conf >= 80 else ("Moderate" if conf >= 60 else "Low — Consult a Professional")
     sections    = report.get("sections", {})
     _comps_raw  = report.get("comparables", [])
-    comparables = _comps_raw if isinstance(_comps_raw, list) else []
+    comparables = (_comps_raw if isinstance(_comps_raw, list) else [])[:3]
 
     sec_html = ""
     for letter in ["A","B","C","D","E","F","G"]:
         sec_html += _render_section(letter, sections.get(letter, {}))
 
+    def _html_comp_fields(c):
+        if isinstance(c, str):
+            return c, "", ""
+        project = (c.get("description") or c.get("project_name") or
+                   c.get("property")    or c.get("address")      or
+                   c.get("project")     or c.get("name") or "")
+        if project:
+            config = c.get("configuration") or c.get("bhk") or ""
+            size   = c.get("size_sqft") or c.get("area_sqft") or ""
+            parts  = [str(project)]
+            if config: parts.append(str(config))
+            if size:   parts.append(f"{size} sqft")
+            desc = " ".join(parts)
+        else:
+            desc = ""
+        ppsf = c.get("price_per_sqft") or c.get("rate_per_sqft")
+        if ppsf:
+            try:    signal = f"Rs.{int(ppsf):,}/sqft"
+            except: signal = str(ppsf)
+        else:
+            signal = (c.get("price_signal") or c.get("total_price") or
+                      c.get("price") or c.get("rate") or "")
+        source = (c.get("source") or c.get("portal") or c.get("area") or "")
+        return str(desc), str(signal), str(source)
+
     comp_html = ""
     if comparables:
         rows = "".join(
             f"""<tr>
-                  <td class="comp-desc">{c.get('description','')}</td>
-                  <td class="comp-signal">{c.get('price_signal','')}</td>
-                  <td class="comp-source">{c.get('source','')}</td>
+                  <td class="comp-desc">{_html_comp_fields(c)[0]}</td>
+                  <td class="comp-signal">{_html_comp_fields(c)[1]}</td>
+                  <td class="comp-source">{_html_comp_fields(c)[2]}</td>
                 </tr>"""
             for c in comparables
         )
