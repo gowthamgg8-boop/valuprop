@@ -424,6 +424,23 @@ async def generate_detailed_report(
                 except Exception:
                     step5_raw = None
                     print(f"[ENGINE] step5_raw string could not be parsed as JSON list — skipping", flush=True)
+            if step5_raw and isinstance(step5_raw, dict):
+                # LLM returned a single-object dict instead of a list — wrap it
+                # Try to extract any connectivity-like sub-lists first
+                inner = next((v for v in step5_raw.values() if isinstance(v, list)), None)
+                if inner:
+                    step5_raw = inner
+                    print(f"[ENGINE] step5_raw extracted inner list len={len(step5_raw)}", flush=True)
+                else:
+                    # Convert dict keys/values into synthetic connectivity items
+                    step5_raw = [
+                        {"label": str(k).replace("_", " ").title(), "factor": str(v) if "%" in str(v) else "+1%", "applied": str(v)}
+                        for k, v in step5_raw.items()
+                        if k not in ("location_premium", "location_justification")
+                    ]
+                    if not step5_raw:
+                        step5_raw = None
+                    print(f"[ENGINE] step5_raw dict converted to list len={len(step5_raw) if step5_raw else 0}", flush=True)
             if step5_raw and isinstance(step5_raw, list):
                 print(f"[ENGINE] applying step5 connectivity, {len(step5_raw)} adjustments", flush=True)
                 report.valuation_buildup = _apply_step5_connectivity(
@@ -945,7 +962,9 @@ Field specifications:
 
 "risk_diligence": string with 5 specific due diligence bullets for {prop.locality} — cover CRZ/flood risk, approval body (CMDA/DTCP/Avadi Corp etc), OC certificate issues, road widening proposals, loan eligibility risks.
 
-"step5_adjustments": array of 4 objects each with keys "label", "factor", "applied" — covering the main corridor, metro/rail station, main road, and employment node for {prop.locality}.
+"step5_adjustments": MUST be a JSON array of exactly 4 objects. Each object has exactly 3 keys: "label", "factor", "applied". Example for {prop.locality}:
+[{{"label":"NH-716 corridor influence","factor":"+2%","applied":"Property on NH-716 arterial"}},{{"label":"Avadi MRTS/suburban rail station","factor":"+1%","applied":"2.5 km to nearest station"}},{{"label":"Poonamallee High Road frontage","factor":"+1%","applied":"Main arterial road access"}},{{"label":"TIDEL Park / HVF employment node","factor":"+2%","applied":"1.5 km to employment hub"}}]
+Replace label/factor/applied values with actual data for {prop.locality}. Do NOT return a dict — must be an array.
 
 "pricing_signals": string with current apartment rates per sqft, 12-month appreciation trend, guideline/circle rate for {prop.locality}.
 
