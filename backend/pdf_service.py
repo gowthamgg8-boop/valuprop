@@ -1,33 +1,25 @@
 """
 valUProp.in — PDF Generation Service
 backend/pdf_service.py
-
 Generates a branded PDF report using ReportLab (pure Python, no system deps).
 Falls back to WeasyPrint if available.
-
 INSTALL:
   pip install reportlab
 """
-
 import io
 import logging
 from datetime import datetime
 from typing import Optional
-
 logger = logging.getLogger("valuprop.pdf")
-
 BRAND_BLUE   = "#1B3F6E"
 BRAND_ACCENT = "#D95F2B"
 BRAND_GOLD   = "#C49A3C"
 SUCCESS      = "#1A7A4A"
 WARNING      = "#D97706"
 DANGER       = "#B91C1C"
-
-
 # ═══════════════════════════════════════════════════════════════════
 # NORMALISE — map DetailedReport dict → pdf_service expected shape
 # ═══════════════════════════════════════════════════════════════════
-
 def _normalise(report_data: dict) -> dict:
     """
     DetailedReport (from valuation_engine.asdict) uses flat field names.
@@ -75,7 +67,6 @@ def _normalise(report_data: dict) -> dict:
         },
         "G": {"title": "Important Disclaimer", "content": report_data.get("disclaimer", "")},
     }
-
     return {
         "sections":        sections,
         "value_min":       report_data.get("value_lo", 0),
@@ -84,17 +75,14 @@ def _normalise(report_data: dict) -> dict:
         "comparables":     report_data.get("comparables", []),
     }
 
-
 def _fmt_range(lo, hi, prefix="Rs.", suffix="L") -> str:
     if lo is None or hi is None:
         return ""
     return f"{prefix}{lo}{suffix} - {prefix}{hi}{suffix}"
 
-
 # ═══════════════════════════════════════════════════════════════════
 # PUBLIC ENTRY POINT
 # ═══════════════════════════════════════════════════════════════════
-
 def generate_pdf(
     report_data: dict,
     area_data:   dict,
@@ -111,7 +99,6 @@ def generate_pdf(
         return pdf_bytes
     except Exception as e:
         logger.warning(f"ReportLab failed val={valuation_id}: {e} — trying WeasyPrint")
-
     try:
         from weasyprint import HTML, CSS
         html = _build_html(report_data, area_data, valuation_id)
@@ -122,14 +109,11 @@ def generate_pdf(
         return pdf_bytes
     except Exception as e:
         logger.error(f"WeasyPrint also failed val={valuation_id}: {e}")
-
     raise RuntimeError("PDF generation failed — both ReportLab and WeasyPrint unavailable")
-
 
 # ═══════════════════════════════════════════════════════════════════
 # REPORTLAB GENERATOR
 # ═══════════════════════════════════════════════════════════════════
-
 def _hex(h):
     h = h.lstrip("#")
     return tuple(int(h[i:i+2], 16)/255 for i in (0, 2, 4))
@@ -139,7 +123,8 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
     from reportlab.lib.units import mm
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_LEFT, TA_RIGHT, TA_CENTER
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+    from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table,
+                                    TableStyle, HRFlowable, KeepTogether)
     from reportlab.lib import colors
 
     C_BLUE   = colors.HexColor(BRAND_BLUE)
@@ -149,6 +134,7 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
     C_BORDER = colors.HexColor("#E0E4EC")
     C_BG     = colors.HexColor("#F6F7FA")
     C_TEXT   = colors.HexColor("#111827")
+
     conf     = report.get("confidence_score", 70)
     C_CONF   = colors.HexColor(SUCCESS if conf >= 70 else (WARNING if conf >= 50 else DANGER))
 
@@ -160,8 +146,9 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
     ref       = f"VUP-{val_id:05d}"
     vmin      = report.get("value_min", 0) or 0
     vmax      = report.get("value_max", 0) or 0
-    val_range = f"{_fmt(vmin)} \u2013 {_fmt(vmax)}"
+    val_range = f"{_fmt(vmin)} – {_fmt(vmax)}"
     conf_label = "High" if conf >= 80 else ("Moderate" if conf >= 60 else "Low")
+
     sections  = report.get("sections", {})
     comps     = report.get("comparables", []) or []
 
@@ -180,14 +167,17 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
         for k, v in kw.items(): setattr(s, k, v)
         return s
 
-    sN  = S("N",  fontSize=9,  leading=14, textColor=C_TEXT)
-    sMu = S("Mu", fontSize=8,  leading=12, textColor=C_MUTED)
-    sBo = S("Bo", fontSize=9,  leading=14, textColor=C_TEXT,  fontName="Helvetica-Bold")
-    sH1 = S("H1", fontSize=16, leading=22, textColor=C_BLUE,  fontName="Helvetica-Bold")
-    sH2 = S("H2", fontSize=11, leading=16, textColor=C_TEXT,  fontName="Helvetica-Bold")
-    sWh = S("Wh", fontSize=9,  leading=14, textColor=colors.white)
-    sWB = S("WB", fontSize=13, leading=18, textColor=colors.white, fontName="Helvetica-Bold")
-    sWS = S("WS", fontSize=8,  leading=11, textColor=colors.HexColor("#CBD5E1"))
+    sN    = S("N",    fontSize=9,  leading=14, textColor=C_TEXT)
+    sMu   = S("Mu",   fontSize=8,  leading=12, textColor=C_MUTED)
+    sBo   = S("Bo",   fontSize=9,  leading=14, textColor=C_TEXT,  fontName="Helvetica-Bold")
+    sH1   = S("H1",   fontSize=16, leading=22, textColor=C_BLUE,  fontName="Helvetica-Bold")
+    sH2   = S("H2",   fontSize=11, leading=16, textColor=C_TEXT,  fontName="Helvetica-Bold")
+    sWh   = S("Wh",   fontSize=9,  leading=14, textColor=colors.white)
+    sWB   = S("WB",   fontSize=13, leading=18, textColor=colors.white, fontName="Helvetica-Bold")
+    sWS   = S("WS",   fontSize=8,  leading=11, textColor=colors.HexColor("#CBD5E1"))
+    # Content style: indented paragraph that flows freely across pages (no Table wrapper)
+    sCont = S("Cont", fontSize=9,  leading=14, textColor=C_TEXT,
+               leftIndent=10, rightIndent=10, spaceBefore=6, spaceAfter=6)
 
     story = []
 
@@ -210,8 +200,8 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
     b = Table([
         [Paragraph(f"<b>PROPERTY</b><br/>{address}", sBo),
          Paragraph(f"<b>ESTIMATED MARKET VALUE</b><br/>"
-                   f"<font size=\'16\'><b>{val_range}</b></font><br/>"
-                   f"<font size=\'8\'>Excl. registration charges &amp; taxes</font><br/>"
+                   f"<font size='16'><b>{val_range}</b></font><br/>"
+                   f"<font size='8'>Excl. registration charges &amp; taxes</font><br/>"
                    f"Confidence: {conf}% - {conf_label}", sBo)]
     ], colWidths=[W*0.45, W*0.55], rowHeights=[80])
     b.setStyle(TableStyle([
@@ -245,8 +235,7 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
         title   = sec.get("title", f"Section {letter}")
         content = sec.get("content", "")
         is_E    = letter == "E"
-        bg      = C_LIGHT if is_E else colors.white
-        bc      = C_BLUE  if is_E else C_BORDER
+        bc      = C_BLUE if is_E else C_BORDER
 
         # Section header
         hdr = Table([[
@@ -263,9 +252,11 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
             ("LINEBELOW",(0,0),(-1,-1),0.5,C_BORDER),
             ("BOX",(0,0),(-1,-1),1,bc),
         ]))
-        story.append(hdr)
 
-        # Section E value range
+        # Collect this section's flowables; added to story at end of iteration
+        sec_items = [hdr]
+
+        # ── Section E: value range banner ──────────────────────
         if is_E:
             vr = sec.get("value_range", "")
             if vr:
@@ -276,9 +267,9 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                     ("TOPPADDING",(0,0),(-1,-1),8),("BOTTOMPADDING",(0,0),(-1,-1),4),
                     ("BOX",(0,0),(-1,-1),1,C_BLUE),
                 ]))
-                story.append(vrt)
+                sec_items.append(vrt)
 
-        # Section C data - pricing signals table
+        # ── Section C: pricing signals table ───────────────────
         elif letter == "C":
             rows = []
             for k, fk in [("Land Rate Range","land_rate_range"),
@@ -290,8 +281,8 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                     rows.append([Paragraph(k, sMu), Paragraph(str(v), sBo)])
             if rows:
                 hdr_row = [
-                    Paragraph("SIGNAL", S("ch", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold")),
-                    Paragraph("VALUE", S("ch2", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
+                    Paragraph("SIGNAL", S("ch",  fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold")),
+                    Paragraph("VALUE",  S("ch2", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
                 ]
                 dt = Table([hdr_row] + rows, colWidths=[W*0.55, W*0.45])
                 dt.setStyle(TableStyle([
@@ -301,17 +292,16 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                     ("LINEBELOW",(0,0),(-1,-1),0.5,C_BORDER),
                     ("BOX",(0,0),(-1,-1),1,C_BORDER),
                 ]))
-                story.append(dt)
+                sec_items.append(dt)
 
-        # Section D — v2.4 tables: Steps + Adjustments + Rental Yield
+        # ── Section D: Steps + Adjustments + Rental Yield ──────
         elif letter == "D":
             raw_content = sec.get("content", "")
-            # Parse structured pipe-separated data
-            step_rows = []
-            adj_rows  = []
-            yield_rows= []
-            note_text = ""
-            final_val = ""
+            step_rows  = []
+            adj_rows   = []
+            yield_rows = []
+            note_text  = ""
+            final_val  = ""
             for line in raw_content.split("\n"):
                 parts = [p.strip() for p in line.split("|")]
                 if not parts or not parts[0]:
@@ -328,14 +318,15 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                 elif tag == "NOTE":
                     note_text = "|".join(parts[1:])
 
-            # Steps table (Step 1-4)
+            # Steps table (Steps 1–4)
             if step_rows:
-                hdr = [Paragraph(h, S(f"sh{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
-                       for i, h in enumerate(["STEP","COMPONENT","CALCULATION","VALUE"])]
-                rows = [[Paragraph(c, sBo if i==0 else (sBo if i==3 else sN)) for i,c in enumerate(r)] for r in step_rows]
+                shdr  = [Paragraph(h, S(f"sh{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
+                         for i, h in enumerate(["STEP","COMPONENT","CALCULATION","VALUE"])]
+                srows = [[Paragraph(c, sBo if i==0 else (sBo if i==3 else sN)) for i,c in enumerate(r)] for r in step_rows]
                 if final_val:
-                    rows.append([Paragraph("", sN), Paragraph("FINAL VALUE", sBo), Paragraph("", sN), Paragraph(final_val, S("fv", fontSize=9, leading=14, textColor=C_BLUE, fontName="Helvetica-Bold"))])
-                t = Table([hdr]+rows, colWidths=[W*0.12, W*0.28, W*0.33, W*0.27])
+                    srows.append([Paragraph("", sN), Paragraph("FINAL VALUE", sBo), Paragraph("", sN),
+                                  Paragraph(final_val, S("fv", fontSize=9, leading=14, textColor=C_BLUE, fontName="Helvetica-Bold"))])
+                t = Table([shdr]+srows, colWidths=[W*0.12, W*0.28, W*0.33, W*0.27])
                 t.setStyle(TableStyle([
                     ("BACKGROUND",(0,0),(-1,0),C_BG),
                     ("BACKGROUND",(0,-1),(-1,-1),C_LIGHT),
@@ -344,19 +335,22 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                     ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
                     ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
                 ]))
-                story.append(t)
-                story.append(Spacer(1,4))
+                sec_items.append(t)
+                sec_items.append(Spacer(1, 4))
 
             # Adjustments table (Step 5)
             if adj_rows:
-                ahdr = [Paragraph(h, S(f"ah{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
-                        for i,h in enumerate(["STEP 5 ADJUSTMENTS","FACTOR","APPLIED"])]
+                ahdr  = [Paragraph(h, S(f"ah{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
+                         for i, h in enumerate(["STEP 5 ADJUSTMENTS","FACTOR","APPLIED"])]
                 arows = []
                 for r in adj_rows:
                     is_net = "NET" in r[0].upper()
-                    style = S("adj_bold", fontSize=8, leading=12, textColor=C_BLUE if is_net else C_TEXT,
-                              fontName="Helvetica-Bold" if is_net else "Helvetica")
-                    arows.append([Paragraph(r[0], style), Paragraph(r[1], sBo), Paragraph(r[2] if len(r)>2 else "", sN)])
+                    style  = S("adj_bold", fontSize=8, leading=12,
+                               textColor=C_BLUE if is_net else C_TEXT,
+                               fontName="Helvetica-Bold" if is_net else "Helvetica")
+                    arows.append([Paragraph(r[0], style),
+                                  Paragraph(r[1], sBo),
+                                  Paragraph(r[2] if len(r) > 2 else "", sN)])
                 at = Table([ahdr]+arows, colWidths=[W*0.50, W*0.15, W*0.35])
                 at.setStyle(TableStyle([
                     ("BACKGROUND",(0,0),(-1,0),C_BG),
@@ -366,15 +360,16 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                     ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
                     ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
                 ]))
-                story.append(at)
-                story.append(Spacer(1,4))
+                sec_items.append(at)
+                sec_items.append(Spacer(1, 4))
 
             # Rental yield table (Step 5b)
             if yield_rows:
-                yhdr = [Paragraph(h, S(f"yh{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
-                        for i,h in enumerate(["SCENARIO","MONTHLY RENT","ANNUAL RENT","CAPITAL VALUE","GROSS YIELD"])]
-                yrows = [[Paragraph(c, sBo if i==0 else (S("yg", fontSize=8, leading=12, textColor=colors.HexColor("#1A7A4A"), fontName="Helvetica-Bold") if i==4 else sN))
-                          for i,c in enumerate(r)] for r in yield_rows]
+                yhdr  = [Paragraph(h, S(f"yh{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
+                         for i, h in enumerate(["SCENARIO","MONTHLY RENT","ANNUAL RENT","CAPITAL VALUE","GROSS YIELD"])]
+                yrows = [[Paragraph(c, sBo if i==0 else (S("yg", fontSize=8, leading=12,
+                                    textColor=colors.HexColor("#1A7A4A"), fontName="Helvetica-Bold") if i==4 else sN))
+                          for i, c in enumerate(r)] for r in yield_rows]
                 yt = Table([yhdr]+yrows, colWidths=[W*0.12, W*0.22, W*0.22, W*0.22, W*0.22])
                 yt.setStyle(TableStyle([
                     ("BACKGROUND",(0,0),(-1,0),C_BG),
@@ -383,7 +378,7 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                     ("LEFTPADDING",(0,0),(-1,-1),6),("RIGHTPADDING",(0,0),(-1,-1),6),
                     ("TOPPADDING",(0,0),(-1,-1),4),("BOTTOMPADDING",(0,0),(-1,-1),4),
                 ]))
-                story.append(yt)
+                sec_items.append(yt)
                 if note_text:
                     nt = Table([[Paragraph(note_text, sN)]], colWidths=[W])
                     nt.setStyle(TableStyle([
@@ -392,25 +387,15 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                         ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
                         ("TOPPADDING",(0,0),(-1,-1),5),("BOTTOMPADDING",(0,0),(-1,-1),5),
                     ]))
-                    story.append(nt)
-                story.append(Spacer(1,4))
-            content = ""  # skip default content block since we rendered tables above
+                    sec_items.append(nt)
+                sec_items.append(Spacer(1, 4))
+            content = ""  # skip default content block
 
-            # Also render components summary table
-            comp_rows = []
-            for k, fk in [("Land Value","land_value"),("Building Value","building_value"),("Adjustments","adjustments")]:
-                v = sec.get(fk,"")
-                if v:
-                    comp_rows.append([Paragraph(k, sMu), Paragraph(str(v), sBo)])
-            if comp_rows:
-                # Insert before steps as a summary
-                pass  # already shown in steps table
-
-        # Section F risks
+        # ── Section F: risk & due diligence bullets ─────────────
         elif letter == "F":
             risks = sec.get("risk_points", [])
             if risks:
-                _strip = "•- "
+                _strip    = "•- "
                 risk_text = "<br/>".join(
                     f"• {r.lstrip(_strip)}"
                     for r in risks if r.strip()
@@ -422,31 +407,59 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                     ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
                     ("TOPPADDING",(0,0),(-1,-1),7),("BOTTOMPADDING",(0,0),(-1,-1),7),
                 ]))
-                story.append(rt)
+                sec_items.append(rt)
                 content = ""
 
-        # Content paragraph
+        # ── Content paragraph (A, B, C LLM text, E opinion, G disclaimer) ──
         if content:
-            ct = Table([[Paragraph(content, sN)]], colWidths=[W])
-            ct.setStyle(TableStyle([
-                ("BACKGROUND",(0,0),(-1,-1),bg),
-                ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
-                ("TOPPADDING",(0,0),(-1,-1),7),("BOTTOMPADDING",(0,0),(-1,-1),7),
-                ("BOX",(0,0),(-1,-1),1,bc),
-            ]))
-            story.append(ct)
+            if is_E:
+                # Section E keeps Table wrapper for the blue background
+                ct = Table([[Paragraph(content, sN)]], colWidths=[W])
+                ct.setStyle(TableStyle([
+                    ("BACKGROUND",(0,0),(-1,-1),C_LIGHT),
+                    ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
+                    ("TOPPADDING",(0,0),(-1,-1),7),("BOTTOMPADDING",(0,0),(-1,-1),7),
+                    ("BOX",(0,0),(-1,-1),1,C_BLUE),
+                ]))
+                sec_items.append(ct)
+            else:
+                # Use Paragraph directly — it can split across pages, eliminating
+                # the large whitespace gaps caused by unsplittable single-row Tables.
+                # Convert \n to <br/> so bullet points render on separate lines.
+                sec_items.append(Paragraph(content.replace("\n", "<br/>"), sCont))
 
-        story.append(Spacer(1, 6))
+        # Section G: keep header + disclaimer body on the same page
+        if letter == "G":
+            story.append(KeepTogether(sec_items))
+        else:
+            story.extend(sec_items)
+
+        story.append(Spacer(1, 4))
 
     # ── COMPARABLES ──────────────────────────────────────────────
     if comps:
-        comp_rows = [[Paragraph("Property",sBo), Paragraph("Price Signal",sBo), Paragraph("Source",sBo)]]
+        comp_rows = [[Paragraph("Property", sBo),
+                      Paragraph("Price Signal", sBo),
+                      Paragraph("Source", sBo)]]
         for c in comps:
+            if isinstance(c, str):
+                # Handle plain-string comparables
+                comp_rows.append([Paragraph(c, sN), Paragraph("", sN), Paragraph("", sMu)])
+                continue
+            # Try multiple key variants the LLM may return
+            desc   = (c.get("description") or c.get("property") or
+                      c.get("address")     or c.get("project")  or
+                      c.get("name")        or str(c))
+            signal = (c.get("price_signal") or c.get("price")   or
+                      c.get("rate")         or c.get("pricing") or
+                      c.get("value")        or "")
+            source = (c.get("source")   or c.get("location") or
+                      c.get("area")     or c.get("reference") or "")
             comp_rows.append([
-                Paragraph(str(c.get("description","")), sN),
-                Paragraph(str(c.get("price_signal","")), S("cs",fontSize=9,leading=14,
-                                                           textColor=C_BLUE,fontName="Helvetica-Bold")),
-                Paragraph(str(c.get("source","")), sMu),
+                Paragraph(str(desc),   sN),
+                Paragraph(str(signal), S("cs", fontSize=9, leading=14,
+                                         textColor=C_BLUE, fontName="Helvetica-Bold")),
+                Paragraph(str(source), sMu),
             ])
         ct = Table(comp_rows, colWidths=[W*0.5, W*0.28, W*0.22])
         ct.setStyle(TableStyle([
@@ -477,12 +490,9 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
     doc.build(story, onFirstPage=_footer, onLaterPages=_footer)
     return buf.getvalue()
 
-
-
 # ═══════════════════════════════════════════════════════════════════
 # WEASYPRINT HTML FALLBACK (kept for reference)
 # ═══════════════════════════════════════════════════════════════════
-
 def _build_html(report: dict, area: dict, val_id: int) -> str:
     locality  = area.get("locality", "")
     city      = area.get("city", "")
@@ -493,9 +503,9 @@ def _build_html(report: dict, area: dict, val_id: int) -> str:
     vmin      = report.get("value_min", 0)
     vmax      = report.get("value_max", 0)
     conf      = report.get("confidence_score", 70)
-    val_range = f"{_fmt(vmin)} \u2013 {_fmt(vmax)}"
+    val_range = f"{_fmt(vmin)} – {_fmt(vmax)}"
     conf_color  = SUCCESS if conf >= 70 else (WARNING if conf >= 50 else DANGER)
-    conf_label  = "Good" if conf >= 80 else ("Moderate" if conf >= 60 else "Low \u2014 Consult a Professional")
+    conf_label  = "Good" if conf >= 80 else ("Moderate" if conf >= 60 else "Low — Consult a Professional")
     sections    = report.get("sections", {})
     comparables = report.get("comparables", [])
 
@@ -577,7 +587,6 @@ def _build_html(report: dict, area: dict, val_id: int) -> str:
   </div>
 </body></html>"""
 
-
 def _render_section(letter: str, sec: dict) -> str:
     if not sec:
         return ""
@@ -624,7 +633,6 @@ def _render_section(letter: str, sec: dict) -> str:
       </div>
     </div>"""
 
-
 def _main_css() -> str:
     return f"""
     @page {{ size: A4; margin: 18mm 16mm 22mm 16mm; }}
@@ -665,7 +673,6 @@ def _main_css() -> str:
     .page-footer {{ position: fixed; bottom: -14mm; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 7.5pt; color: #9CA3AF; padding: 6px 16mm; border-top: 1px solid #E0E4EC; }}
     """
 
-
 def _watermark_css() -> str:
     return """
     @page {
@@ -674,18 +681,15 @@ def _watermark_css() -> str:
     .watermark { display: none; }
     """
 
-
 # ═══════════════════════════════════════════════════════════════════
 # HELPERS
 # ═══════════════════════════════════════════════════════════════════
-
 def _fmt(lakhs: float) -> str:
     if not lakhs:
         return "-"
     if lakhs >= 100:
         return f"Rs.{lakhs/100:.2f} Cr"
     return f"Rs.{lakhs:.1f} L"
-
 
 def _type_label(t: str) -> str:
     return {
