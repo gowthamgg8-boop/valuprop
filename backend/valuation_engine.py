@@ -412,11 +412,25 @@ async def generate_detailed_report(
         if comp_raw:
             report.comparables = comp_raw
         step5_raw = _first(_STEP5_KEYS)
+        print(f"[ENGINE] step5_raw type={type(step5_raw).__name__} val={repr(str(step5_raw)[:200])}", flush=True)
         # ── Apply LLM-enriched Step 5 connectivity labels ─────────
         if step5_raw:
-            report.valuation_buildup = _apply_step5_connectivity(
-                report.valuation_buildup, step5_raw
-            )
+            if isinstance(step5_raw, str):
+                # LLM returned step5 as a string — try to parse it as JSON list
+                try:
+                    import json as _json
+                    step5_raw = _json.loads(step5_raw)
+                    print(f"[ENGINE] step5_raw parsed from string to list len={len(step5_raw)}", flush=True)
+                except Exception:
+                    step5_raw = None
+                    print(f"[ENGINE] step5_raw string could not be parsed as JSON list — skipping", flush=True)
+            if step5_raw and isinstance(step5_raw, list):
+                print(f"[ENGINE] applying step5 connectivity, {len(step5_raw)} adjustments", flush=True)
+                report.valuation_buildup = _apply_step5_connectivity(
+                    report.valuation_buildup, step5_raw
+                )
+            else:
+                print(f"[ENGINE] step5_raw not a list — skipping connectivity replacement", flush=True)
         print(f"[ENGINE] LLM enrichment SUCCEEDED for {prop.locality}", flush=True)
         logger.info(f"LLM prose enrichment succeeded for {prop.locality}")
     except Exception as e:
