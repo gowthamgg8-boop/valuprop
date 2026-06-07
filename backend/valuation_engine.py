@@ -332,44 +332,75 @@ async def generate_detailed_report(
                 )
             return str(val) if val is not None else ""
 
-        # ── Key fallbacks: LLM sometimes uses full-report schema keys ──
-        # micro_market → also check micro_market_context (full-report key)
-        mm_raw = prose.get("micro_market") or prose.get("micro_market_context") or ""
+        # ── Normalise whatever keys the LLM returned → our 5 keys ──
+        # LLM invents a different schema every call. Map all known
+        # variants to our canonical keys before extracting values.
+        _MICRO_KEYS   = {"micro_market","micro_market_context","microMarket",
+                         "market_context","marketAnalysis","market_analysis",
+                         "locality_context","infrastructureHighlights",
+                         "infrastructure_highlights","demographicProfile",
+                         "demographic_profile","connectivity_infrastructure",
+                         "localityAnalysis","locality_analysis","areaContext",
+                         "area_context","microMarketContext"}
+        _PRICE_KEYS   = {"pricing_signals","observed_pricing_signals",
+                         "pricingSignals","price_signals","appreciationTrend",
+                         "appreciation_trend","pricing","market_rates",
+                         "marketRates","investmentPotential","investment_potential",
+                         "priceSignals","marketPricing","market_pricing",
+                         "propertyRates","property_rates","valuationSignals"}
+        _RISK_KEYS    = {"risk_diligence","risk_due_diligence","riskDiligence",
+                         "due_diligence","dueDiligence","risks","risk_factors",
+                         "riskFactors","dueDiligencePoints","legal_risks",
+                         "legalRisks","buyerRisks","buyer_risks"}
+        _STEP5_KEYS   = {"step5_adjustments","connectivity_adjustments",
+                         "adjustments","connectivityFactors","connectivity_factors",
+                         "step5","stepFiveAdjustments"}
+        _COMP_KEYS    = {"comparables","comparable_transactions",
+                         "comparableTransactions","recentTransactions",
+                         "recent_transactions","comps"}
+
+        def _first(keys):
+            for k in keys:
+                v = prose.get(k)
+                if v:
+                    return v
+            return None
+
+        mm_raw = _first(_MICRO_KEYS) or ""
         mm = _to_str(mm_raw)
-        print(f"[ENGINE] micro_market type={type(mm_raw).__name__} val={repr(mm[:150])}", flush=True)
+        print(f"[ENGINE] micro_market val={repr(mm[:120])}", flush=True)
         if mm and mm.strip():
             report.micro_market = mm
             print(f"[ENGINE] micro_market UPDATED ({len(mm)} chars)", flush=True)
         else:
-            print(f"[ENGINE] micro_market SKIPPED (empty/falsy)", flush=True)
+            print(f"[ENGINE] micro_market SKIPPED (empty)", flush=True)
 
-        # pricing_signals → also check observed_pricing_signals (full-report key)
-        ps_raw = prose.get("pricing_signals") or prose.get("observed_pricing_signals") or ""
+        ps_raw = _first(_PRICE_KEYS) or ""
         ps = _to_str(ps_raw)
-        print(f"[ENGINE] pricing_signals type={type(ps_raw).__name__} val={repr(ps[:150])}", flush=True)
+        print(f"[ENGINE] pricing_signals val={repr(ps[:120])}", flush=True)
         if ps and ps.strip():
             report.pricing_signals = ps
             print(f"[ENGINE] pricing_signals UPDATED ({len(ps)} chars)", flush=True)
         else:
-            print(f"[ENGINE] pricing_signals SKIPPED (empty/falsy)", flush=True)
+            print(f"[ENGINE] pricing_signals SKIPPED (empty)", flush=True)
 
-        # risk_diligence → also check risk_due_diligence, due_diligence (alternate keys)
-        rd_raw = (prose.get("risk_diligence") or prose.get("risk_due_diligence")
-                  or prose.get("due_diligence") or "")
+        rd_raw = _first(_RISK_KEYS) or ""
         rd = _to_str(rd_raw)
-        print(f"[ENGINE] risk_diligence type={type(rd_raw).__name__} val={repr(rd[:150])}", flush=True)
+        print(f"[ENGINE] risk_diligence val={repr(rd[:120])}", flush=True)
         if rd and rd.strip():
             report.risk_diligence = rd
             print(f"[ENGINE] risk_diligence UPDATED ({len(rd)} chars)", flush=True)
         else:
-            print(f"[ENGINE] risk_diligence SKIPPED (empty/falsy)", flush=True)
+            print(f"[ENGINE] risk_diligence SKIPPED (empty)", flush=True)
 
-        if prose.get("comparables"):
-            report.comparables = prose["comparables"]
+        comp_raw = _first(_COMP_KEYS)
+        if comp_raw:
+            report.comparables = comp_raw
+        step5_raw = _first(_STEP5_KEYS)
         # ── Apply LLM-enriched Step 5 connectivity labels ─────────
-        if prose.get("step5_adjustments"):
+        if step5_raw:
             report.valuation_buildup = _apply_step5_connectivity(
-                report.valuation_buildup, prose["step5_adjustments"]
+                report.valuation_buildup, step5_raw
             )
         print(f"[ENGINE] LLM enrichment SUCCEEDED for {prop.locality}", flush=True)
         logger.info(f"LLM prose enrichment succeeded for {prop.locality}")
@@ -871,33 +902,25 @@ def _build_prose_prompt(
             f"Trend: {loc_data.trend_12m}"
         )
     area = prop.carpet_area or prop.plot_house or prop.plot_land or 0
-    return f"""
-Search for current property market data for {prop.locality}, {prop.city} and return enrichment fields for a pre-built valuation report.
+    return f"""Search for real estate data for {prop.locality}, {prop.city} and return a JSON object.
 
-Property: {prop.prop_type} | {prop.bhk or ''} | {area} sq.ft | Age: {prop.age_apt or prop.age_house or 'not specified'}
-Locality data: {loc_info}
-Calculated value range: Rs.{lo}L - Rs.{hi}L
+Property: {prop.prop_type}, {prop.bhk or '2BHK'}, {area} sqft, Age: {prop.age_apt or 'not specified'}
+DB rates: {loc_info}
+Value range: Rs.{lo}L - Rs.{hi}L
 
-MANDATORY: Populate ALL 5 fields below. Use search results if available; use your training knowledge if searches return nothing. Never leave fields empty.
+Return JSON with these fields about {prop.locality}:
 
-OUTPUT — return ONLY this JSON with exactly these 5 keys (no other keys, no extra text):
-{{
-  "micro_market": "• [name the metro/rail corridor and nearest station serving {prop.locality}, distance, operational status]\\n• [name the key arterial roads and highway access for {prop.locality}]\\n• [name the IT parks, institutions, or employment hubs driving demand in {prop.locality}]",
-  "risk_diligence": "• [CRZ/flood zone risk specific to {prop.locality} if applicable]\\n• [approval body and OC risks in {prop.locality}]\\n• [road widening or acquisition proposals in {prop.locality}]\\n• [title/encumbrance risk specific to this area]\\n• [loan eligibility or layout approval issues in {prop.locality}]",
-  "step5_adjustments": [
-    {{"label": "Connectivity: [name the OMR/ECR/GST/NH corridor serving {prop.locality}]", "factor": "+X%", "applied": "[corridor name and distance from {prop.locality}]"}},
-    {{"label": "Connectivity: [name the nearest metro or MRTS station] ([operational/under-construction/DPR])", "factor": "+X%", "applied": "[station name, distance in km, operational status]"}},
-    {{"label": "Connectivity: [name the main arterial road in {prop.locality}]", "factor": "+X%", "applied": "[road name]"}},
-    {{"label": "Connectivity: [name the nearest IT park or employment node]", "factor": "+X%", "applied": "[IT park/estate name and distance]"}}
-  ],
-  "pricing_signals": "[current apartment rate per sqft in {prop.locality} from search or training data, 12-month trend, guideline value if known, 2-3 specific comparable transactions or listings with size/price/date]",
-  "comparables": [
-    {{"description": "[specific comparable in or near {prop.locality}]", "price_signal": "Rs.XL or Rs.X/sqft", "source": "market signals"}},
-    {{"description": "[comparable 2]", "price_signal": "Rs.XL", "source": "aggregator data"}},
-    {{"description": "[comparable 3]", "price_signal": "Rs.XL", "source": "community observations"}}
-  ]
-}}
-""".strip()
+micro_market: 3 bullet points — (1) nearest metro/suburban rail station name and operational status, (2) key arterial roads and highway corridor, (3) main employment hubs or IT parks driving demand.
+
+risk_diligence: 5 specific due diligence bullets for {prop.locality} — cover CRZ/flood risk, approval body (CMDA/DTCP/Avadi Corp etc), OC issues, road widening proposals, loan eligibility risks.
+
+step5_adjustments: array of 4 connectivity adjustment objects, each with label/factor/applied — covering corridor, metro/rail station, main road, employment node.
+
+pricing_signals: current apartment rates per sqft, 12-month appreciation, guideline/circle rate, 2-3 recent comparable transactions.
+
+comparables: array of 3 comparable properties with description, price_signal, source.
+
+JSON:""".strip()
 def _build_fallback_report(
     prop:     PropertyInput,
     loc_data: Optional[LocalityData],
