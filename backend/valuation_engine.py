@@ -226,6 +226,7 @@ FINAL VALUE RANGE: max-min spread must be within 8-10% of the lower bound.
 Example: Lo Rs.77L -> Hi should be Rs.83-85L (NOT Rs.95L+).
 DO NOT invent numbers. If search returns nothing useful, lower confidence and say so explicitly.
 After all searches, output your final answer as valid JSON only — no text after the JSON.
+IMPORTANT: If web searches return no usable results, populate ALL fields using your training knowledge about Indian real estate markets. Training knowledge is acceptable and expected when live search data is unavailable. Do NOT return empty fields.
 """
 )
 # ═══════════════════════════════════════════════════════════════════
@@ -892,47 +893,29 @@ def _build_prose_prompt(
         )
     area = prop.carpet_area or prop.plot_house or prop.plot_land or 0
     return f"""
-You are enriching a pre-built valuation report with locality-specific data. Use your web search tools to look up current market data for {prop.locality}, {prop.city}.
+Search for current property market data for {prop.locality}, {prop.city} and return enrichment fields for a pre-built valuation report.
 
 Property: {prop.prop_type} | {prop.bhk or ''} | {area} sq.ft | Age: {prop.age_apt or prop.age_house or 'not specified'}
 Locality data: {loc_info}
 Calculated value range: Rs.{lo}L - Rs.{hi}L
 
-CRITICAL OUTPUT RULE: Return EXACTLY this JSON structure with EXACTLY these 5 keys.
-Do NOT return a full valuation report. Do NOT use keys like micro_market_context, observed_pricing_signals, property_id, valuation_date, property_overview, valuation_buildup, independent_value_opinion, or sanity_checks_performed.
-Output ONLY these 5 keys: micro_market, risk_diligence, step5_adjustments, pricing_signals, comparables.
+MANDATORY: Populate ALL 5 fields below. Use search results if available; use your training knowledge if searches return nothing. Never leave fields empty.
 
-FIELD INSTRUCTIONS:
-micro_market — 3 bullet points specific to {prop.locality}:
-  • Bullet 1: Metro/rail corridor (name, station, distance, operational/u-c/DPR status)
-  • Bullet 2: Key arterial roads and highway access serving {prop.locality}
-  • Bullet 3: Employment demand drivers (IT parks, institutions, industrial estates near {prop.locality})
-
-risk_diligence — 5 bullet points SPECIFIC to {prop.locality} (NOT generic):
-  Include: CRZ/flood zone status, specific approval body, OC issues common in area, road widening proposals, local litigation patterns.
-
-step5_adjustments — EXACTLY 4 rows (corridor, metro/rail, main road, employment node):
-  Factor guide: Operational station +4-5% | Under construction +2-3% | DPR only +1-2%
-
-pricing_signals — Current per-sqft rates from search, 12-month trend, guideline value, 2-3 specific comparables with prices and dates.
-
-comparables — 3 specific listings found via search.
-
-Return ONLY this JSON (no text before or after):
+OUTPUT — return ONLY this JSON with exactly these 5 keys (no other keys, no extra text):
 {{
-  "micro_market": "• [metro/rail bullet for {prop.locality}]\\n• [roads bullet]\\n• [employment bullet]",
-  "risk_diligence": "• [locality-specific risk 1]\\n• [risk 2]\\n• [risk 3]\\n• [risk 4]\\n• [risk 5]",
+  "micro_market": "• [name the metro/rail corridor and nearest station serving {prop.locality}, distance, operational status]\\n• [name the key arterial roads and highway access for {prop.locality}]\\n• [name the IT parks, institutions, or employment hubs driving demand in {prop.locality}]",
+  "risk_diligence": "• [CRZ/flood zone risk specific to {prop.locality} if applicable]\\n• [approval body and OC risks in {prop.locality}]\\n• [road widening or acquisition proposals in {prop.locality}]\\n• [title/encumbrance risk specific to this area]\\n• [loan eligibility or layout approval issues in {prop.locality}]",
   "step5_adjustments": [
-    {{"label": "Connectivity: [corridor name] access", "factor": "+X%", "applied": "[corridor name and approx distance]"}},
-    {{"label": "Connectivity: [station name] ([operational/u/c/DPR])", "factor": "+X%", "applied": "[station name, distance, status]"}},
-    {{"label": "Connectivity: [road name] access", "factor": "+X%", "applied": "[road name]"}},
-    {{"label": "Connectivity: [employment node name]", "factor": "+X%", "applied": "[IT park/estate name, distance]"}}
+    {{"label": "Connectivity: [name the OMR/ECR/GST/NH corridor serving {prop.locality}]", "factor": "+X%", "applied": "[corridor name and distance from {prop.locality}]"}},
+    {{"label": "Connectivity: [name the nearest metro or MRTS station] ([operational/under-construction/DPR])", "factor": "+X%", "applied": "[station name, distance in km, operational status]"}},
+    {{"label": "Connectivity: [name the main arterial road in {prop.locality}]", "factor": "+X%", "applied": "[road name]"}},
+    {{"label": "Connectivity: [name the nearest IT park or employment node]", "factor": "+X%", "applied": "[IT park/estate name and distance]"}}
   ],
-  "pricing_signals": "[current rates, trend, guideline, 2-3 comparables]",
+  "pricing_signals": "[current apartment rate per sqft in {prop.locality} from search or training data, 12-month trend, guideline value if known, 2-3 specific comparable transactions or listings with size/price/date]",
   "comparables": [
-    {{"description": "comparable 1", "price_signal": "Rs.XL", "source": "market signals"}},
-    {{"description": "comparable 2", "price_signal": "Rs.XL", "source": "aggregator data"}},
-    {{"description": "comparable 3", "price_signal": "Rs.XL", "source": "community observations"}}
+    {{"description": "[specific comparable in or near {prop.locality}]", "price_signal": "Rs.XL or Rs.X/sqft", "source": "market signals"}},
+    {{"description": "[comparable 2]", "price_signal": "Rs.XL", "source": "aggregator data"}},
+    {{"description": "[comparable 3]", "price_signal": "Rs.XL", "source": "community observations"}}
   ]
 }}
 """.strip()
