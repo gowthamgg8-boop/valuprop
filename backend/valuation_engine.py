@@ -340,12 +340,21 @@ async def generate_detailed_report(
         )
         prose = parse_json_response(raw)
         prose = validate_report_dict(prose)
+        def _to_str(val):
+            """Coerce LLM value to string — LLM sometimes returns a list instead of a string."""
+            if isinstance(val, list):
+                return "\n".join(
+                    str(item) if str(item).startswith(("•", "*", "-")) else f"• {item}"
+                    for item in val
+                )
+            return str(val) if val is not None else ""
+
         if prose.get("micro_market"):
-            report.micro_market = prose["micro_market"]
+            report.micro_market = _to_str(prose["micro_market"])
         if prose.get("pricing_signals"):
-            report.pricing_signals = prose["pricing_signals"]
+            report.pricing_signals = _to_str(prose["pricing_signals"])
         if prose.get("risk_diligence"):
-            report.risk_diligence = prose["risk_diligence"]
+            report.risk_diligence = _to_str(prose["risk_diligence"])
         if prose.get("comparables"):
             report.comparables = prose["comparables"]
         # ── Apply LLM-enriched Step 5 connectivity labels ─────────
