@@ -80,6 +80,12 @@ def _fmt_range(lo, hi, prefix="Rs.", suffix="L") -> str:
         return ""
     return f"{prefix}{lo}{suffix} - {prefix}{hi}{suffix}"
 
+def _tc(s, n: int = 300) -> str:
+    """Truncate table-cell text to prevent ReportLab from creating cells taller
+    than one page (which causes a fatal PDF generation error)."""
+    s = str(s) if s is not None else ""
+    return s[:n] + "…" if len(s) > n else s
+
 # ═══════════════════════════════════════════════════════════════════
 # PUBLIC ENTRY POINT
 # ═══════════════════════════════════════════════════════════════════
@@ -322,7 +328,7 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
             if step_rows:
                 shdr  = [Paragraph(h, S(f"sh{i}", fontSize=7, leading=10, textColor=C_MUTED, fontName="Helvetica-Bold"))
                          for i, h in enumerate(["STEP","COMPONENT","CALCULATION","VALUE"])]
-                srows = [[Paragraph(c, sBo if i==0 else (sBo if i==3 else sN)) for i,c in enumerate(r)] for r in step_rows]
+                srows = [[Paragraph(_tc(c, 200), sBo if i==0 else (sBo if i==3 else sN)) for i,c in enumerate(r)] for r in step_rows]
                 if final_val:
                     srows.append([Paragraph("", sN), Paragraph("FINAL VALUE", sBo), Paragraph("", sN),
                                   Paragraph(final_val, S("fv", fontSize=9, leading=14, textColor=C_BLUE, fontName="Helvetica-Bold"))])
@@ -348,9 +354,9 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
                     style  = S("adj_bold", fontSize=8, leading=12,
                                textColor=C_BLUE if is_net else C_TEXT,
                                fontName="Helvetica-Bold" if is_net else "Helvetica")
-                    arows.append([Paragraph(r[0], style),
-                                  Paragraph(r[1], sBo),
-                                  Paragraph(r[2] if len(r) > 2 else "", sN)])
+                    arows.append([Paragraph(_tc(r[0], 120), style),
+                                  Paragraph(_tc(r[1],  20), sBo),
+                                  Paragraph(_tc(r[2] if len(r) > 2 else "", 250), sN)])
                 at = Table([ahdr]+arows, colWidths=[W*0.50, W*0.15, W*0.35])
                 at.setStyle(TableStyle([
                     ("BACKGROUND",(0,0),(-1,0),C_BG),
@@ -397,8 +403,8 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
             if risks:
                 _strip    = "•- "
                 risk_text = "<br/>".join(
-                    f"• {r.lstrip(_strip)}"
-                    for r in risks if r.strip()
+                    f"• {_tc(r.lstrip(_strip), 250)}"
+                    for r in risks[:12] if r.strip()
                 )
                 rt = Table([[Paragraph(risk_text, sN)]], colWidths=[W])
                 rt.setStyle(TableStyle([
@@ -456,10 +462,10 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
             source = (c.get("source")   or c.get("location") or
                       c.get("area")     or c.get("reference") or "")
             comp_rows.append([
-                Paragraph(str(desc),   sN),
-                Paragraph(str(signal), S("cs", fontSize=9, leading=14,
-                                         textColor=C_BLUE, fontName="Helvetica-Bold")),
-                Paragraph(str(source), sMu),
+                Paragraph(_tc(desc,   250), sN),
+                Paragraph(_tc(signal,  80), S("cs", fontSize=9, leading=14,
+                                              textColor=C_BLUE, fontName="Helvetica-Bold")),
+                Paragraph(_tc(source,  80), sMu),
             ])
         ct = Table(comp_rows, colWidths=[W*0.5, W*0.28, W*0.22])
         ct.setStyle(TableStyle([

@@ -19,6 +19,7 @@ import json
 import logging
 import math
 import pathlib
+import re
 from dataclasses import dataclass, field
 from typing import Optional
 from llm_service import (
@@ -432,9 +433,21 @@ async def generate_detailed_report(
                     step5_raw = inner
                     print(f"[ENGINE] step5_raw extracted inner list len={len(step5_raw)}", flush=True)
                 else:
-                    # Convert dict keys/values into synthetic connectivity items
+                    # Convert dict keys/values into synthetic connectivity items.
+                    # Extract just the first +/-% token for "factor"; keep "applied" short.
+                    def _pct_from(text):
+                        m = re.search(r'([+-]?\d+(?:\.\d+)?%)', str(text))
+                        return m.group(1) if m else "+0%"
+                    def _short_note(text):
+                        text = str(text)
+                        m = re.match(r'([^.!?\n]{10,120}[.!?])', text)
+                        if m:
+                            return m.group(1).strip()
+                        return text[:100] + ("…" if len(text) > 100 else "")
                     step5_raw = [
-                        {"label": str(k).replace("_", " ").title(), "factor": str(v) if "%" in str(v) else "+1%", "applied": str(v)}
+                        {"label": str(k).replace("_", " ").title(),
+                         "factor": _pct_from(v),
+                         "applied": _short_note(v)}
                         for k, v in step5_raw.items()
                         if k not in ("location_premium", "location_justification")
                     ]
@@ -956,19 +969,26 @@ Property: {prop.prop_type}, {prop.bhk or '2BHK'}, {area} sqft, Age: {prop.age_ap
 DB rates: {loc_info}
 Value range: Rs.{lo}L - Rs.{hi}L
 
+STRICT LENGTH RULES — violating these breaks the system:
+- Every string field: NO essays, NO paragraphs, NO repetition.
+- "micro_market": exactly 3 bullet lines starting with "• ", max 15 words each.
+- "risk_diligence": exactly 5 bullet lines starting with "• ", max 20 words each.
+- "pricing_signals": exactly 3 sentences, max 25 words each. Total under 75 words.
+- "step5_adjustments": JSON array of 4 objects. "factor" = short % like "+2%". "applied" = 4-6 words only.
+
 Field specifications:
 
-"micro_market": string with 3 bullet points — (1) nearest metro/suburban rail station name and operational status, (2) key arterial roads and highway corridor, (3) main employment hubs or IT parks driving demand in {prop.locality}.
+"micro_market": 3 bullets — (1) nearest metro/suburban rail station name and walk/drive time, (2) key arterial road or highway, (3) main employment hub or IT park.
 
-"risk_diligence": string with 5 specific due diligence bullets for {prop.locality} — cover CRZ/flood risk, approval body (CMDA/DTCP/Avadi Corp etc), OC certificate issues, road widening proposals, loan eligibility risks.
+"risk_diligence": 5 bullets for {prop.locality} — (1) CRZ or flood zone risk, (2) approval body ({('CMDA' if prop.city == 'Chennai' else 'BBMP/BDA')}) and OC status, (3) road widening or acquisition risk, (4) title/encumbrance check, (5) loan eligibility risk.
 
-"step5_adjustments": MUST be a JSON array of exactly 4 objects. Each object has exactly 3 keys: "label", "factor", "applied". Example for {prop.locality}:
-[{{"label":"NH-716 corridor influence","factor":"+2%","applied":"Property on NH-716 arterial"}},{{"label":"Avadi MRTS/suburban rail station","factor":"+1%","applied":"2.5 km to nearest station"}},{{"label":"Poonamallee High Road frontage","factor":"+1%","applied":"Main arterial road access"}},{{"label":"TIDEL Park / HVF employment node","factor":"+2%","applied":"1.5 km to employment hub"}}]
-Replace label/factor/applied values with actual data for {prop.locality}. Do NOT return a dict — must be an array.
+"step5_adjustments": JSON array of exactly 4 objects, keys "label", "factor", "applied":
+[{{"label":"OMR/ECR corridor premium","factor":"+2%","applied":"On arterial IT corridor"}},{{"label":"Metro station proximity","factor":"+1%","applied":"1.5 km to MRTS station"}},{{"label":"Employment node access","factor":"+2%","applied":"Near IT park cluster"}},{{"label":"Property age premium","factor":"+1%","applied":"0-5 yr ready-to-move"}}]
+Use actual {prop.locality} data. "factor" must be a short % like "+2%" or "-1%". "applied" must be 4-6 words only.
 
-"pricing_signals": string with current apartment rates per sqft, 12-month appreciation trend, guideline/circle rate for {prop.locality}.
+"pricing_signals": 3 sentences total. Sentence 1: current rate range per sqft and source. Sentence 2: 12-month appreciation % and trend direction. Sentence 3: one buyer tip for {prop.locality}.
 
-"comparables": array of 3 objects each with keys "description", "price_signal", "source" — recent comparable apartment transactions in {prop.locality} or adjacent areas.
+"comparables": array of 3 objects, keys "description" (project name + config, max 8 words), "price_signal" (rate or total price), "source" (portal name).
 
 JSON:""".strip()
 def _build_fallback_report(
