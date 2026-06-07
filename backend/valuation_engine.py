@@ -191,44 +191,23 @@ VALUPROP_SYSTEM_PROMPT = (
     _V24_PROMPT_BASE
     + "\n\nOUTPUT FORMAT: Respond with valid JSON only. No markdown, no preamble, no backticks."
 )
-# ── VALUPROP_SYSTEM_PROMPT_WITH_SEARCH ────────────────────────────
+# ── ENRICHMENT_SYSTEM_PROMPT ──────────────────────────────────────
 # Used for: paid report prose enrichment via call_llm_with_search
-# Full v2.4 methodology + paid-tier search instructions
-VALUPROP_SYSTEM_PROMPT_WITH_SEARCH = (
-    _V24_PROMPT_BASE
-    + """
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-PAID REPORT MODE (Rs.199 tier) — WEB SEARCH ENABLED
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-The customer expects accuracy within plus or minus 5% of true market value.
-YOUR SEARCH PROCESS (4-5 searches):
-Search 1: "[locality] [city] apartment price per sqft 2025 2026"
-Search 2: "[locality] [city] [BHK] flat for sale price"
-Search 3: "[locality] [city] property rate trend appreciation"
-Search 4: "[locality] metro station distance connectivity [city]"
-Search 5 (optional): "[locality] registered transaction rate sub-registrar [city]"
-FROM SEARCH RESULTS EXTRACT:
-- Current per-sqft rate range (note listing dates, apply Step 2A time-decay)
-- 3-5 specific comparable listings (size, price, age, BHK, listing date)
-- 12-month appreciation trend
-- Metro/rail/road infrastructure — operational status is critical for Step 5
-- Government guideline/circle rate if cited
-CONNECTIVITY FACTOR — MANDATORY BREAKDOWN IN STEP 5:
-For every report, identify and apply EACH sub-component as a SEPARATE line:
-  a) Corridor: OMR / ECR / GST / CPRR / NH-48 / NH-16 / ORR / Sarjapur Road etc.
-     State corridor name and approximate distance from subject property.
-  b) Metro/Rail: Nearest metro or suburban rail station, distance in km, status:
-     Operational +4-6% | Under-construction +2-4% | DPR/Announced only +1-3%
-  c) Main road: Name the primary arterial road serving the locality.
-  d) Employment node: Nearest IT park, TIDEL, ELCOT, industrial estate, distance.
-DO NOT collapse these into one line. Each sub-component = one row in the table.
-FINAL VALUE RANGE: max-min spread must be within 8-10% of the lower bound.
-Example: Lo Rs.77L -> Hi should be Rs.83-85L (NOT Rs.95L+).
-DO NOT invent numbers. If search returns nothing useful, lower confidence and say so explicitly.
-After all searches, output your final answer as valid JSON only — no text after the JSON.
-IMPORTANT: If web searches return no usable results, populate ALL fields using your training knowledge about Indian real estate markets. Training knowledge is acceptable and expected when live search data is unavailable. Do NOT return empty fields.
-"""
-)
+# Deliberately neutral — NOT the v2.4 full-report prompt.
+# The v2.4 prompt causes the LLM to return a full-report JSON schema
+# instead of our 5-key enrichment schema. This prompt has no valuation
+# context so the LLM follows the user-message JSON schema exactly.
+ENRICHMENT_SYSTEM_PROMPT = """You are a JSON data API for Indian real estate market intelligence.
+You receive a location and property details and return EXACTLY the JSON schema specified in the user message.
+Rules:
+- Return valid JSON only. No preamble, no explanation, no markdown.
+- Use EXACTLY the field names specified in the user message. Never rename, add, or remove fields.
+- Use web search to find current data. If searches return nothing, use your training knowledge.
+- Never return empty string values. Always populate every field with real content.
+- For Indian localities you know well, your training knowledge is sufficient and accurate."""
+
+# Keep old name as alias so any other code referencing it still works
+VALUPROP_SYSTEM_PROMPT_WITH_SEARCH = ENRICHMENT_SYSTEM_PROMPT
 # ═══════════════════════════════════════════════════════════════════
 # FREE ESTIMATE ENGINE
 # ═══════════════════════════════════════════════════════════════════
