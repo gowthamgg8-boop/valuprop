@@ -10,7 +10,6 @@
   <style>
     /* Report-specific styles */
     .report-wrap { max-width: 680px; margin: 0 auto; padding: 24px 20px 60px; }
-
     .report-hero {
       background: var(--brand); border-radius: var(--radius);
       padding: 26px 28px; margin-bottom: 16px; color: white;
@@ -47,7 +46,6 @@
       background: rgba(255,255,255,0.1); border-radius: var(--radius-sm);
       font-size: 12px; line-height: 1.5; opacity: 0.9;
     }
-
     .section-card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); overflow: hidden;
@@ -72,7 +70,6 @@
     .section-body p {
       font-size: 14px; color: var(--muted); line-height: 1.7; margin: 0;
     }
-
     .data-table { width: 100%; border-collapse: collapse; }
     .data-table td {
       padding: 10px 0; border-bottom: 1px solid var(--border);
@@ -83,7 +80,6 @@
       text-align: right; color: var(--text); font-weight: 500;
     }
     .data-table tr:last-child td { border-bottom: none; }
-
     .risk-list {
       list-style: none; display: flex; flex-direction: column; gap: 8px;
     }
@@ -95,7 +91,6 @@
       width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
       flex-shrink: 0; margin-top: 6px;
     }
-
     .comp-list { display: flex; flex-direction: column; gap: 0; }
     .comp-item {
       padding: 12px 0; border-bottom: 1px solid var(--border);
@@ -106,14 +101,12 @@
     .comp-desc { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
     .comp-source { font-size: 12px; color: var(--muted-light); }
     .comp-price { font-size: 14px; font-weight: 600; color: var(--brand); white-space: nowrap; }
-
     .disclaimer-card {
       background: var(--bg); border: 1px solid var(--border);
       border-radius: var(--radius-sm); padding: 14px 18px;
       font-size: 12px; color: var(--muted-light); line-height: 1.65;
       margin-bottom: 12px;
     }
-
     .report-actions { display: flex; gap: 10px; margin-bottom: 24px; }
     .btn-print {
       flex: 1; padding: 13px; background: var(--brand); color: white;
@@ -130,16 +123,61 @@
     }
     .btn-share:hover { background: var(--brand-light); }
 
-    /* Loading state */
+    /* ── Loading state ─────────────────────────────────────────── */
     .report-loading {
-      text-align: center; padding: 80px 20px;
+      text-align: center;
+      padding: 60px 20px 80px;
     }
     .report-loading .spinner-ring {
-      width: 52px; height: 52px; margin: 0 auto 20px;
-      border: 3px solid var(--brand-light); border-top-color: var(--brand);
+      width: 64px; height: 64px; margin: 0 auto 28px;
+      border: 4px solid var(--brand-light); border-top-color: var(--brand);
       border-radius: 50%; animation: spin 0.9s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-title {
+      font-family: var(--font-head); font-size: 24px; font-weight: 700;
+      color: var(--text); margin-bottom: 8px;
+    }
+    .loading-status {
+      font-size: 16px; color: var(--brand); font-weight: 500;
+      margin-bottom: 28px; min-height: 26px;
+      transition: opacity 0.4s ease;
+    }
+    /* Progress bar container */
+    .progress-track {
+      background: var(--border); border-radius: 100px;
+      height: 8px; width: 100%; max-width: 380px;
+      margin: 0 auto 10px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--brand), #E8734A);
+      width: 0%;
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .progress-fill.complete {
+      background: #16A34A;
+      transition: width 0.5s ease;
+    }
+    .progress-pct {
+      font-size: 12px; color: var(--muted); margin-bottom: 24px;
+      font-variant-numeric: tabular-nums;
+    }
+    .loading-steps {
+      display: flex; flex-direction: column; gap: 6px;
+      max-width: 340px; margin: 0 auto 24px; text-align: left;
+    }
+    .loading-step {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 15px; color: var(--muted-light);
+      opacity: 0.4; transition: opacity 0.5s ease;
+    }
+    .loading-step.done   { opacity: 1; color: var(--muted); }
+    .loading-step.active { opacity: 1; color: var(--text); font-weight: 500; }
+    .step-icon { font-size: 20px; width: 26px; text-align: center; flex-shrink: 0; }
+    .loading-note {
+      font-size: 14px; color: var(--muted-light); line-height: 1.65;
+    }
 
     @media print {
       .navbar, .report-actions, .btn-back-nav { display: none !important; }
@@ -149,30 +187,53 @@
   </style>
 </head>
 <body>
-
   <nav class="navbar">
     <div class="nav-inner">
       <a href="index.html" class="logo">valUProp<span class="logo-dot">.in</span></a>
       <a href="estimate.html" class="btn-back-nav">New estimate →</a>
     </div>
   </nav>
-
   <main class="report-wrap">
 
-    <!-- Loading state (shown while polling) -->
+    <!-- ── Loading state (shown while polling) ──────────────────── -->
     <div class="report-loading" id="report-loading">
-      <div class="spinner-ring"></div>
-      <div style="font-family:var(--font-head);font-size:18px;font-weight:600;margin-bottom:8px;">
-        Generating your report…
+      <div class="spinner-ring" id="loading-spinner"></div>
+      <div class="loading-title">Generating your report…</div>
+      <div class="loading-status" id="loading-status">Connecting to property database…</div>
+
+      <!-- Progress bar -->
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
       </div>
-      <p style="font-size:14px;color:var(--muted);">
-        Our AI is analysing your property. This takes 10–20 seconds.
+      <div class="progress-pct" id="progress-pct">0%</div>
+
+      <!-- Step checklist -->
+      <div class="loading-steps">
+        <div class="loading-step active" id="step-0">
+          <span class="step-icon">🔍</span> Our AI is analysing your property
+        </div>
+        <div class="loading-step" id="step-1">
+          <span class="step-icon">📊</span> Our AI is comparing market data
+        </div>
+        <div class="loading-step" id="step-2">
+          <span class="step-icon">🧮</span> Our AI is calculating adjustments
+        </div>
+        <div class="loading-step" id="step-3">
+          <span class="step-icon">✍️</span> Our AI is writing your report
+        </div>
+        <div class="loading-step" id="step-4">
+          <span class="step-icon">📄</span> Our AI is generating your PDF
+        </div>
+      </div>
+
+      <p class="loading-note">
+        Our AI researches real-time market data for your property.<br>
+        This typically takes about <strong>60 seconds</strong> — please don't close this tab.
       </p>
     </div>
 
-    <!-- Report content (hidden until loaded) -->
+    <!-- ── Report content (hidden until loaded) ─────────────────── -->
     <div id="report-content" style="display:none;">
-
       <!-- Hero banner -->
       <div class="report-hero">
         <div class="report-hero-top">
@@ -190,14 +251,12 @@
           ⚠️ Confidence below 70% — we recommend consulting a registered valuer before transacting.
         </div>
       </div>
-
       <!-- Actions -->
       <div class="report-actions">
         <button class="btn-print" id="btn-download" onclick="downloadPdf()">⬇ Download PDF</button>
         <button class="btn-print" onclick="window.print()" style="background:var(--muted);">🖨️ Print</button>
         <button class="btn-share" onclick="shareReport()">📲 Share</button>
       </div>
-
       <!-- Section A -->
       <div class="section-card">
         <div class="section-head">
@@ -206,7 +265,6 @@
         </div>
         <div class="section-body"><p id="sec-a"></p></div>
       </div>
-
       <!-- Section B -->
       <div class="section-card">
         <div class="section-head">
@@ -215,7 +273,6 @@
         </div>
         <div class="section-body"><p id="sec-b"></p></div>
       </div>
-
       <!-- Section C -->
       <div class="section-card">
         <div class="section-head">
@@ -227,7 +284,6 @@
           <p id="sec-c-content" style="font-size:13px;color:var(--muted);line-height:1.65;"></p>
         </div>
       </div>
-
       <!-- Section D -->
       <div class="section-card">
         <div class="section-head">
@@ -239,7 +295,6 @@
           <p id="sec-d-content" style="font-size:13px;color:var(--muted);line-height:1.65;"></p>
         </div>
       </div>
-
       <!-- Section E -->
       <div class="section-card" style="border-color: var(--brand);">
         <div class="section-head" style="background: var(--brand-light);">
@@ -252,7 +307,6 @@
           <p id="sec-e-content" style="font-size:14px;color:var(--muted);line-height:1.65;margin:0;"></p>
         </div>
       </div>
-
       <!-- Section F -->
       <div class="section-card">
         <div class="section-head">
@@ -263,7 +317,6 @@
           <ul class="risk-list" id="sec-f-list"></ul>
         </div>
       </div>
-
       <!-- Comparables -->
       <div class="section-card" id="comp-card" style="display:none;">
         <div class="section-head">
@@ -274,19 +327,118 @@
           <div class="comp-list" id="comp-list"></div>
         </div>
       </div>
-
       <!-- Disclaimer -->
       <div class="disclaimer-card" id="sec-g"></div>
-
       <div style="text-align:center;font-size:12px;color:var(--muted-light);padding-bottom:8px;">
         Report emailed to <span id="r-email">your email address</span>.
         Valid for 48 hours from generation. Ref: <span id="r-ref-bottom"></span>
       </div>
-
     </div><!-- end report-content -->
   </main>
 
   <script src="js/estimate.js"></script>
   <script src="js/detail.js"></script>
+
+  <!-- ── Progress bar simulation ─────────────────────────────────
+       Runs independently of detail.js.
+       Advances to 88% over ~65s, then waits.
+       When detail.js hides #report-loading, we intercept:
+       complete to 100%, pause 700ms, then reveal the report.
+  ─────────────────────────────────────────────────────────────── -->
+  <script>
+  (function () {
+    const fill    = document.getElementById('progress-fill');
+    const pctEl   = document.getElementById('progress-pct');
+    const statusEl = document.getElementById('loading-status');
+    const spinner  = document.getElementById('loading-spinner');
+    const loading  = document.getElementById('report-loading');
+    const content  = document.getElementById('report-content');
+
+    // Steps: [targetPct, delayMs, statusMsg, activeStepIndex]
+    const TIMELINE = [
+      [  8,  1500, 'Connecting to property database…',        0 ],
+      [ 20,  6000, 'Searching MagicBricks & 99acres…',        0 ],
+      [ 35, 14000, 'Analysing comparable listings…',          1 ],
+      [ 52, 24000, 'Calculating market adjustments…',         2 ],
+      [ 68, 36000, 'Writing your 7-section report…',          3 ],
+      [ 80, 50000, 'Generating PDF & finalising…',            4 ],
+      [ 88, 65000, 'Almost ready — just a moment more…',      4 ],
+    ];
+
+    let currentPct = 0;
+    let done = false;
+
+    function setStep(idx) {
+      for (let i = 0; i < 5; i++) {
+        const el = document.getElementById('step-' + i);
+        if (!el) continue;
+        el.classList.remove('active', 'done');
+        if (i < idx)       el.classList.add('done');
+        else if (i === idx) el.classList.add('active');
+      }
+    }
+
+    function setProgress(pct, msg, stepIdx) {
+      currentPct = pct;
+      fill.style.width = pct + '%';
+      pctEl.textContent = Math.round(pct) + '%';
+      if (msg) {
+        statusEl.style.opacity = '0';
+        setTimeout(() => {
+          statusEl.textContent = msg;
+          statusEl.style.opacity = '1';
+        }, 200);
+      }
+      if (stepIdx !== undefined) setStep(stepIdx);
+    }
+
+    // Schedule timeline steps
+    TIMELINE.forEach(([pct, delay, msg, step]) => {
+      setTimeout(() => {
+        if (!done && currentPct < pct) setProgress(pct, msg, step);
+      }, delay);
+    });
+
+    // Complete to 100% and reveal content
+    function completeAndReveal() {
+      if (done) return;
+      done = true;
+
+      // Mark all steps done
+      for (let i = 0; i < 5; i++) {
+        const el = document.getElementById('step-' + i);
+        if (el) { el.classList.remove('active'); el.classList.add('done'); }
+      }
+
+      // Animate to 100%
+      fill.classList.add('complete');
+      setProgress(100, '✓ Your report is ready!', 4);
+      spinner.style.display = 'none';
+
+      // Reveal content after a short pause so user sees 100%
+      setTimeout(() => {
+        loading.style.display = 'none';
+        content.style.display  = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 800);
+    }
+
+    // Watch for detail.js hiding the loading div OR showing content
+    const obs = new MutationObserver(() => {
+      const loadingHidden  = loading.style.display === 'none';
+      const contentVisible = content.style.display  !== 'none';
+      if ((loadingHidden || contentVisible) && !done) {
+        obs.disconnect();
+        // Temporarily restore loading state so we can show 100%
+        loading.style.display = 'block';
+        content.style.display  = 'none';
+        completeAndReveal();
+      }
+    });
+    obs.observe(loading,  { attributes: true, attributeFilter: ['style'] });
+    obs.observe(content,  { attributes: true, attributeFilter: ['style'] });
+  })();
+  </script>
+
 </body>
 </html>
