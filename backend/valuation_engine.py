@@ -351,7 +351,9 @@ async def generate_detailed_report(
         _RISK_KEYS    = {"risk_diligence","risk_due_diligence","riskDiligence",
                          "due_diligence","dueDiligence","risks","risk_factors",
                          "riskFactors","dueDiligencePoints","legal_risks",
-                         "legalRisks","buyerRisks","buyer_risks"}
+                         "legalRisks","buyerRisks","buyer_risks",
+                         "nearbyLandmarks","localityRisks","locality_risks",
+                         "buyerConsiderations","buyer_considerations"}
         _STEP5_KEYS   = {"step5_adjustments","connectivity_adjustments",
                          "adjustments","connectivityFactors","connectivity_factors",
                          "step5","stepFiveAdjustments"}
@@ -902,23 +904,25 @@ def _build_prose_prompt(
             f"Trend: {loc_data.trend_12m}"
         )
     area = prop.carpet_area or prop.plot_house or prop.plot_land or 0
-    return f"""Search for real estate data for {prop.locality}, {prop.city} and return a JSON object.
+    return f"""Return a JSON object with EXACTLY these 5 keys (no other keys allowed):
+"micro_market", "risk_diligence", "step5_adjustments", "pricing_signals", "comparables"
 
+Location: {prop.locality}, {prop.city}
 Property: {prop.prop_type}, {prop.bhk or '2BHK'}, {area} sqft, Age: {prop.age_apt or 'not specified'}
 DB rates: {loc_info}
 Value range: Rs.{lo}L - Rs.{hi}L
 
-Return JSON with these fields about {prop.locality}:
+Field specifications:
 
-micro_market: 3 bullet points — (1) nearest metro/suburban rail station name and operational status, (2) key arterial roads and highway corridor, (3) main employment hubs or IT parks driving demand.
+"micro_market": string with 3 bullet points — (1) nearest metro/suburban rail station name and operational status, (2) key arterial roads and highway corridor, (3) main employment hubs or IT parks driving demand in {prop.locality}.
 
-risk_diligence: 5 specific due diligence bullets for {prop.locality} — cover CRZ/flood risk, approval body (CMDA/DTCP/Avadi Corp etc), OC issues, road widening proposals, loan eligibility risks.
+"risk_diligence": string with 5 specific due diligence bullets for {prop.locality} — cover CRZ/flood risk, approval body (CMDA/DTCP/Avadi Corp etc), OC certificate issues, road widening proposals, loan eligibility risks.
 
-step5_adjustments: array of 4 connectivity adjustment objects, each with label/factor/applied — covering corridor, metro/rail station, main road, employment node.
+"step5_adjustments": array of 4 objects each with keys "label", "factor", "applied" — covering the main corridor, metro/rail station, main road, and employment node for {prop.locality}.
 
-pricing_signals: current apartment rates per sqft, 12-month appreciation, guideline/circle rate, 2-3 recent comparable transactions.
+"pricing_signals": string with current apartment rates per sqft, 12-month appreciation trend, guideline/circle rate for {prop.locality}.
 
-comparables: array of 3 comparable properties with description, price_signal, source.
+"comparables": array of 3 objects each with keys "description", "price_signal", "source" — recent comparable apartment transactions in {prop.locality} or adjacent areas.
 
 JSON:""".strip()
 def _build_fallback_report(
