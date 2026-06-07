@@ -961,34 +961,42 @@ def _build_prose_prompt(
             f"Trend: {loc_data.trend_12m}"
         )
     area = prop.carpet_area or prop.plot_house or prop.plot_land or 0
-    return f"""Return a JSON object with EXACTLY these 5 keys (no other keys allowed):
-"micro_market", "risk_diligence", "step5_adjustments", "pricing_signals", "comparables"
+    approval_body = 'CMDA' if prop.city == 'Chennai' else 'BBMP/BDA'
+    return f"""You are a JSON API. Output ONLY a JSON object — no explanation, no markdown, no extra keys.
 
+Required keys: "micro_market", "risk_diligence", "step5_adjustments", "pricing_signals", "comparables"
+
+Context:
 Location: {prop.locality}, {prop.city}
 Property: {prop.prop_type}, {prop.bhk or '2BHK'}, {area} sqft, Age: {prop.age_apt or 'not specified'}
 DB rates: {loc_info}
 Value range: Rs.{lo}L - Rs.{hi}L
 
-STRICT LENGTH RULES — violating these breaks the system:
-- Every string field: NO essays, NO paragraphs, NO repetition.
-- "micro_market": exactly 3 bullet lines starting with "• ", max 15 words each.
-- "risk_diligence": exactly 5 bullet lines starting with "• ", max 20 words each.
-- "pricing_signals": exactly 3 sentences, max 25 words each. Total under 75 words.
-- "step5_adjustments": JSON array of 4 objects. "factor" = short % like "+2%". "applied" = 4-6 words only.
+━━━ FILL EACH FIELD USING THE TEMPLATE BELOW. DO NOT ADD MORE TEXT. ━━━
 
-Field specifications:
+"micro_market": Fill this template (EXACTLY 3 lines, each starts with "• ", max 15 words per line):
+"• [nearest metro or suburban rail station]: [X] km, [Y] min by [walk/auto/drive]
+• [key road or highway name]: [2-3 word access note]
+• [main employment hub or IT park name]: [X] km away"
 
-"micro_market": 3 bullets — (1) nearest metro/suburban rail station name and walk/drive time, (2) key arterial road or highway, (3) main employment hub or IT park.
+"risk_diligence": Fill this template (EXACTLY 5 lines, each starts with "• ", max 20 words per line):
+"• Flood/low-lying risk: [1 sentence for {prop.locality}]
+• {approval_body} approval: [OC/plan sanction status risk]
+• Road widening: [road acquisition or setback risk]
+• Title: [encumbrance or ownership check note]
+• Loan: [bank eligibility or LTV risk note]"
 
-"risk_diligence": 5 bullets for {prop.locality} — (1) CRZ or flood zone risk, (2) approval body ({('CMDA' if prop.city == 'Chennai' else 'BBMP/BDA')}) and OC status, (3) road widening or acquisition risk, (4) title/encumbrance check, (5) loan eligibility risk.
+"step5_adjustments": EXACTLY 4 objects. "factor" = percent string only. "applied" = max 6 words. NO sentences.
+[{{"label":"[label1]","factor":"+2%","applied":"[4-6 words]"}},{{"label":"[label2]","factor":"+1%","applied":"[4-6 words]"}},{{"label":"[label3]","factor":"-1%","applied":"[4-6 words]"}},{{"label":"[label4]","factor":"+1%","applied":"[4-6 words]"}}]
 
-"step5_adjustments": JSON array of exactly 4 objects, keys "label", "factor", "applied":
-[{{"label":"OMR/ECR corridor premium","factor":"+2%","applied":"On arterial IT corridor"}},{{"label":"Metro station proximity","factor":"+1%","applied":"1.5 km to MRTS station"}},{{"label":"Employment node access","factor":"+2%","applied":"Near IT park cluster"}},{{"label":"Property age premium","factor":"+1%","applied":"0-5 yr ready-to-move"}}]
-Use actual {prop.locality} data. "factor" must be a short % like "+2%" or "-1%". "applied" must be 4-6 words only.
+"pricing_signals": EXACTLY 3 sentences. Max 25 words each. Total under 75 words. No semicolons or lists.
+Sentence 1: rate range Rs.X,XXX-X,XXX/sqft (cite source portal).
+Sentence 2: X% appreciation in 12 months (rising/flat/declining trend).
+Sentence 3: one specific buyer tip for {prop.locality}.
 
-"pricing_signals": 3 sentences total. Sentence 1: current rate range per sqft and source. Sentence 2: 12-month appreciation % and trend direction. Sentence 3: one buyer tip for {prop.locality}.
-
-"comparables": array of 3 objects, keys "description" (project name + config, max 8 words), "price_signal" (rate or total price), "source" (portal name).
+"comparables": MUST be a JSON array (NOT a string). EXACTLY 3 objects with keys "description", "price_signal", "source".
+"description" = project name + config, max 8 words. "price_signal" = rate or price. "source" = portal name only.
+[{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.X,XXX/sqft","source":"99acres"}},{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"MagicBricks"}},{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Housing"}}]
 
 JSON:""".strip()
 def _build_fallback_report(

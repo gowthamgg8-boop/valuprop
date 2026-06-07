@@ -31,10 +31,19 @@ def _normalise(report_data: dict) -> dict:
         return report_data
 
     def _risk_points(text: str) -> list:
-        """Split bullet-point string into list."""
+        """Split bullet-point string into list.
+        Handles newline-separated bullets AND run-on strings with embedded • markers."""
         if not text:
             return []
+        # First try newline split
         lines = [l.strip() for l in text.split("\n") if l.strip()]
+        # If only 1 line but it contains multiple bullet markers, re-split on •
+        if len(lines) <= 1:
+            import re as _re
+            parts = _re.split(r'(?<!\A)(?=•)', text)
+            parts = [p.strip() for p in parts if p.strip()]
+            if len(parts) > 1:
+                lines = parts
         return lines
 
     sections = {
@@ -412,17 +421,11 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
             if risks:
                 _strip    = "•- "
                 risk_text = "<br/>".join(
-                    f"• {_tc(r.lstrip(_strip), 250)}"
+                    f"• {_tc(r.lstrip(_strip), 300)}"
                     for r in risks[:12] if r.strip()
                 )
-                rt = Table([[Paragraph(risk_text, sN)]], colWidths=[W])
-                rt.setStyle(TableStyle([
-                    ("BACKGROUND",(0,0),(-1,-1),colors.white),
-                    ("BOX",(0,0),(-1,-1),1,C_BORDER),
-                    ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),
-                    ("TOPPADDING",(0,0),(-1,-1),7),("BOTTOMPADDING",(0,0),(-1,-1),7),
-                ]))
-                sec_items.append(rt)
+                # Use Paragraph (not single-row Table) so content can flow across pages
+                sec_items.append(Paragraph(risk_text, sCont))
                 content = ""
 
         # ── Content paragraph (A, B, C LLM text, E opinion, G disclaimer) ──
