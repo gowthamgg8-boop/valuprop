@@ -72,7 +72,7 @@ def _normalise(report_data: dict) -> dict:
         "value_min":       report_data.get("value_lo", 0),
         "value_max":       report_data.get("value_hi", 0),
         "confidence_score": report_data.get("confidence", 70),
-        "comparables":     report_data.get("comparables", []),
+        "comparables":     report_data.get("comparables", []) if isinstance(report_data.get("comparables"), list) else [],
     }
 
 def _fmt_range(lo, hi, prefix="Rs.", suffix="L") -> str:
@@ -156,7 +156,16 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
     conf_label = "High" if conf >= 80 else ("Moderate" if conf >= 60 else "Low")
 
     sections  = report.get("sections", {})
-    comps     = report.get("comparables", []) or []
+    comps_raw = report.get("comparables", []) or []
+    # Guard: LLM sometimes returns comparables as a string instead of a list.
+    # Iterating over a string produces one character per row → multi-page disaster.
+    if isinstance(comps_raw, str):
+        try:
+            import json as _json_c
+            comps_raw = _json_c.loads(comps_raw)
+        except Exception:
+            comps_raw = []
+    comps = comps_raw if isinstance(comps_raw, list) else []
 
     buf = io.BytesIO()
     PAGE_W, PAGE_H = A4
@@ -513,7 +522,8 @@ def _build_html(report: dict, area: dict, val_id: int) -> str:
     conf_color  = SUCCESS if conf >= 70 else (WARNING if conf >= 50 else DANGER)
     conf_label  = "Good" if conf >= 80 else ("Moderate" if conf >= 60 else "Low — Consult a Professional")
     sections    = report.get("sections", {})
-    comparables = report.get("comparables", [])
+    _comps_raw  = report.get("comparables", [])
+    comparables = _comps_raw if isinstance(_comps_raw, list) else []
 
     sec_html = ""
     for letter in ["A","B","C","D","E","F","G"]:
