@@ -426,7 +426,7 @@ async def generate_detailed_report(
 
         mm_raw = _first(_MICRO_KEYS) or ""
         mm = _to_str(mm_raw)
-        mm_bullets = _force_bullets(mm, 3, 15)
+        mm_bullets = _force_bullets(mm, 3, 25)
         # Only override if we got at least 2 bullets — otherwise LLM returned
         # a single-sentence description which looks bad as a bullet section
         if mm_bullets.count('•') >= 2:
