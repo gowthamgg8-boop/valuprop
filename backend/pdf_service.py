@@ -53,9 +53,19 @@ def _normalise(report_data: dict) -> dict:
         "C": {
             "title":           "Observed Pricing Signals",
             "content":         report_data.get("pricing_signals", ""),
-            "land_rate_range": _fmt_range(report_data.get("land_value_lo"), report_data.get("land_value_hi"), suffix="L"),
-            "apt_rate_range":  "",
-            "guideline_value": "",
+            "land_rate_range": (
+                f"Rs.{int(report_data['land_rate_sqft_lo']):,}–Rs.{int(report_data['land_rate_sqft_hi']):,}/sqft"
+                if report_data.get("land_rate_sqft_lo") else
+                _fmt_range(report_data.get("land_value_lo"), report_data.get("land_value_hi"), suffix="L")
+            ),
+            "apt_rate_range":  (
+                f"Rs.{int(report_data['apt_rate_lo']):,}–Rs.{int(report_data['apt_rate_hi']):,}/sqft"
+                if report_data.get("apt_rate_lo") else ""
+            ),
+            "guideline_value": (
+                f"Rs.{int(report_data['guideline_rate']):,}/sqft (regulatory floor)"
+                if report_data.get("guideline_rate") else ""
+            ),
             "trend":           report_data.get("locality_trend", ""),
         },
         "D": {

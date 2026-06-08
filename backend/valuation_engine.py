@@ -112,6 +112,12 @@ class DetailedReport:
     adj_value_hi:      Optional[float] = None
     # Comparables
     comparables:       list = field(default_factory=list)
+    # Per-sqft rates for Section C table (from locality DB)
+    apt_rate_lo:       float = 0.0
+    apt_rate_hi:       float = 0.0
+    land_rate_sqft_lo: float = 0.0
+    land_rate_sqft_hi: float = 0.0
+    guideline_rate:    float = 0.0
     # Meta
     locality_trend:    str = ""
     data_source:       str = "ai"
@@ -407,31 +413,56 @@ async def generate_detailed_report(
             if not text:
                 return text
             text = str(text)
-            # Try '; ' first, then '. ', then '\n'
-            parts = re.split(r';\s+', text)
+            # Step 1: Collapse newlines to spaces so embedded \n don't survive into output.
+            # This prevents lines like "+0.8%\n0.0%\n+25%" from being included as fragments.
+            text_norm = re.sub(r'\s*\n\s*', ' ', text).strip()
+            # Step 2: Try '; ' first, then '. ', then fall back to raw '\n' split of original
+            parts = re.split(r';\s+', text_norm)
             if len(parts) < 2:
-                parts = re.split(r'\.\s+', text)
+                parts = re.split(r'\.\s+', text_norm)
             if len(parts) < 2:
-                parts = text.split('\n')
-            # Filter: keep only lines ≥ 20 chars that look like narrative (contain a letter word)
+                parts = [p.strip() for p in text.split('\n')]
+            # Filter: keep only clauses ≥ 30 chars that contain a real word (3+ letters)
             parts = [
                 p.strip().rstrip(";.,")
                 for p in parts
-                if len(p.strip()) >= 20 and re.search(r'[a-zA-Z]{3,}', p)
+                if len(p.strip()) >= 30 and re.search(r'[a-zA-Z]{3,}', p)
             ]
             if not parts:
-                # Last resort: take first max_chars*n chars as one sentence
-                return text[:max_chars] + "."
+                return text_norm[:max_chars] + "."
             return ". ".join(p[:max_chars] for p in parts[:n]) + "."
 
         mm_raw = _first(_MICRO_KEYS) or ""
         mm = _to_str(mm_raw)
-        # New prompt returns labeled paragraphs with "* LABEL: ..." format.
-        # Accept if it has at least 2 labeled paragraphs (either * or • prefix).
-        # Only fall back to _force_bullets if the LLM returned a plain string.
-        has_labeled = mm.count('* ') >= 2 or mm.count('• ') >= 2
-        if has_labeled:
-            print(f"[ENGINE] micro_market UPDATED labeled ({len(mm)} chars)", flush=True)
+
+        def _extract_bullets(text: str, max_items: int = 3) -> str:
+            """
+            Extract up to max_items bullet items from LLM output.
+            Handles both '* Label: ...' and '• ...' formats.
+            Strips any intro paragraph that appears before the first bullet.
+            """
+            if not text:
+                return text
+            # Find position of first bullet marker (* or •)
+            pos_star  = text.find('* ')
+            pos_bullet = text.find('• ')
+            markers = [p for p in [pos_star, pos_bullet] if p >= 0]
+            if not markers:
+                return text  # no bullets found — return as-is
+            first = min(markers)
+            # If there's more than 60 chars before the first bullet, that's an intro — strip it
+            body = text[first:] if first > 60 else text
+            # Split into individual bullet items on newline-then-marker
+            items = re.split(r'\n(?=[\*•])', body)
+            items = [i.strip() for i in items if i.strip()]
+            # Keep only items that are substantive (≥ 20 chars)
+            items = [i for i in items if len(i) >= 20]
+            return "\n".join(items[:max_items])
+
+        mm = _extract_bullets(mm, max_items=3)
+        has_content = mm.count('* ') >= 2 or mm.count('• ') >= 2
+        if has_content:
+            print(f"[ENGINE] micro_market UPDATED ({len(mm)} chars)", flush=True)
         else:
             mm_bullets = _force_bullets(mm, 3, 25)
             if mm_bullets.count('•') >= 2:
@@ -439,21 +470,13 @@ async def generate_detailed_report(
                 print(f"[ENGINE] micro_market UPDATED bullets ({len(mm)} chars)", flush=True)
             else:
                 mm = ""   # keep the engine-generated section_b
-                print(f"[ENGINE] micro_market SKIPPED — insufficient bullets from LLM", flush=True)
+                print(f"[ENGINE] micro_market SKIPPED — insufficient content from LLM", flush=True)
         print(f"[ENGINE] micro_market val={repr(mm[:120])}", flush=True)
         if mm and mm.strip():
             report.micro_market = mm
 
-        ps_raw = _first(_PRICE_KEYS) or ""
-        ps = _to_str(ps_raw)
-        # New prompt returns 4-5 sentences; only force-truncate if LLM returned a data dump
-        ps = _force_sentences(ps, 5, 150)   # allow up to 5 sentences, 150 chars each
-        print(f"[ENGINE] pricing_signals val={repr(ps[:120])}", flush=True)
-        if ps and ps.strip():
-            report.pricing_signals = ps
-            print(f"[ENGINE] pricing_signals UPDATED ({len(ps)} chars)", flush=True)
-        else:
-            print(f"[ENGINE] pricing_signals SKIPPED (empty)", flush=True)
+        # pricing_signals (Section C) is engine-only — LLM does NOT overwrite it.
+        print(f"[ENGINE] pricing_signals: engine-generated from DB (no LLM overwrite)", flush=True)
 
         rd_raw = _first(_RISK_KEYS) or ""
         rd = _to_str(rd_raw)
@@ -879,17 +902,23 @@ def _build_structured_report(
     section_a = f"This {prop.prop_type.replace('IndependentHouse','Independent House')} is located in {prop.locality}, {prop.city}.{area_info}{age_info} Locality character and micro-market rates are based on our proprietary database.{uds_note}"
     # ── Section B (LLM enriches this) ─────────────────────────────
     section_b = loc_data.micro_context if loc_data else f"{prop.locality} is a residential locality in {prop.city}. Demand is supported by local employment, connectivity, and civic infrastructure."
-    # ── Section C ─────────────────────────────────────────────────
+    # ── Section C (engine-only; LLM does NOT overwrite) ──────────
     if loc_data:
-        mid_rate = (loc_data.apt_rate_lo + loc_data.apt_rate_hi) // 2 if hasattr(loc_data, "apt_rate_lo") else 0
+        mid_rate     = (loc_data.apt_rate_lo + loc_data.apt_rate_hi) // 2
+        age_factor_c = _age_depreciation(prop.age_apt or "5-10 years")
+        eff_lo       = round(mid_rate * age_factor_c * 0.97)
+        eff_hi       = round(mid_rate * age_factor_c * 1.03)
+        dep_note     = (f" Age discount ({round((1-age_factor_c)*100)}%) applied for {prop.age_apt or '5-10 year'} resale stock."
+                        if age_factor_c < 1.0 else "")
+        gv_note      = (f" Government guideline value Rs.{loc_data.guideline_value:,}/sqft — regulatory floor only."
+                        if loc_data.guideline_value > 0 else "")
+        mkt_class    = "active" if "+" in str(loc_data.trend_12m) else "stable"
         section_c = (
-            f"Based on our locality database: "
-            f"Land rates in {prop.locality}: Rs.{loc_data.land_rate_lo:,}-Rs.{loc_data.land_rate_hi:,}/sq.ft. "
-            f"Apartment rates: Rs.{loc_data.apt_rate_lo:,}-Rs.{loc_data.apt_rate_hi:,}/sq.ft carpet. "
-            f"12-month appreciation: {loc_data.trend_12m}. "
-            f"Government guideline value: Rs.{loc_data.guideline_value:,}/sq.ft (regulatory floor only). "
-            f"Effective working rate for {prop.age_apt or '5-10 year'} resale: "
-            f"Rs.{round(mid_rate*0.88):,}-Rs.{round(mid_rate*0.95):,}/sq.ft after age/resale adjustment."
+            f"Locality DB rates for {prop.locality}: apartment Rs.{loc_data.apt_rate_lo:,}"
+            f"–Rs.{loc_data.apt_rate_hi:,}/sqft; land Rs.{loc_data.land_rate_lo:,}"
+            f"–Rs.{loc_data.land_rate_hi:,}/sqft.{dep_note}"
+            f" Effective working rate: Rs.{eff_lo:,}–Rs.{eff_hi:,}/sqft."
+            f" 12-month appreciation {loc_data.trend_12m} YoY — {mkt_class} market.{gv_note}"
         )
     else:
         section_c = f"Pricing signals based on our locality database for {prop.locality}, {prop.city}."
@@ -962,12 +991,13 @@ def _build_structured_report(
     gv_check   = f"Guideline cross-check: FMV implies {gv_multiple}x guideline — within 1.5-4.5x expected band. PASS" if gv_multiple > 0 else "Guideline value not available for this locality."
     trend_check= f"Appreciation: {loc_data.trend_12m} YoY — consistent with corridor." if loc_data else ""
     section_e = (
-        f"Estimated Market Value: Rs.{lo}L - Rs.{hi}L. "
-        f"Most Likely Transaction Range: Rs.{txn_lo}L - Rs.{txn_hi}L (after 3-5% negotiation). "
-        f"Confidence: {confidence}%. "
-        f"Sanity checks: {gv_check} "
-        f"Rental yield 2.0-3.5% target band — income supported. PASS. "
-        f"{trend_check}"
+        f"Estimated Market Value: Rs.{lo}L - Rs.{hi}L\n"
+        f"Most Likely Transaction Range: Rs.{txn_lo}L - Rs.{txn_hi}L (after 3-5% negotiation)\n"
+        f"Confidence: {confidence}%\n\n"
+        f"Sanity Checks:\n"
+        f"* {gv_check}\n"
+        f"* Rental yield 2.0-3.5% target band — income supported. PASS\n"
+        + (f"* {trend_check}\n" if trend_check else "")
     )
     # ── Section F ─────────────────────────────────────────────────
     city_approval = "CMDA/DTCP" if prop.city == "Chennai" else "BBMP/BDA"
@@ -1020,6 +1050,11 @@ def _build_structured_report(
         adj_value_lo      = components["adj_lo"],
         adj_value_hi      = components["adj_hi"],
         locality_trend    = loc_data.trend_12m if loc_data else "+8.0%",
+        apt_rate_lo       = loc_data.apt_rate_lo if loc_data else 0.0,
+        apt_rate_hi       = loc_data.apt_rate_hi if loc_data else 0.0,
+        land_rate_sqft_lo = loc_data.land_rate_lo if loc_data else 0.0,
+        land_rate_sqft_hi = loc_data.land_rate_hi if loc_data else 0.0,
+        guideline_rate    = loc_data.guideline_value if loc_data else 0.0,
         data_source       = "structured",
     )
 def _build_prose_prompt(
@@ -1030,8 +1065,8 @@ def _build_prose_prompt(
 ) -> str:
     """
     Prompt asking LLM for enriched fields using v2.4 methodology.
-    Returns: micro_market, risk_diligence, step5_adjustments, pricing_signals, comparables.
-    risk_diligence and step5_adjustments come BEFORE pricing_signals to avoid truncation.
+    Returns: micro_market, risk_diligence, step5_adjustments, comparables.
+    pricing_signals (Section C) is engine-only — NOT requested from LLM.
     """
     loc_info = f"{prop.locality}, {prop.city}"
     if loc_data:
@@ -1044,7 +1079,7 @@ def _build_prose_prompt(
     approval_body = 'CMDA' if prop.city == 'Chennai' else 'BBMP/BDA'
     return f"""You are a JSON API. Output ONLY a JSON object — no explanation, no markdown, no extra keys.
 
-Required keys: "micro_market", "risk_diligence", "step5_adjustments", "pricing_signals", "comparables"
+Required keys: "micro_market", "risk_diligence", "step5_adjustments", "comparables"
 
 Context:
 Location: {prop.locality}, {prop.city}
@@ -1054,12 +1089,12 @@ Value range: Rs.{lo}L - Rs.{hi}L
 
 ━━━ FILL EACH FIELD USING THE TEMPLATE BELOW. DO NOT ADD MORE TEXT. ━━━
 
-"micro_market": EXACTLY 3 labeled bullet paragraphs. Each starts with "* [LABEL]: " followed by 2-3 specific sentences.
-Use these 3 labels in order:
-  Label 1 — infrastructure/metro catalyst: name the specific metro line or suburban rail station, km distance, operational status (approved/DPR/under construction/operational), and what it means for value. If no metro, describe the key rail/bus connectivity.
-  Label 2 — existing road connectivity: name 2-3 specific roads, arterials, or highways serving {prop.locality}, and key destinations they connect to.
-  Label 3 — demand profile: name the primary employment hubs (IT parks, industrial estates, institutions) within 5-10 km driving, the workforce segment, and any institutional demand anchors (hospitals, universities, defence).
-Each label paragraph: max 60 words. Be specific — use actual road names, station names, distances, and employer names for {prop.locality}, {prop.city}.
+"micro_market": Output EXACTLY 3 items and NOTHING ELSE. Do NOT write any intro sentence or paragraph before the first item. Start your output directly with "* " on the first character.
+Each item: "* [LABEL]: [2-3 specific sentences about {prop.locality}]"
+Item 1 label — Metro/rail infrastructure: name the specific metro line or suburban rail station, km, operational status, value impact.
+Item 2 label — Road connectivity: name 2-3 specific roads/highways serving {prop.locality} and key destinations.
+Item 3 label — Demand profile: name employment hubs (IT parks, industrial estates) within 5-10 km, workforce type, institutional anchors.
+Max 60 words per item. Use real names, distances, facts for {prop.locality}, {prop.city}.
 
 "risk_diligence": EXACTLY 5 labeled bullet paragraphs. Each starts with "* [LABEL]: " followed by 2-3 sentences specific to {prop.locality}.
 Use these 5 labels:
@@ -1072,14 +1107,6 @@ Each label paragraph: max 60 words. Be specific to {prop.locality}.
 
 "step5_adjustments": EXACTLY 4 objects. "factor" = percent string only. "applied" = max 8 words describing the specific local reason. NO generic phrases.
 [{{"label":"[label1]","factor":"+2%","applied":"[specific local reason, max 8 words]"}},{{"label":"[label2]","factor":"+1%","applied":"[specific local reason]"}},{{"label":"[label3]","factor":"-1%","applied":"[specific local reason]"}},{{"label":"[label4]","factor":"+1%","applied":"[specific local reason]"}}]
-
-"pricing_signals": 4-5 sentences total. No semicolons. Do NOT mention any portal or website name.
-Sentence 1: current asking rate range Rs.X,XXX-X,XXX/sqft in {prop.locality} and how it was adjusted for listing date lag.
-Sentence 2: registered transaction rate (if available) or comparable resale evidence and what discount was applied.
-Sentence 3: X% appreciation in 12 months and active/stable/declining market classification.
-Sentence 4: reconciliation — which rate was used as the working rate and why.
-Sentence 5 (optional): one specific buyer caution or opportunity for {prop.locality}.
-Total max 120 words.
 
 "comparables": MUST be a JSON array (NOT a string). EXACTLY 3 objects with keys "description", "price_signal", "source".
 "description" = project name + config, max 8 words. "price_signal" = rate or price. "source" = month and year only (e.g. "May 2026"). Do NOT include any portal or website name in "source".
@@ -1139,5 +1166,10 @@ def _build_fallback_report(
         adj_value_lo      = components.get("adj_lo"),
         adj_value_hi      = components.get("adj_hi"),
         locality_trend    = loc_data.trend_12m if loc_data else "+8.0%",
+        apt_rate_lo       = loc_data.apt_rate_lo if loc_data else 0.0,
+        apt_rate_hi       = loc_data.apt_rate_hi if loc_data else 0.0,
+        land_rate_sqft_lo = loc_data.land_rate_lo if loc_data else 0.0,
+        land_rate_sqft_hi = loc_data.land_rate_hi if loc_data else 0.0,
+        guideline_rate    = loc_data.guideline_value if loc_data else 0.0,
         data_source       = "fallback",
     )
