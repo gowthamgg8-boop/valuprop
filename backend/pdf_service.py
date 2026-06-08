@@ -421,8 +421,8 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
             risks = sec.get("risk_points", [])
             if risks:
                 _strip    = "•- "
-                risk_text = "<br/>".join(
-                    f"• {_tc(r.lstrip(_strip), 300)}"
+                risk_text = "<br/><br/>".join(
+                    f"• {_tc(r.lstrip(_strip), 600)}"
                     for r in risks[:5] if r.strip()
                 )
                 # Use Paragraph (not single-row Table) so content can flow across pages
@@ -432,8 +432,9 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
         # ── Content paragraph (A, B, C LLM text, E opinion, G disclaimer) ──
         if content:
             if is_E:
-                # Section E keeps Table wrapper for the blue background
-                ct = Table([[Paragraph(content, sN)]], colWidths=[W])
+                # Section E keeps Table wrapper for the blue background.
+                # Replace \n with <br/> so sanity checks render on separate lines.
+                ct = Table([[Paragraph(content.replace("\n", "<br/>"), sN)]], colWidths=[W])
                 ct.setStyle(TableStyle([
                     ("BACKGROUND",(0,0),(-1,-1),C_LIGHT),
                     ("LEFTPADDING",(0,0),(-1,-1),10),("RIGHTPADDING",(0,0),(-1,-1),10),

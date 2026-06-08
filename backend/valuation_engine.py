@@ -426,22 +426,28 @@ async def generate_detailed_report(
 
         mm_raw = _first(_MICRO_KEYS) or ""
         mm = _to_str(mm_raw)
-        mm_bullets = _force_bullets(mm, 3, 25)
-        # Only override if we got at least 2 bullets — otherwise LLM returned
-        # a single-sentence description which looks bad as a bullet section
-        if mm_bullets.count('•') >= 2:
-            mm = mm_bullets
-            print(f"[ENGINE] micro_market UPDATED ({len(mm)} chars)", flush=True)
+        # New prompt returns labeled paragraphs with "* LABEL: ..." format.
+        # Accept if it has at least 2 labeled paragraphs (either * or • prefix).
+        # Only fall back to _force_bullets if the LLM returned a plain string.
+        has_labeled = mm.count('* ') >= 2 or mm.count('• ') >= 2
+        if has_labeled:
+            print(f"[ENGINE] micro_market UPDATED labeled ({len(mm)} chars)", flush=True)
         else:
-            mm = ""   # keep the engine-generated section_b
-            print(f"[ENGINE] micro_market SKIPPED — only {mm_bullets.count('•')} bullet(s) from LLM", flush=True)
+            mm_bullets = _force_bullets(mm, 3, 25)
+            if mm_bullets.count('•') >= 2:
+                mm = mm_bullets
+                print(f"[ENGINE] micro_market UPDATED bullets ({len(mm)} chars)", flush=True)
+            else:
+                mm = ""   # keep the engine-generated section_b
+                print(f"[ENGINE] micro_market SKIPPED — insufficient bullets from LLM", flush=True)
         print(f"[ENGINE] micro_market val={repr(mm[:120])}", flush=True)
         if mm and mm.strip():
             report.micro_market = mm
 
         ps_raw = _first(_PRICE_KEYS) or ""
         ps = _to_str(ps_raw)
-        ps = _force_sentences(ps, 3, 120)   # enforce 3-sentence format always
+        # New prompt returns 4-5 sentences; only force-truncate if LLM returned a data dump
+        ps = _force_sentences(ps, 5, 150)   # allow up to 5 sentences, 150 chars each
         print(f"[ENGINE] pricing_signals val={repr(ps[:120])}", flush=True)
         if ps and ps.strip():
             report.pricing_signals = ps
@@ -1048,25 +1054,32 @@ Value range: Rs.{lo}L - Rs.{hi}L
 
 ━━━ FILL EACH FIELD USING THE TEMPLATE BELOW. DO NOT ADD MORE TEXT. ━━━
 
-"micro_market": Fill this template (EXACTLY 3 lines, each starts with "• ", max 15 words per line):
-"• [nearest metro or suburban rail station]: [X] km, [Y] min by [walk/auto/drive]
-• [key road or highway name]: [2-3 word access note]
-• [main employment hub or IT park name]: [X] km away"
+"micro_market": EXACTLY 3 labeled bullet paragraphs. Each starts with "* [LABEL]: " followed by 2-3 specific sentences.
+Use these 3 labels in order:
+  Label 1 — infrastructure/metro catalyst: name the specific metro line or suburban rail station, km distance, operational status (approved/DPR/under construction/operational), and what it means for value. If no metro, describe the key rail/bus connectivity.
+  Label 2 — existing road connectivity: name 2-3 specific roads, arterials, or highways serving {prop.locality}, and key destinations they connect to.
+  Label 3 — demand profile: name the primary employment hubs (IT parks, industrial estates, institutions) within 5-10 km driving, the workforce segment, and any institutional demand anchors (hospitals, universities, defence).
+Each label paragraph: max 60 words. Be specific — use actual road names, station names, distances, and employer names for {prop.locality}, {prop.city}.
 
-"risk_diligence": Fill this template (EXACTLY 5 lines, each starts with "• ", max 20 words per line):
-"• Flood/low-lying risk: [1 sentence for {prop.locality}]
-• {approval_body} approval: [OC/plan sanction status risk]
-• Road widening: [road acquisition or setback risk]
-• Title: [encumbrance or ownership check note]
-• Loan: [bank eligibility or LTV risk note]"
+"risk_diligence": EXACTLY 5 labeled bullet paragraphs. Each starts with "* [LABEL]: " followed by 2-3 sentences specific to {prop.locality}.
+Use these 5 labels:
+  Label 1 — Title and UDS verification: encumbrance chain, UDS arrangements typical for this zone.
+  Label 2 — {approval_body} approvals: building plan sanction body for this zone, OC/completion cert risks, home loan eligibility impact.
+  Label 3 — Age and occupancy: condition risks for this building age, OC status, renovation costs.
+  Label 4 — Infrastructure timeline risk: any pending metro/road project at DPR or pre-construction stage; caution on paying full infrastructure premium.
+  Label 5 — Flooding and civic: known waterlogging pockets, drainage, borewell dependency specific to {prop.locality}.
+Each label paragraph: max 60 words. Be specific to {prop.locality}.
 
-"step5_adjustments": EXACTLY 4 objects. "factor" = percent string only. "applied" = max 6 words. NO sentences.
-[{{"label":"[label1]","factor":"+2%","applied":"[4-6 words]"}},{{"label":"[label2]","factor":"+1%","applied":"[4-6 words]"}},{{"label":"[label3]","factor":"-1%","applied":"[4-6 words]"}},{{"label":"[label4]","factor":"+1%","applied":"[4-6 words]"}}]
+"step5_adjustments": EXACTLY 4 objects. "factor" = percent string only. "applied" = max 8 words describing the specific local reason. NO generic phrases.
+[{{"label":"[label1]","factor":"+2%","applied":"[specific local reason, max 8 words]"}},{{"label":"[label2]","factor":"+1%","applied":"[specific local reason]"}},{{"label":"[label3]","factor":"-1%","applied":"[specific local reason]"}},{{"label":"[label4]","factor":"+1%","applied":"[specific local reason]"}}]
 
-"pricing_signals": EXACTLY 3 sentences. Max 25 words each. Total under 75 words. No semicolons or lists. Do NOT mention any portal or website name.
-Sentence 1: current rate range Rs.X,XXX-X,XXX/sqft in {prop.locality}.
-Sentence 2: X% appreciation in 12 months (rising/flat/declining trend).
-Sentence 3: one specific buyer tip for {prop.locality}.
+"pricing_signals": 4-5 sentences total. No semicolons. Do NOT mention any portal or website name.
+Sentence 1: current asking rate range Rs.X,XXX-X,XXX/sqft in {prop.locality} and how it was adjusted for listing date lag.
+Sentence 2: registered transaction rate (if available) or comparable resale evidence and what discount was applied.
+Sentence 3: X% appreciation in 12 months and active/stable/declining market classification.
+Sentence 4: reconciliation — which rate was used as the working rate and why.
+Sentence 5 (optional): one specific buyer caution or opportunity for {prop.locality}.
+Total max 120 words.
 
 "comparables": MUST be a JSON array (NOT a string). EXACTLY 3 objects with keys "description", "price_signal", "source".
 "description" = project name + config, max 8 words. "price_signal" = rate or price. "source" = month and year only (e.g. "May 2026"). Do NOT include any portal or website name in "source".
