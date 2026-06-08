@@ -125,11 +125,6 @@ class DetailedReport:
 # SYSTEM PROMPTS — valUProp.in v2.4
 # ═══════════════════════════════════════════════════════════════════
 def _load_v24_prompt() -> str:
-    """
-    Load the full v2.4 methodology from the .md file in backend/.
-    Falls back to inline if file is missing so app never crashes.
-    Deploy valUProp_Prompt_v2_4.md alongside this file on Render.
-    """
     candidates = [
         pathlib.Path(__file__).parent / "valUProp_Prompt_v2_4.md",
         pathlib.Path(__file__).parent / "valUProp_Prompt_-_v2_4.md",
@@ -191,19 +186,10 @@ Prepared using valUProp.in v2.4 methodology. © myRiky Technologies P. Ltd. | in
 """.strip()
 # Load once at module import time
 _V24_PROMPT_BASE = _load_v24_prompt()
-# ── VALUPROP_SYSTEM_PROMPT ─────────────────────────────────────────
-# Used for: free estimate teaser LLM call
-# Full v2.4 methodology + JSON output instruction
 VALUPROP_SYSTEM_PROMPT = (
     _V24_PROMPT_BASE
     + "\n\nOUTPUT FORMAT: Respond with valid JSON only. No markdown, no preamble, no backticks."
 )
-# ── ENRICHMENT_SYSTEM_PROMPT ──────────────────────────────────────
-# Used for: paid report prose enrichment via call_llm_with_search
-# Deliberately neutral — NOT the v2.4 full-report prompt.
-# The v2.4 prompt causes the LLM to return a full-report JSON schema
-# instead of our 5-key enrichment schema. This prompt has no valuation
-# context so the LLM follows the user-message JSON schema exactly.
 ENRICHMENT_SYSTEM_PROMPT = """You are a JSON data API for Indian real estate market intelligence.
 You receive a location and property details and return EXACTLY the JSON schema specified in the user message.
 Rules:
@@ -212,28 +198,18 @@ Rules:
 - Use web search to find current data. If searches return nothing, use your training knowledge.
 - Never return empty string values. Always populate every field with real content.
 - For Indian localities you know well, your training knowledge is sufficient and accurate."""
-
-# Keep old name as alias so any other code referencing it still works
 VALUPROP_SYSTEM_PROMPT_WITH_SEARCH = ENRICHMENT_SYSTEM_PROMPT
 # ═══════════════════════════════════════════════════════════════════
 # FREE ESTIMATE ENGINE
 # ═══════════════════════════════════════════════════════════════════
 async def generate_free_estimate(prop: PropertyInput) -> FreeEstimate:
-    """
-    Generate a free estimate (wide range, ~12% wide).
-    Uses LLM for teaser insight; uses locality DB for price range.
-    """
     loc_data = get_locality(prop.city, prop.locality)
     fallback  = get_fallback(prop.city, prop.locality, prop.bhk or "2BHK")
-    # ── Calculate base price range ────────────────────────────────
     lo, hi = _calculate_base_range(prop, loc_data, fallback)
-    # ── Widen range by ±6% for free tier
     mid  = (lo + hi) / 2
     lo   = round(mid * 0.94, 1)
     hi   = round(mid * 1.06, 1)
-    # ── Confidence ────────────────────────────────────────────────
     confidence = loc_data.data_confidence if loc_data else fallback.get("confidence", 70)
-    # ── LLM teaser insight ────────────────────────────────────────
     teaser = await _generate_teaser(prop, loc_data, lo, hi)
     return FreeEstimate(
         value_lo        = lo,
@@ -250,7 +226,6 @@ async def _generate_teaser(
     lo:       float,
     hi:       float,
 ) -> str:
-    """Generate a single compelling teaser insight using LLM."""
     context = ""
     if loc_data:
         context = (
@@ -294,25 +269,13 @@ async def generate_detailed_report(
     prop: PropertyInput,
     free_range: Optional[tuple] = None,
 ) -> DetailedReport:
-    """
-    Generate the full 7-section valUProp report using v2.4 methodology.
-    Sections A-G as per valUProp_Prompt_v2_4.md.
-    Args:
-        prop: Property input
-        free_range: Optional (lo, hi) tuple from the user's free estimate.
-                    Paid report range is clamped to within ±15% of free midpoint.
-    """
     loc_data = get_locality(prop.city, prop.locality)
     fallback  = get_fallback(prop.city, prop.locality, prop.bhk or "2BHK")
-    # ── Base price range from locality data
     base_lo, base_hi = _calculate_base_range(prop, loc_data, fallback)
-    # ── Paid tier: tighter ±5% range
     midpoint = (base_lo + base_hi) / 2
     lo = round(midpoint * 0.95, 1)
     hi = round(midpoint * 1.05, 1)
-    # ── Build structured report (Python-calculated tables)
     report = _build_structured_report(prop, loc_data, lo, hi)
-    # ── LLM enrichment (prose only — not tables)
     try:
         print(f"[ENGINE] Starting LLM enrichment for val locality={prop.locality}", flush=True)
         logger.info(f"Starting LLM enrichment for {prop.locality}")
@@ -327,19 +290,14 @@ async def generate_detailed_report(
         )
         prose = parse_json_response(raw)
         prose = validate_report_dict(prose)
-        # ── DEBUG: log what the LLM actually returned ─────────────
         print(f"[ENGINE] prose keys: {list(prose.keys())}", flush=True)
-        # ─────────────────────────────────────────────────────────
         def _to_str(val):
-            """Coerce LLM value to string — handles str, list, or nested dict."""
             if isinstance(val, list):
                 return "\n".join(
                     str(item) if str(item).startswith(("•", "*", "-")) else f"• {item}"
                     for item in val
                 )
             if isinstance(val, dict):
-                # LLM returned nested object — extract the most useful string fields
-                # Common patterns: {overview: ..., demand_drivers: ...} or {summary: ..., details: ...}
                 parts = []
                 for k in ("overview", "summary", "description", "context", "analysis",
                           "demand_drivers", "highlights", "details", "points", "notes"):
@@ -348,13 +306,8 @@ async def generate_detailed_report(
                         parts.append(_to_str(v))
                 if parts:
                     return "\n".join(parts)
-                # Fallback: join all string values
                 return "\n".join(_to_str(v) for v in val.values() if v)
             return str(val) if val is not None else ""
-
-        # ── Normalise whatever keys the LLM returned → our 5 keys ──
-        # LLM invents a different schema every call. Map all known
-        # variants to our canonical keys before extracting values.
         _MICRO_KEYS   = {"micro_market","micro_market_context","microMarket",
                          "market_context","marketAnalysis","market_analysis",
                          "locality_context","infrastructureHighlights",
@@ -380,49 +333,35 @@ async def generate_detailed_report(
         _COMP_KEYS    = {"comparables","comparable_transactions",
                          "comparableTransactions","recentTransactions",
                          "recent_transactions","comps"}
-
         def _first(keys):
             for k in keys:
                 v = prose.get(k)
                 if v:
                     return v
             return None
-
-        # ── Post-processing helpers (applied regardless of LLM format) ───────
         def _force_bullets(text: str, n: int = 3, max_words: int = 15) -> str:
-            """Reduce any text to n bullet lines, max_words each.
-            Filters out short 'header' lines (city names, numbers, etc.)."""
             if not text:
                 return text
             text = str(text)
-            # Split on newlines; also split embedded bullet markers
             lines = re.split(r'\n|(?<=[a-z0-9])\s*•\s*', text)
-            # Filter: keep only lines with ≥12 chars (skip "Adyar", "8.5", etc.)
             lines = [l.strip().lstrip("•-– ") for l in lines if len(l.strip()) >= 12]
             if not lines:
                 return text[:200]
-            # Take first n, limit to max_words each
             out = []
             for l in lines[:n]:
                 words = l.split()
                 out.append("• " + " ".join(words[:max_words]))
             return "\n".join(out)
-
         def _force_sentences(text: str, n: int = 3, max_chars: int = 120) -> str:
-            """Reduce text to n short clauses. Handles newline-separated data dumps."""
             if not text:
                 return text
             text = str(text)
-            # Step 1: Collapse newlines to spaces so embedded \n don't survive into output.
-            # This prevents lines like "+0.8%\n0.0%\n+25%" from being included as fragments.
             text_norm = re.sub(r'\s*\n\s*', ' ', text).strip()
-            # Step 2: Try '; ' first, then '. ', then fall back to raw '\n' split of original
             parts = re.split(r';\s+', text_norm)
             if len(parts) < 2:
                 parts = re.split(r'\.\s+', text_norm)
             if len(parts) < 2:
                 parts = [p.strip() for p in text.split('\n')]
-            # Filter: keep only clauses ≥ 30 chars that contain a real word (3+ letters)
             parts = [
                 p.strip().rstrip(";.,")
                 for p in parts
@@ -431,21 +370,17 @@ async def generate_detailed_report(
             if not parts:
                 return text_norm[:max_chars] + "."
             return ". ".join(p[:max_chars] for p in parts[:n]) + "."
-
         # Sections B and F are engine-generated — LLM does NOT overwrite them.
         print(f"[ENGINE] micro_market: engine-generated (no LLM overwrite)", flush=True)
         print(f"[ENGINE] risk_diligence: engine-generated (no LLM overwrite)", flush=True)
         print(f"[ENGINE] pricing_signals: engine-generated (no LLM overwrite)", flush=True)
-
         comp_raw = _first(_COMP_KEYS)
         if comp_raw:
             report.comparables = comp_raw
         step5_raw = _first(_STEP5_KEYS)
         print(f"[ENGINE] step5_raw type={type(step5_raw).__name__} val={repr(str(step5_raw)[:200])}", flush=True)
-        # ── Apply LLM-enriched Step 5 connectivity labels ─────────
         if step5_raw:
             if isinstance(step5_raw, str):
-                # LLM returned step5 as a string — try to parse it as JSON list
                 try:
                     import json as _json
                     step5_raw = _json.loads(step5_raw)
@@ -454,19 +389,15 @@ async def generate_detailed_report(
                     step5_raw = None
                     print(f"[ENGINE] step5_raw string could not be parsed as JSON list — skipping", flush=True)
             if step5_raw and isinstance(step5_raw, dict):
-                # LLM returned a single-object dict instead of a list — wrap it
-                # Try to extract any connectivity-like sub-lists first
                 inner = next((v for v in step5_raw.values() if isinstance(v, list)), None)
                 if inner:
                     step5_raw = inner
                     print(f"[ENGINE] step5_raw extracted inner list len={len(step5_raw)}", flush=True)
                 else:
-                    # Convert dict keys/values into synthetic connectivity items.
                     def _pct_from(text):
                         m = re.search(r'([+-]?\d+(?:\.\d+)?%)', str(text))
                         return m.group(1) if m else "+0%"
                     def _short_note(text):
-                        # Max 6 whole words — slice the token LIST, not the joined string
                         tokens = re.split(r'\s+', re.sub(r'[;:,]', ' ', str(text).strip()))
                         return " ".join([t for t in tokens if t][:6])
                     step5_raw = [
@@ -479,26 +410,26 @@ async def generate_detailed_report(
                     if not step5_raw:
                         step5_raw = None
                     print(f"[ENGINE] step5_raw dict converted to list len={len(step5_raw) if step5_raw else 0}", flush=True)
+            # Labels that signal LLM rolled up its own net — exclude to prevent double-counting
+            _SKIP_LABEL_WORDS = {"net", "overall", "total", "summary", "combined", "aggregate"}
             if step5_raw and isinstance(step5_raw, list):
-                # ── Sanity guards on step5 list ──────────────────────────────
-                # 1. Drop +0% items — informational rows, not real adjustments
                 step5_raw = [
                     i for i in step5_raw
                     if isinstance(i, dict) and
-                       str(i.get("factor", "+0%")).replace("+", "").replace("%", "").strip() not in ("0", "0.0", "")
+                       str(i.get("factor", "+0%")).replace("+", "").replace("%", "").strip() not in ("0", "0.0", "") and
+                       not any(w in str(i.get("label", "")).lower() for w in _SKIP_LABEL_WORDS)
                 ]
-                # 2. Truncate applied text to max 6 whole words (no mid-word cuts)
                 def _short_note_6w(text):
-                    # Slice the token LIST (not the joined string) to get max 6 WORDS
-                    tokens = re.split(r'\s+', re.sub(r'[;:,]', ' ', str(text).strip()))
-                    return " ".join([t for t in tokens if t][:6])
+                    t = str(text).strip()
+                    # Strip dict-like string artifacts from LLM
+                    if t.startswith("{") or t.startswith("{'"):
+                        return ""
+                    tokens = re.split(r'\s+', re.sub(r'[;:,]', ' ', t))
+                    return " ".join([tok for tok in tokens if tok][:6])
                 for item in step5_raw:
                     if isinstance(item, dict):
                         item["applied"] = _short_note_6w(item.get("applied", ""))
-                # 3. Cap to max 4 items (LLM sometimes returns 8+)
                 step5_raw = step5_raw[:4]
-                # 3. If ALL factors are negative, the LLM returned "downside only"
-                #    adjustments — skip them (default connectivity labels are better)
                 factors_sum = sum(
                     int(str(i.get("factor", "0")).replace("%", "").replace("+", "") or 0)
                     for i in step5_raw if isinstance(i, dict)
@@ -519,7 +450,6 @@ async def generate_detailed_report(
     except Exception as e:
         print(f"[ENGINE] LLM enrichment FAILED: {e}", flush=True)
         logger.warning(f"LLM prose enrichment failed (using structured fallback): {e}")
-    # ── Consistency clamp: keep paid report close to free estimate
     if free_range is not None:
         try:
             free_lo, free_hi = float(free_range[0]), float(free_range[1])
@@ -558,36 +488,26 @@ async def generate_detailed_report(
 # STEP 5 CONNECTIVITY ENRICHMENT HELPER
 # ═══════════════════════════════════════════════════════════════════
 def _apply_step5_connectivity(section_d: str, adjustments: list) -> str:
-    """
-    Replace generic connectivity ADJ lines in section_d with LLM-enriched
-    locality-specific ones. Recalculates NET STEP 5 ADJUSTMENT accordingly.
-    """
     if not adjustments or not isinstance(adjustments, list):
         return section_d
-
     lines = section_d.split("\n")
     result = []
     conn_inserted = False
     conn_total_pct = 0
-
-    # Parse percentage from a factor string like "+4%" or "-2%"
     def parse_pct(s):
         try:
             return int(str(s).replace("%", "").replace("+", "").strip())
         except Exception:
             return 0
-
-    # Sum connectivity percentages from LLM adjustments
     for adj in adjustments:
         if isinstance(adj, dict):
             conn_total_pct += parse_pct(adj.get("factor", "+1%"))
-
-    # Fixed non-connectivity adjustments
     quality_pct = -2
     yield_pct   = 1
     net_pct     = conn_total_pct + quality_pct + yield_pct
+    # Cap to prevent LLM-inflated factors producing unrealistic net adjustments
+    net_pct     = max(-12, min(net_pct, 12))
     net_str     = f"+{net_pct}%" if net_pct >= 0 else f"{net_pct}%"
-
     for line in lines:
         if line.startswith("ADJ|Connectivity:"):
             if not conn_inserted:
@@ -600,17 +520,16 @@ def _apply_step5_connectivity(section_d: str, adjustments: list) -> str:
                         if isinstance(applied, dict):
                             applied = applied.get("reasoning", applied.get("description", ""))
                         applied = str(applied)[:120].strip()
+                        # Guard: LLM sometimes returns a Python dict repr string
+                        if applied.startswith("{") or applied.startswith("{'"):
+                            applied = ""
                         result.append(f"ADJ|{label}|{factor}|{applied}")
                 conn_inserted = True
-            # Drop old generic connectivity line
         elif line.startswith("ADJ|NET STEP 5"):
-            # Rebuild NET line, preserving the base-value portion
             parts = line.split("|")
             base_val_part = parts[3] if len(parts) >= 4 else ""
-            # Update multiplier in base_val_part if possible
             try:
                 multiplier = 1 + net_pct / 100
-                # Replace old multiplier pattern like "x 1.03" with new one
                 import re as _re
                 base_val_part = _re.sub(r'x\s*[\d.]+', f'x {multiplier:.2f}', base_val_part)
             except Exception:
@@ -618,10 +537,7 @@ def _apply_step5_connectivity(section_d: str, adjustments: list) -> str:
             result.append(f"ADJ|NET STEP 5 ADJUSTMENT|{net_str}|{base_val_part}")
         else:
             result.append(line)
-
     return "\n".join(result)
-
-
 def _describe_property(prop: PropertyInput) -> str:
     lines = [f"Type: {prop.prop_type}", f"Location: {prop.locality}, {prop.city}"]
     if prop.address: lines.append(f"Address: {prop.address}")
@@ -664,7 +580,6 @@ def _calculate_components(
     lo: float,
     hi: float,
 ) -> dict:
-    """Break the final value into Land + Building + Adjustments components."""
     if prop.prop_type in ("IndependentHouse", "LandPlot"):
         land_lo = round(lo * 0.72, 1)
         land_hi = round(hi * 0.78, 1)
@@ -680,7 +595,6 @@ def _calculate_components(
         adj_lo  = round(lo * 0.08, 1)
         adj_hi  = round(hi * 0.12, 1)
     else:
-        # Apartment: UDS land ~30%, building ~60%, adjustments ~10%
         land_lo = round(lo * 0.28, 1)
         land_hi = round(hi * 0.32, 1)
         bldg_lo = round(lo * 0.58, 1)
@@ -697,7 +611,6 @@ def _calculate_base_range(
     loc_data: Optional[LocalityData],
     fallback: dict,
 ) -> tuple[float, float]:
-    """Calculate base price range from locality data + property inputs."""
     if prop.prop_type == "Apartment":
         bhk_multipliers = {
             "1BHK": 0.58, "2BHK": 1.0, "3BHK": 1.48,
@@ -774,10 +687,6 @@ def _calculate_base_range(
     hi = max(lo + 5, hi)
     return round(lo, 1), round(hi, 1)
 def _age_depreciation(age_str: str) -> float:
-    """
-    Return a multiplier for age-based depreciation (apartments).
-    v2.4: 0-5 yrs 0% | 5-10 yrs 12% | 10-15 yrs 30% | 15-20 yrs 40% | 20+ yrs 50%
-    """
     factors = {
         "Under construction": 1.05,
         "0-5 years":  1.0,  "0–5 years":  1.0,
@@ -788,7 +697,6 @@ def _age_depreciation(age_str: str) -> float:
     }
     return factors.get(age_str or "0–5 years", 0.88)
 def _apply_floor_factor(lo: float, hi: float, floor_info: str) -> tuple[float, float]:
-    """Apply floor premium/discount."""
     if not floor_info:
         return lo, hi
     try:
@@ -807,7 +715,6 @@ def _parse_report_response(
     lo:       float,
     hi:       float,
 ) -> DetailedReport:
-    """Parse LLM JSON response into DetailedReport."""
     confidence = int(data.get("confidence", loc_data.data_confidence if loc_data else 70))
     return DetailedReport(
         asset_overview    = data.get("section_a", ""),
@@ -835,10 +742,6 @@ def _parse_report_response(
 # ENGINE TEMPLATE BUILDERS — Sections B and F (no LLM, fully stable)
 # ═══════════════════════════════════════════════════════════════════
 def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData]) -> str:
-    """
-    Build Section B (Micro-Market Context) entirely from DB data.
-    Always produces 3 labeled * paragraphs. No LLM.
-    """
     if not loc_data:
         return (
             f"* Market positioning: {prop.locality} is a residential locality in {prop.city}. "
@@ -848,13 +751,11 @@ def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData
             f"* Demand profile: Residential demand is driven by end-user buyers and investors "
             f"seeking urban amenities and employment proximity in {prop.city}."
         )
-
     mid_rate = (loc_data.apt_rate_lo + loc_data.apt_rate_hi) // 2
     try:
         trend_val = float(str(loc_data.trend_12m).replace("+", "").replace("%", ""))
     except (ValueError, AttributeError):
         trend_val = 5.0
-
     mkt_tier = (
         "premium" if mid_rate >= 12000 else
         "upper-mid segment" if mid_rate >= 8000 else
@@ -868,16 +769,12 @@ def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData
     )
     boundary = getattr(loc_data, "boundary_tier", "")
     zone_note = f" ({boundary})" if boundary else ""
-
-    # ── Item 1: Market positioning ────────────────────────────────
     item1 = (
         f"* Market positioning: {prop.locality}{zone_note} is a {mkt_tier} locality in {prop.city}. "
         f"Apartment rates Rs.{loc_data.apt_rate_lo:,}–Rs.{loc_data.apt_rate_hi:,}/sqft; "
         f"land rates Rs.{loc_data.land_rate_lo:,}–Rs.{loc_data.land_rate_hi:,}/sqft. "
         f"12-month appreciation {loc_data.trend_12m} YoY — {trend_desc}."
     )
-
-    # ── Item 2: Connectivity — derived from rate tier ──────────────
     if prop.city == "Chennai":
         if mid_rate >= 12000:
             conn = (
@@ -923,8 +820,6 @@ def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData
             f"Infrastructure quality is consistent with the locality's market rate positioning."
         )
     item2 = f"* Connectivity: {conn}"
-
-    # ── Item 3: Demand profile ────────────────────────────────────
     if prop.city == "Chennai":
         if mid_rate >= 12000:
             demand = (
@@ -959,19 +854,10 @@ def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData
             f"Investor demand is supported by rental yields consistent with the locality's rate band."
         )
     item3 = f"* Demand profile: {demand}"
-
     return f"{item1}\n{item2}\n{item3}"
-
-
 def _build_section_f_engine(prop: PropertyInput, loc_data: Optional[LocalityData]) -> str:
-    """
-    Build Section F (Risk & Due Diligence) from templates.
-    Always produces 5 labeled * paragraphs. No LLM.
-    """
     boundary = getattr(loc_data, "boundary_tier", "") if loc_data else ""
     age_str   = prop.age_apt or (f"{prop.age_house} years" if prop.age_house else "5-10 years")
-
-    # Determine approval body from boundary_tier or city
     if "Avadi" in boundary:
         ab_full  = "Avadi Municipal Corporation (AvMC)"
         ab_short = "AvMC"
@@ -990,7 +876,6 @@ def _build_section_f_engine(prop: PropertyInput, loc_data: Optional[LocalityData
     else:
         ab_full  = "local municipal authority"
         ab_short = "local authority"
-
     if prop.prop_type == "Apartment":
         item1 = (
             f"* Title and UDS verification: {prop.locality} falls under {ab_full} jurisdiction. "
@@ -1018,7 +903,6 @@ def _build_section_f_engine(prop: PropertyInput, loc_data: Optional[LocalityData
             f"are cleared by the seller. Obtain society NOC and existing bank NOC (if applicable) "
             f"before executing the sale agreement."
         )
-
     elif prop.prop_type == "IndependentHouse":
         item1 = (
             f"* Title and patta verification: {prop.locality} falls under {ab_full} jurisdiction. "
@@ -1045,7 +929,6 @@ def _build_section_f_engine(prop: PropertyInput, loc_data: Optional[LocalityData
             f"If the property has multiple legal heirs, obtain a valid release deed or family "
             f"settlement document before transacting."
         )
-
     else:  # LandPlot / Villa
         item1 = (
             f"* Title and survey verification: {prop.locality} falls under {ab_full} jurisdiction. "
@@ -1072,23 +955,15 @@ def _build_section_f_engine(prop: PropertyInput, loc_data: Optional[LocalityData
             f"a registered valuer under the Wealth Tax Act / IBBI guidelines for an independent "
             f"statutory valuation opinion."
         )
-
     return f"{item1}\n{item2}\n{item3}\n{item4}\n{item5}"
-
-
 def _build_structured_report(
     prop:     PropertyInput,
     loc_data: Optional[LocalityData],
     lo:       float,
     hi:       float,
 ) -> DetailedReport:
-    """
-    Build a complete v2.4 structured report using Python calculations.
-    Tables calculated deterministically; LLM enriches prose on top.
-    """
     components = _calculate_components(prop, loc_data, lo, hi)
     confidence = loc_data.data_confidence if loc_data else 65
-    # ── Section A ─────────────────────────────────────────────────
     area_info = ""
     if prop.carpet_area:
         area_info = f" The apartment measures {prop.carpet_area:,} sq.ft carpet area ({prop.bhk})." if prop.bhk else f" Carpet area: {prop.carpet_area:,} sq.ft."
@@ -1099,9 +974,7 @@ def _build_structured_report(
     age_info = f" Building age: {prop.age_apt}." if prop.age_apt else (f" Building age: {prop.age_house} years." if prop.age_house else " Property age not specified; standard condition assumed.")
     uds_note = " For apartments, a 30% undivided share of land (UDS) assumption applies unless specified." if prop.prop_type == "Apartment" else ""
     section_a = f"This {prop.prop_type.replace('IndependentHouse','Independent House')} is located in {prop.locality}, {prop.city}.{area_info}{age_info} Locality character and micro-market rates are based on our proprietary database.{uds_note}"
-    # ── Section B — engine-only (no LLM) ──────────────────────────
     section_b = _build_section_b_engine(prop, loc_data)
-    # ── Section C (engine-only; LLM does NOT overwrite) ──────────
     if loc_data:
         mid_rate     = (loc_data.apt_rate_lo + loc_data.apt_rate_hi) // 2
         age_factor_c = _age_depreciation(prop.age_apt or "5-10 years")
@@ -1121,7 +994,6 @@ def _build_structured_report(
         )
     else:
         section_c = f"Pricing signals based on our locality database for {prop.locality}, {prop.city}."
-    # ── Section D: v2.4 Build-Up with sub-component connectivity ──
     age_factor = _age_depreciation(prop.age_apt or "5-10 years")
     dep_pct    = round((1 - age_factor) * 100)
     area       = prop.carpet_area or 950
@@ -1132,19 +1004,14 @@ def _build_structured_report(
         base_hi_raw  = round(area * rate_hi / 100000, 1)
         base_lo_dep  = round(base_lo_raw * age_factor, 1)
         base_hi_dep  = round(base_hi_raw * age_factor, 1)
-        # v2.4 Step 5: connectivity broken into sub-components
-        # These are generic defaults; LLM enrichment (_apply_step5_connectivity)
-        # will replace these with locality-specific labels after the LLM call.
         trend_val  = float(loc_data.trend_12m.replace("%","").replace("+","")) if loc_data.trend_12m else 5.0
-        # Connectivity sub-components (generic defaults — LLM enriches)
-        conn_road  = "+2%"   # Main road / arterial access
-        conn_metro = "+2%" if trend_val >= 8 else "+1%"   # Metro/rail proximity
-        conn_empl  = "+2%" if trend_val >= 10 else "+1%"  # Employment node
+        conn_road  = "+2%"
+        conn_metro = "+2%" if trend_val >= 8 else "+1%"
+        conn_empl  = "+2%" if trend_val >= 10 else "+1%"
         qual_pct   = "-2%"
         yield_pct  = "+1%"
         conn_total = 2 + (2 if trend_val >= 8 else 1) + (2 if trend_val >= 10 else 1)
-        net_adj    = f"+{conn_total - 2 + 1}%"  # conn total + yield - quality
-        # Rental yield cross-check
+        net_adj    = f"+{conn_total - 2 + 1}%"
         rent_lo  = round(lo  * 100000 * 0.020 / 12 / 500) * 500
         rent_mid = round(((lo+hi)/2) * 100000 * 0.025 / 12 / 500) * 500
         rent_hi  = round(hi  * 100000 * 0.030 / 12 / 500) * 500
@@ -1180,7 +1047,6 @@ def _build_structured_report(
             f"Location adjustments: Rs.{components['adj_lo']}L-Rs.{components['adj_hi']}L. "
             f"Total estimated value: Rs.{lo}L-Rs.{hi}L."
         )
-    # ── Section E ─────────────────────────────────────────────────
     txn_lo  = round(lo * 0.96, 1)
     txn_hi  = round(hi * 0.97, 1)
     gv      = loc_data.guideline_value if loc_data else 0
@@ -1198,7 +1064,6 @@ def _build_structured_report(
         f"* Rental yield 2.0-3.5% target band — income supported. PASS\n"
         + (f"* {trend_check}\n" if trend_check else "")
     )
-    # ── Section F — engine-only (no LLM) ──────────────────────────
     section_f = _build_section_f_engine(prop, loc_data)
     section_g = (
         "This AI-generated valuation is for informational purposes only and does not constitute "
@@ -1238,11 +1103,6 @@ def _build_prose_prompt(
     lo:       float,
     hi:       float,
 ) -> str:
-    """
-    Prompt asking LLM for step5_adjustments and comparables ONLY.
-    Sections B (micro_market) and F (risk_diligence) are engine-generated — NOT requested from LLM.
-    Section C (pricing_signals) is engine-generated — NOT requested from LLM.
-    """
     loc_info = f"{prop.locality}, {prop.city}"
     if loc_data:
         loc_info += (
@@ -1252,22 +1112,17 @@ def _build_prose_prompt(
         )
     area = prop.carpet_area or prop.plot_house or prop.plot_land or 0
     return f"""You are a JSON API. Output ONLY a JSON object — no explanation, no markdown, no extra keys.
-
 Required keys: "step5_adjustments", "comparables"
-
 Context:
 Location: {prop.locality}, {prop.city}
 Property: {prop.prop_type}, {prop.bhk or '2BHK'}, {area} sqft, Age: {prop.age_apt or 'not specified'}
 DB rates: {loc_info}
 Value range: Rs.{lo}L - Rs.{hi}L
-
 "step5_adjustments": EXACTLY 4 objects. Use REAL local names — specific road, metro station, IT park, or industrial estate in {prop.locality}. "factor" = percent string only. "applied" = max 8 words. NO generic phrases like "good connectivity" or "road network".
 [{{"label":"[specific road or metro name]","factor":"+2%","applied":"[specific local reason, max 8 words]"}},{{"label":"[specific station or highway]","factor":"+1%","applied":"[specific local reason]"}},{{"label":"[specific employment hub]","factor":"+1%","applied":"[specific local reason]"}},{{"label":"[quality or other factor]","factor":"-1%","applied":"[specific local reason]"}}]
-
 "comparables": MUST be a JSON array (NOT a string). EXACTLY 3 objects with keys "description", "price_signal", "source".
 "description" = real project name + config, max 8 words. "price_signal" = rate or price. "source" = month and year only (e.g. "May 2026"). Do NOT include any portal or website name.
 [{{"description":"[Real Project Name 2BHK Xsqft]","price_signal":"Rs.X,XXX/sqft","source":"May 2026"}},{{"description":"[Real Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Jun 2026"}},{{"description":"[Real Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Jun 2026"}}]
-
 JSON:""".strip()
 def _build_fallback_report(
     prop:     PropertyInput,
@@ -1275,7 +1130,7 @@ def _build_fallback_report(
     lo:       float,
     hi:       float,
 ) -> DetailedReport:
-    """Graceful fallback if LLM fails — use template text."""
+    """Graceful fallback if LLM fails — use engine template text."""
     components = _calculate_components(prop, loc_data, lo, hi)
     confidence = loc_data.data_confidence if loc_data else 65
     return DetailedReport(
@@ -1286,10 +1141,10 @@ def _build_fallback_report(
         ),
         micro_market      = _build_section_b_engine(prop, loc_data),
         pricing_signals   = (
-            f"Based on our locality database: "
-            f"Land rates in {prop.locality}: Rs.{loc_data.land_rate_lo:,}-{loc_data.land_rate_hi:,}/sq.ft. "
-            f"Apartment rates: Rs.{loc_data.apt_rate_lo:,}-{loc_data.apt_rate_hi:,}/sq.ft carpet. "
-            f"Government guideline value: Rs.{loc_data.guideline_value:,}/sq.ft (regulatory floor only)."
+            f"Locality DB rates for {prop.locality}: apartment Rs.{loc_data.apt_rate_lo:,}"
+            f"-Rs.{loc_data.apt_rate_hi:,}/sqft; land Rs.{loc_data.land_rate_lo:,}"
+            f"-Rs.{loc_data.land_rate_hi:,}/sqft. "
+            f"Government guideline value: Rs.{loc_data.guideline_value:,}/sqft (regulatory floor only)."
         ) if loc_data else "Pricing signals based on our locality database.",
         valuation_buildup = (
             f"Land component: Rs.{components['land_lo']}L-{components['land_hi']}L. "
@@ -1318,12 +1173,6 @@ def _build_fallback_report(
         locality_trend    = loc_data.trend_12m if loc_data else "+8.0%",
         apt_rate_lo       = loc_data.apt_rate_lo if loc_data else 0.0,
         apt_rate_hi       = loc_data.apt_rate_hi if loc_data else 0.0,
-        land_rate_sqft_lo = loc_data.land_rate_lo if loc_data else 0.0,
-        land_rate_sqft_hi = loc_data.land_rate_hi if loc_data else 0.0,
-        guideline_rate    = loc_data.guideline_value if loc_data else 0.0,
-        data_source       = "fallback",
-    )
-hi if loc_data else 0.0,
         land_rate_sqft_lo = loc_data.land_rate_lo if loc_data else 0.0,
         land_rate_sqft_hi = loc_data.land_rate_hi if loc_data else 0.0,
         guideline_rate    = loc_data.guideline_value if loc_data else 0.0,
