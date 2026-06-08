@@ -596,6 +596,10 @@ def _apply_step5_connectivity(section_d: str, adjustments: list) -> str:
                         label   = adj.get("label", "Connectivity")
                         factor  = adj.get("factor", "+1%")
                         applied = adj.get("applied", "")
+                        # Guard: LLM sometimes returns applied as a nested dict
+                        if isinstance(applied, dict):
+                            applied = applied.get("reasoning", applied.get("description", ""))
+                        applied = str(applied)[:120].strip()
                         result.append(f"ADJ|{label}|{factor}|{applied}")
                 conn_inserted = True
             # Drop old generic connectivity line
@@ -1314,6 +1318,12 @@ def _build_fallback_report(
         locality_trend    = loc_data.trend_12m if loc_data else "+8.0%",
         apt_rate_lo       = loc_data.apt_rate_lo if loc_data else 0.0,
         apt_rate_hi       = loc_data.apt_rate_hi if loc_data else 0.0,
+        land_rate_sqft_lo = loc_data.land_rate_lo if loc_data else 0.0,
+        land_rate_sqft_hi = loc_data.land_rate_hi if loc_data else 0.0,
+        guideline_rate    = loc_data.guideline_value if loc_data else 0.0,
+        data_source       = "fallback",
+    )
+hi if loc_data else 0.0,
         land_rate_sqft_lo = loc_data.land_rate_lo if loc_data else 0.0,
         land_rate_sqft_hi = loc_data.land_rate_hi if loc_data else 0.0,
         guideline_rate    = loc_data.guideline_value if loc_data else 0.0,
