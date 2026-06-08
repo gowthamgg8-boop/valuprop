@@ -432,60 +432,10 @@ async def generate_detailed_report(
                 return text_norm[:max_chars] + "."
             return ". ".join(p[:max_chars] for p in parts[:n]) + "."
 
-        mm_raw = _first(_MICRO_KEYS) or ""
-        mm = _to_str(mm_raw)
-
-        def _extract_bullets(text: str, max_items: int = 3) -> str:
-            """
-            Extract up to max_items bullet items from LLM output.
-            Handles both '* Label: ...' and '• ...' formats.
-            Strips any intro paragraph that appears before the first bullet.
-            """
-            if not text:
-                return text
-            # Find position of first bullet marker (* or •)
-            pos_star  = text.find('* ')
-            pos_bullet = text.find('• ')
-            markers = [p for p in [pos_star, pos_bullet] if p >= 0]
-            if not markers:
-                return text  # no bullets found — return as-is
-            first = min(markers)
-            # If there's more than 60 chars before the first bullet, that's an intro — strip it
-            body = text[first:] if first > 60 else text
-            # Split into individual bullet items on newline-then-marker
-            items = re.split(r'\n(?=[\*•])', body)
-            items = [i.strip() for i in items if i.strip()]
-            # Keep only items that are substantive (≥ 20 chars)
-            items = [i for i in items if len(i) >= 20]
-            return "\n".join(items[:max_items])
-
-        mm = _extract_bullets(mm, max_items=3)
-        has_content = mm.count('* ') >= 2 or mm.count('• ') >= 2
-        if has_content:
-            print(f"[ENGINE] micro_market UPDATED ({len(mm)} chars)", flush=True)
-        else:
-            mm_bullets = _force_bullets(mm, 3, 25)
-            if mm_bullets.count('•') >= 2:
-                mm = mm_bullets
-                print(f"[ENGINE] micro_market UPDATED bullets ({len(mm)} chars)", flush=True)
-            else:
-                mm = ""   # keep the engine-generated section_b
-                print(f"[ENGINE] micro_market SKIPPED — insufficient content from LLM", flush=True)
-        print(f"[ENGINE] micro_market val={repr(mm[:120])}", flush=True)
-        if mm and mm.strip():
-            report.micro_market = mm
-
-        # pricing_signals (Section C) is engine-only — LLM does NOT overwrite it.
-        print(f"[ENGINE] pricing_signals: engine-generated from DB (no LLM overwrite)", flush=True)
-
-        rd_raw = _first(_RISK_KEYS) or ""
-        rd = _to_str(rd_raw)
-        print(f"[ENGINE] risk_diligence val={repr(rd[:120])}", flush=True)
-        if rd and rd.strip():
-            report.risk_diligence = rd
-            print(f"[ENGINE] risk_diligence UPDATED ({len(rd)} chars)", flush=True)
-        else:
-            print(f"[ENGINE] risk_diligence SKIPPED (empty)", flush=True)
+        # Sections B and F are engine-generated — LLM does NOT overwrite them.
+        print(f"[ENGINE] micro_market: engine-generated (no LLM overwrite)", flush=True)
+        print(f"[ENGINE] risk_diligence: engine-generated (no LLM overwrite)", flush=True)
+        print(f"[ENGINE] pricing_signals: engine-generated (no LLM overwrite)", flush=True)
 
         comp_raw = _first(_COMP_KEYS)
         if comp_raw:
@@ -877,6 +827,251 @@ def _parse_report_response(
         locality_trend    = loc_data.trend_12m if loc_data else "+8.0%",
         data_source       = "ai",
     )
+# ═══════════════════════════════════════════════════════════════════
+# ENGINE TEMPLATE BUILDERS — Sections B and F (no LLM, fully stable)
+# ═══════════════════════════════════════════════════════════════════
+def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData]) -> str:
+    """
+    Build Section B (Micro-Market Context) entirely from DB data.
+    Always produces 3 labeled * paragraphs. No LLM.
+    """
+    if not loc_data:
+        return (
+            f"* Market positioning: {prop.locality} is a residential locality in {prop.city}. "
+            f"Demand is supported by employment access, road connectivity, and civic infrastructure.\n"
+            f"* Connectivity: {prop.locality} is served by the road network linking to arterial routes. "
+            f"Public transport options provide access to key city destinations.\n"
+            f"* Demand profile: Residential demand is driven by end-user buyers and investors "
+            f"seeking urban amenities and employment proximity in {prop.city}."
+        )
+
+    mid_rate = (loc_data.apt_rate_lo + loc_data.apt_rate_hi) // 2
+    try:
+        trend_val = float(str(loc_data.trend_12m).replace("+", "").replace("%", ""))
+    except (ValueError, AttributeError):
+        trend_val = 5.0
+
+    mkt_tier = (
+        "premium" if mid_rate >= 12000 else
+        "upper-mid segment" if mid_rate >= 8000 else
+        "mid segment" if mid_rate >= 5000 else
+        "affordable segment"
+    )
+    trend_desc = (
+        "strong appreciation momentum" if trend_val >= 10 else
+        "healthy appreciation trend" if trend_val >= 6 else
+        "moderate, stable growth"
+    )
+    boundary = getattr(loc_data, "boundary_tier", "")
+    zone_note = f" ({boundary})" if boundary else ""
+
+    # ── Item 1: Market positioning ────────────────────────────────
+    item1 = (
+        f"* Market positioning: {prop.locality}{zone_note} is a {mkt_tier} locality in {prop.city}. "
+        f"Apartment rates Rs.{loc_data.apt_rate_lo:,}–Rs.{loc_data.apt_rate_hi:,}/sqft; "
+        f"land rates Rs.{loc_data.land_rate_lo:,}–Rs.{loc_data.land_rate_hi:,}/sqft. "
+        f"12-month appreciation {loc_data.trend_12m} YoY — {trend_desc}."
+    )
+
+    # ── Item 2: Connectivity — derived from rate tier ──────────────
+    if prop.city == "Chennai":
+        if mid_rate >= 12000:
+            conn = (
+                f"{prop.locality} is served by South/Central Chennai arterial roads with established "
+                f"MTC bus routes and suburban rail access. Proximity to key commercial, institutional, "
+                f"and coastal amenities supports premium demand and stable occupancy."
+            )
+        elif mid_rate >= 8000:
+            conn = (
+                f"{prop.locality} has good arterial road connectivity linking to the inner and outer ring "
+                f"roads. MTC bus and suburban rail (where applicable) provide city-wide access. "
+                f"Commute to major employment hubs is manageable for mid-to-upper segment buyers."
+            )
+        elif mid_rate >= 5000:
+            conn = (
+                f"{prop.locality} is connected via Chennai arterial and peripheral roads. MTC bus routes "
+                f"serve daily commuters; suburban rail options available in parts of the corridor. "
+                f"Infrastructure improvement in this belt is driving incremental buyer demand."
+            )
+        else:
+            conn = (
+                f"{prop.locality} is connected via state and national highway network to Chennai's urban "
+                f"core. Road transport is the primary mode; public transit options are developing. "
+                f"Ongoing corridor investment is expected to progressively improve connectivity."
+            )
+    elif prop.city in ("Bangalore", "Bengaluru"):
+        if mid_rate >= 10000:
+            conn = (
+                f"{prop.locality} benefits from Bengaluru's inner road network and BMTC bus coverage. "
+                f"Metro Phase 1/2 proximity (where applicable) adds transit value. "
+                f"Access to Outer Ring Road and employment clusters is well-established."
+            )
+        else:
+            conn = (
+                f"{prop.locality} is accessible via Bengaluru's arterial and peripheral road network. "
+                f"BMTC bus routes and developing metro corridors support daily commutes. "
+                f"Connectivity to major IT and commercial hubs is the primary demand driver."
+            )
+    else:
+        conn = (
+            f"{prop.locality} is served by arterial road network and public transport options in {prop.city}. "
+            f"Connectivity to key employment and commercial hubs supports residential demand. "
+            f"Infrastructure quality is consistent with the locality's market rate positioning."
+        )
+    item2 = f"* Connectivity: {conn}"
+
+    # ── Item 3: Demand profile ────────────────────────────────────
+    if prop.city == "Chennai":
+        if mid_rate >= 12000:
+            demand = (
+                f"HNI and premium segment end-users dominate buyer profiles. "
+                f"Investment demand is supported by stable rental yields (2.0–3.0%) and long-term "
+                f"capital appreciation. Institutional anchors — schools, hospitals, retail — "
+                f"sustain occupancy and limit vacancy risk."
+            )
+        elif mid_rate >= 8000:
+            demand = (
+                f"Salaried IT/ITES professionals and business owners form the primary buyer base. "
+                f"Upgrade demand from mid-segment households seeking better amenities and connectivity. "
+                f"Rental yields of 2.5–3.5% attract investor buyers alongside end-users."
+            )
+        elif mid_rate >= 5000:
+            demand = (
+                f"Mid-segment salaried workers and first-time homebuyers are the core demand segment. "
+                f"Employment in nearby industrial estates, IT parks, and service sectors drives occupancy. "
+                f"Competitive pricing relative to inner zones attracts upgrade and investment buyers."
+            )
+        else:
+            demand = (
+                f"Affordable and first-time homebuyer segment dominates transactions. "
+                f"Proximity to industrial estates and manufacturing hubs provides the employment base. "
+                f"NRI and diaspora investment demand adds a secondary buyer layer seeking affordable "
+                f"Chennai exposure."
+            )
+    else:
+        demand = (
+            f"End-user buyers seeking {mkt_tier} residential options in {prop.city} drive primary demand. "
+            f"Employment proximity, social infrastructure, and connectivity are the key purchase drivers. "
+            f"Investor demand is supported by rental yields consistent with the locality's rate band."
+        )
+    item3 = f"* Demand profile: {demand}"
+
+    return f"{item1}\n{item2}\n{item3}"
+
+
+def _build_section_f_engine(prop: PropertyInput, loc_data: Optional[LocalityData]) -> str:
+    """
+    Build Section F (Risk & Due Diligence) from templates.
+    Always produces 5 labeled * paragraphs. No LLM.
+    """
+    boundary = getattr(loc_data, "boundary_tier", "") if loc_data else ""
+    age_str   = prop.age_apt or (f"{prop.age_house} years" if prop.age_house else "5-10 years")
+
+    # Determine approval body from boundary_tier or city
+    if "Avadi" in boundary:
+        ab_full  = "Avadi Municipal Corporation (AvMC)"
+        ab_short = "AvMC"
+    elif "Tambaram" in boundary:
+        ab_full  = "Tambaram Municipal Corporation"
+        ab_short = "Tambaram Corp"
+    elif "CMA" in boundary or "DTCP" in boundary:
+        ab_full  = "DTCP (Directorate of Town and Country Planning)"
+        ab_short = "DTCP"
+    elif prop.city == "Chennai":
+        ab_full  = "CMDA (Chennai Metropolitan Development Authority)"
+        ab_short = "CMDA"
+    elif prop.city in ("Bangalore", "Bengaluru"):
+        ab_full  = "BBMP/BDA"
+        ab_short = "BBMP/BDA"
+    else:
+        ab_full  = "local municipal authority"
+        ab_short = "local authority"
+
+    if prop.prop_type == "Apartment":
+        item1 = (
+            f"* Title and UDS verification: {prop.locality} falls under {ab_full} jurisdiction. "
+            f"Verify encumbrance certificate chain for minimum 30 years. "
+            f"UDS percentage in the sale agreement must match the society's undivided share register — "
+            f"mismatch is a common title risk in older projects."
+        )
+        item2 = (
+            f"* {ab_short} approvals and OC: Confirm building plan is sanctioned by {ab_short}. "
+            f"Occupancy Certificate (OC) must be available — absence restricts PSU bank and NBFC "
+            f"financing and significantly limits future resale options."
+        )
+        item3 = (
+            f"* Age and structural condition: For {age_str} stock, verify OC is in place and "
+            f"the structure is in standard condition. Budget 5–10% of purchase value for "
+            f"renovation or fit-out if the unit has dated finishes or deferred maintenance."
+        )
+        item4 = (
+            f"* Layout and encumbrance checks: Confirm the project is not in a road-widening "
+            f"alignment, high-tension line corridor, or water body buffer zone. "
+            f"Verify no pending litigation or mortgage is registered against the project or the specific flat."
+        )
+        item5 = (
+            f"* Dues clearance and NOC: Verify property tax, water charges, and maintenance dues "
+            f"are cleared by the seller. Obtain society NOC and existing bank NOC (if applicable) "
+            f"before executing the sale agreement."
+        )
+
+    elif prop.prop_type == "IndependentHouse":
+        item1 = (
+            f"* Title and patta verification: {prop.locality} falls under {ab_full} jurisdiction. "
+            f"Verify patta/khata is in the seller's name and boundary measurements match "
+            f"registered documents. Review 30-year encumbrance certificate for liens or litigation."
+        )
+        item2 = (
+            f"* {ab_short} plan sanction: Confirm building plan is sanctioned by {ab_short}. "
+            f"Check for deviations from the sanctioned plan — unapproved additions affect "
+            f"loan eligibility and create regularisation liability."
+        )
+        item3 = (
+            f"* Structural condition: For a {age_str} building, commission an independent structural "
+            f"assessment. Older structures may require investment in waterproofing, electrical "
+            f"rewiring, or plumbing — budget accordingly before finalising offer price."
+        )
+        item4 = (
+            f"* Land encumbrances: Verify no overhead HT lines, road-widening proposals, or "
+            f"government acquisition notices affect the plot. Check CRZ or water body buffer "
+            f"zone applicability if the property is near the coast or a lake."
+        )
+        item5 = (
+            f"* Dues and succession: Verify property tax and water dues are cleared by the seller. "
+            f"If the property has multiple legal heirs, obtain a valid release deed or family "
+            f"settlement document before transacting."
+        )
+
+    else:  # LandPlot / Villa
+        item1 = (
+            f"* Title and survey verification: {prop.locality} falls under {ab_full} jurisdiction. "
+            f"Verify patta/title deed chain for minimum 30 years. Confirm survey number and "
+            f"boundary measurements match field verification."
+        )
+        item2 = (
+            f"* {ab_short} layout approval: Confirm the layout is approved by {ab_short}. "
+            f"Unapproved or lapsed layouts carry major home loan and resale risk — do not "
+            f"proceed without a valid layout approval certificate."
+        )
+        item3 = (
+            f"* Land use and conversion: Verify land use classification — agricultural land "
+            f"requires conversion to residential before construction. Conversion adds cost, "
+            f"regulatory timeline, and uncertainty."
+        )
+        item4 = (
+            f"* Access and right of way: Verify road width, access road ownership, and "
+            f"right-of-way documentation. Confirm access from the main road to the plot "
+            f"is undisputed and has adequate width for construction vehicles."
+        )
+        item5 = (
+            f"* Statutory valuation note: For transactions above Rs.1 Cr, consider engaging "
+            f"a registered valuer under the Wealth Tax Act / IBBI guidelines for an independent "
+            f"statutory valuation opinion."
+        )
+
+    return f"{item1}\n{item2}\n{item3}\n{item4}\n{item5}"
+
+
 def _build_structured_report(
     prop:     PropertyInput,
     loc_data: Optional[LocalityData],
@@ -900,8 +1095,8 @@ def _build_structured_report(
     age_info = f" Building age: {prop.age_apt}." if prop.age_apt else (f" Building age: {prop.age_house} years." if prop.age_house else " Property age not specified; standard condition assumed.")
     uds_note = " For apartments, a 30% undivided share of land (UDS) assumption applies unless specified." if prop.prop_type == "Apartment" else ""
     section_a = f"This {prop.prop_type.replace('IndependentHouse','Independent House')} is located in {prop.locality}, {prop.city}.{area_info}{age_info} Locality character and micro-market rates are based on our proprietary database.{uds_note}"
-    # ── Section B (LLM enriches this) ─────────────────────────────
-    section_b = loc_data.micro_context if loc_data else f"{prop.locality} is a residential locality in {prop.city}. Demand is supported by local employment, connectivity, and civic infrastructure."
+    # ── Section B — engine-only (no LLM) ──────────────────────────
+    section_b = _build_section_b_engine(prop, loc_data)
     # ── Section C (engine-only; LLM does NOT overwrite) ──────────
     if loc_data:
         mid_rate     = (loc_data.apt_rate_lo + loc_data.apt_rate_hi) // 2
@@ -999,32 +1194,8 @@ def _build_structured_report(
         f"* Rental yield 2.0-3.5% target band — income supported. PASS\n"
         + (f"* {trend_check}\n" if trend_check else "")
     )
-    # ── Section F ─────────────────────────────────────────────────
-    city_approval = "CMDA/DTCP" if prop.city == "Chennai" else "BBMP/BDA"
-    if prop.prop_type == "Apartment":
-        section_f = (
-            f"• Verify title deed, encumbrance certificate, and UDS percentage matches sale agreement. Verify parent document chain for minimum 30 years.\n"
-            f"• Confirm {city_approval} building approval and Occupancy Certificate. Absence of OC limits PSU bank and NBFC financing.\n"
-            f"• Inspect physical condition — this report assumes standard construction quality. Factor renovation costs for older stock.\n"
-            f"• Verify property tax, maintenance dues, and society NOC are clear before transacting.\n"
-            f"• Check loan eligibility — confirm building is on approved layout and not in any road widening or CRZ zone."
-        )
-    elif prop.prop_type == "IndependentHouse":
-        section_f = (
-            f"• Verify patta/khata is in seller's name and boundary measurements match registered documents.\n"
-            f"• Confirm building plan approval from {city_approval} and check for deviations from sanctioned plan.\n"
-            f"• Review 30-year encumbrance certificate for liens, mortgages, or pending litigation.\n"
-            f"• Verify no overhead HT lines, road widening, or government acquisition proposals affecting plot.\n"
-            f"• Inspect structure condition — older buildings may require significant renovation investment."
-        )
-    else:
-        section_f = (
-            f"• Verify title deed and encumbrance certificate. Confirm parent document chain for 30 years.\n"
-            f"• Confirm {city_approval} approval status — unapproved layouts carry major home loan and resale risk.\n"
-            f"• Check land use classification — agricultural to residential conversion adds cost and time.\n"
-            f"• Verify road width, access, and right-of-way documentation.\n"
-            f"• Consult a registered valuer under Wealth Tax Act / IBBI guidelines for statutory purposes."
-        )
+    # ── Section F — engine-only (no LLM) ──────────────────────────
+    section_f = _build_section_f_engine(prop, loc_data)
     section_g = (
         "This AI-generated valuation is for informational purposes only and does not constitute "
         "a statutory, RERA-approved, or bank-certified valuation. For loans, legal disputes, or "
@@ -1064,9 +1235,9 @@ def _build_prose_prompt(
     hi:       float,
 ) -> str:
     """
-    Prompt asking LLM for enriched fields using v2.4 methodology.
-    Returns: micro_market, risk_diligence, step5_adjustments, comparables.
-    pricing_signals (Section C) is engine-only — NOT requested from LLM.
+    Prompt asking LLM for step5_adjustments and comparables ONLY.
+    Sections B (micro_market) and F (risk_diligence) are engine-generated — NOT requested from LLM.
+    Section C (pricing_signals) is engine-generated — NOT requested from LLM.
     """
     loc_info = f"{prop.locality}, {prop.city}"
     if loc_data:
@@ -1076,10 +1247,9 @@ def _build_prose_prompt(
             f"Trend: {loc_data.trend_12m}"
         )
     area = prop.carpet_area or prop.plot_house or prop.plot_land or 0
-    approval_body = 'CMDA' if prop.city == 'Chennai' else 'BBMP/BDA'
     return f"""You are a JSON API. Output ONLY a JSON object — no explanation, no markdown, no extra keys.
 
-Required keys: "micro_market", "risk_diligence", "step5_adjustments", "comparables"
+Required keys: "step5_adjustments", "comparables"
 
 Context:
 Location: {prop.locality}, {prop.city}
@@ -1087,30 +1257,12 @@ Property: {prop.prop_type}, {prop.bhk or '2BHK'}, {area} sqft, Age: {prop.age_ap
 DB rates: {loc_info}
 Value range: Rs.{lo}L - Rs.{hi}L
 
-━━━ FILL EACH FIELD USING THE TEMPLATE BELOW. DO NOT ADD MORE TEXT. ━━━
-
-"micro_market": Output EXACTLY 3 items and NOTHING ELSE. Do NOT write any intro sentence or paragraph before the first item. Start your output directly with "* " on the first character.
-Each item: "* [LABEL]: [2-3 specific sentences about {prop.locality}]"
-Item 1 label — Metro/rail infrastructure: name the specific metro line or suburban rail station, km, operational status, value impact.
-Item 2 label — Road connectivity: name 2-3 specific roads/highways serving {prop.locality} and key destinations.
-Item 3 label — Demand profile: name employment hubs (IT parks, industrial estates) within 5-10 km, workforce type, institutional anchors.
-Max 60 words per item. Use real names, distances, facts for {prop.locality}, {prop.city}.
-
-"risk_diligence": EXACTLY 5 labeled bullet paragraphs. Each starts with "* [LABEL]: " followed by 2-3 sentences specific to {prop.locality}.
-Use these 5 labels:
-  Label 1 — Title and UDS verification: encumbrance chain, UDS arrangements typical for this zone.
-  Label 2 — {approval_body} approvals: building plan sanction body for this zone, OC/completion cert risks, home loan eligibility impact.
-  Label 3 — Age and occupancy: condition risks for this building age, OC status, renovation costs.
-  Label 4 — Infrastructure timeline risk: any pending metro/road project at DPR or pre-construction stage; caution on paying full infrastructure premium.
-  Label 5 — Flooding and civic: known waterlogging pockets, drainage, borewell dependency specific to {prop.locality}.
-Each label paragraph: max 60 words. Be specific to {prop.locality}.
-
-"step5_adjustments": EXACTLY 4 objects. "factor" = percent string only. "applied" = max 8 words describing the specific local reason. NO generic phrases.
-[{{"label":"[label1]","factor":"+2%","applied":"[specific local reason, max 8 words]"}},{{"label":"[label2]","factor":"+1%","applied":"[specific local reason]"}},{{"label":"[label3]","factor":"-1%","applied":"[specific local reason]"}},{{"label":"[label4]","factor":"+1%","applied":"[specific local reason]"}}]
+"step5_adjustments": EXACTLY 4 objects. Use REAL local names — specific road, metro station, IT park, or industrial estate in {prop.locality}. "factor" = percent string only. "applied" = max 8 words. NO generic phrases like "good connectivity" or "road network".
+[{{"label":"[specific road or metro name]","factor":"+2%","applied":"[specific local reason, max 8 words]"}},{{"label":"[specific station or highway]","factor":"+1%","applied":"[specific local reason]"}},{{"label":"[specific employment hub]","factor":"+1%","applied":"[specific local reason]"}},{{"label":"[quality or other factor]","factor":"-1%","applied":"[specific local reason]"}}]
 
 "comparables": MUST be a JSON array (NOT a string). EXACTLY 3 objects with keys "description", "price_signal", "source".
-"description" = project name + config, max 8 words. "price_signal" = rate or price. "source" = month and year only (e.g. "May 2026"). Do NOT include any portal or website name in "source".
-[{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.X,XXX/sqft","source":"May 2026"}},{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Jun 2026"}},{{"description":"[Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Jun 2026"}}]
+"description" = real project name + config, max 8 words. "price_signal" = rate or price. "source" = month and year only (e.g. "May 2026"). Do NOT include any portal or website name.
+[{{"description":"[Real Project Name 2BHK Xsqft]","price_signal":"Rs.X,XXX/sqft","source":"May 2026"}},{{"description":"[Real Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Jun 2026"}},{{"description":"[Real Project Name 2BHK Xsqft]","price_signal":"Rs.XX.XL","source":"Jun 2026"}}]
 
 JSON:""".strip()
 def _build_fallback_report(
@@ -1128,7 +1280,7 @@ def _build_fallback_report(
             f"The property details provided have been used to generate this valuation. "
             f"Locality character is based on our proprietary database."
         ),
-        micro_market      = loc_data.micro_context if loc_data else f"{prop.locality} is a residential locality in {prop.city}.",
+        micro_market      = _build_section_b_engine(prop, loc_data),
         pricing_signals   = (
             f"Based on our locality database: "
             f"Land rates in {prop.locality}: Rs.{loc_data.land_rate_lo:,}-{loc_data.land_rate_hi:,}/sq.ft. "
@@ -1142,13 +1294,7 @@ def _build_fallback_report(
             f"Total estimated value: Rs.{lo}L-Rs.{hi}L."
         ),
         value_opinion     = f"Estimated market value: Rs.{lo}L-Rs.{hi}L (excl. registration and taxes). Confidence: {confidence}%.",
-        risk_diligence    = (
-            "• Verify title deed and encumbrance certificate before transacting.\n"
-            "• Confirm building approval (CMDA/DTCP) and occupancy certificate.\n"
-            "• Inspect physical condition — this report assumes standard condition.\n"
-            "• Verify property tax payments and no outstanding dues.\n"
-            "• Consult a registered valuer for statutory or loan purposes."
-        ),
+        risk_diligence    = _build_section_f_engine(prop, loc_data),
         disclaimer        = (
             "This AI-generated valuation is for informational purposes only and does not constitute "
             "a statutory, RERA-approved, or bank-certified valuation. For loans, legal disputes, or "
