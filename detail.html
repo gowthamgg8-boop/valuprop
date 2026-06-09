@@ -91,16 +91,6 @@
       width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
       flex-shrink: 0; margin-top: 6px;
     }
-    .comp-list { display: flex; flex-direction: column; gap: 0; }
-    .comp-item {
-      padding: 12px 0; border-bottom: 1px solid var(--border);
-      display: flex; justify-content: space-between; align-items: flex-start;
-      gap: 12px;
-    }
-    .comp-item:last-child { border-bottom: none; }
-    .comp-desc { font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 2px; }
-    .comp-source { font-size: 12px; color: var(--muted-light); }
-    .comp-price { font-size: 14px; font-weight: 600; color: var(--brand); white-space: nowrap; }
     .disclaimer-card {
       background: var(--bg); border: 1px solid var(--border);
       border-radius: var(--radius-sm); padding: 14px 18px;
@@ -122,7 +112,6 @@
       cursor: pointer; transition: all 0.15s; white-space: nowrap;
     }
     .btn-share:hover { background: var(--brand-light); }
-
     /* ── Loading state ─────────────────────────────────────────── */
     .report-loading {
       text-align: center;
@@ -178,7 +167,6 @@
     .loading-note {
       font-size: 14px; color: var(--muted-light); line-height: 1.65;
     }
-
     @media print {
       .navbar, .report-actions, .btn-back-nav { display: none !important; }
       .report-wrap { padding: 0; }
@@ -194,19 +182,16 @@
     </div>
   </nav>
   <main class="report-wrap">
-
     <!-- ── Loading state (shown while polling) ──────────────────── -->
     <div class="report-loading" id="report-loading">
       <div class="spinner-ring" id="loading-spinner"></div>
       <div class="loading-title">Generating your report…</div>
       <div class="loading-status" id="loading-status">Connecting to property database…</div>
-
       <!-- Progress bar -->
       <div class="progress-track">
         <div class="progress-fill" id="progress-fill"></div>
       </div>
       <div class="progress-pct" id="progress-pct">0%</div>
-
       <!-- Step checklist -->
       <div class="loading-steps">
         <div class="loading-step active" id="step-0">
@@ -225,13 +210,11 @@
           <span class="step-icon">📄</span> Our AI is generating your PDF
         </div>
       </div>
-
       <p class="loading-note">
         Our AI researches real-time market data for your property.<br>
         This typically takes about <strong>60 seconds</strong> — please don't close this tab.
       </p>
     </div>
-
     <!-- ── Report content (hidden until loaded) ─────────────────── -->
     <div id="report-content" style="display:none;">
       <!-- Hero banner -->
@@ -317,16 +300,7 @@
           <ul class="risk-list" id="sec-f-list"></ul>
         </div>
       </div>
-      <!-- Comparables -->
-      <div class="section-card" id="comp-card" style="display:none;">
-        <div class="section-head">
-          <div class="section-letter" style="background:var(--muted);">~</div>
-          <div class="section-title">Comparable Pricing References</div>
-        </div>
-        <div class="section-body">
-          <div class="comp-list" id="comp-list"></div>
-        </div>
-      </div>
+      <!-- Comparable Pricing References section removed -->
       <!-- Disclaimer -->
       <div class="disclaimer-card" id="sec-g"></div>
       <div style="text-align:center;font-size:12px;color:var(--muted-light);padding-bottom:8px;">
@@ -335,10 +309,8 @@
       </div>
     </div><!-- end report-content -->
   </main>
-
   <script src="js/estimate.js"></script>
   <script src="js/detail.js"></script>
-
   <!-- ── Progress bar simulation ─────────────────────────────────
        Runs independently of detail.js.
        Advances to 88% over ~65s, then waits.
@@ -353,7 +325,6 @@
     const spinner  = document.getElementById('loading-spinner');
     const loading  = document.getElementById('report-loading');
     const content  = document.getElementById('report-content');
-
     // Steps: [targetPct, delayMs, statusMsg, activeStepIndex]
     const TIMELINE = [
       [  8,  1500, 'Connecting to property database…',        0 ],
@@ -364,10 +335,8 @@
       [ 80, 50000, 'Generating PDF & finalising…',            4 ],
       [ 88, 65000, 'Almost ready — just a moment more…',      4 ],
     ];
-
     let currentPct = 0;
     let done = false;
-
     function setStep(idx) {
       for (let i = 0; i < 5; i++) {
         const el = document.getElementById('step-' + i);
@@ -377,7 +346,6 @@
         else if (i === idx) el.classList.add('active');
       }
     }
-
     function setProgress(pct, msg, stepIdx) {
       currentPct = pct;
       fill.style.width = pct + '%';
@@ -391,30 +359,25 @@
       }
       if (stepIdx !== undefined) setStep(stepIdx);
     }
-
     // Schedule timeline steps
     TIMELINE.forEach(([pct, delay, msg, step]) => {
       setTimeout(() => {
         if (!done && currentPct < pct) setProgress(pct, msg, step);
       }, delay);
     });
-
     // Complete to 100% and reveal content
     function completeAndReveal() {
       if (done) return;
       done = true;
-
       // Mark all steps done
       for (let i = 0; i < 5; i++) {
         const el = document.getElementById('step-' + i);
         if (el) { el.classList.remove('active'); el.classList.add('done'); }
       }
-
       // Animate to 100%
       fill.classList.add('complete');
       setProgress(100, '✓ Your report is ready!', 4);
       spinner.style.display = 'none';
-
       // Reveal content after a short pause so user sees 100%
       setTimeout(() => {
         loading.style.display = 'none';
@@ -422,7 +385,6 @@
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }, 800);
     }
-
     // Watch for detail.js hiding the loading div OR showing content
     const obs = new MutationObserver(() => {
       const loadingHidden  = loading.style.display === 'none';
@@ -439,6 +401,5 @@
     obs.observe(content,  { attributes: true, attributeFilter: ['style'] });
   })();
   </script>
-
 </body>
 </html>
