@@ -92,7 +92,7 @@ def _normalise(report_data: dict) -> dict:
         "value_min":       report_data.get("value_lo", 0),
         "value_max":       report_data.get("value_hi", 0),
         "confidence_score": report_data.get("confidence", 70),
-        "comparables":     (report_data.get("comparables", []) if isinstance(report_data.get("comparables"), list) else [])[:3],
+        "comparables":     [],   # comparables section removed
     }
 
 def _fmt_range(lo, hi, prefix="Rs.", suffix="L") -> str:
@@ -174,24 +174,12 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
     vmax      = report.get("value_max", 0) or 0
     val_range = f"{_fmt(vmin)} – {_fmt(vmax)}"
     conf_label = "High" if conf >= 80 else ("Moderate" if conf >= 60 else "Low")
-
     sections  = report.get("sections", {})
-    comps_raw = report.get("comparables", []) or []
-    # Guard: LLM sometimes returns comparables as a string instead of a list.
-    # Iterating over a string produces one character per row → multi-page disaster.
-    if isinstance(comps_raw, str):
-        try:
-            import json as _json_c
-            comps_raw = _json_c.loads(comps_raw)
-        except Exception:
-            comps_raw = []
-    comps = comps_raw if isinstance(comps_raw, list) else []
 
     buf = io.BytesIO()
     PAGE_W, PAGE_H = A4
     LM = RM = 16*mm
     W = PAGE_W - LM - RM
-
     doc = SimpleDocTemplate(buf, pagesize=A4,
         leftMargin=LM, rightMargin=RM,
         topMargin=18*mm, bottomMargin=22*mm)
@@ -463,79 +451,11 @@ def _generate_reportlab(report: dict, area: dict, val_id: int) -> bytes:
             story.append(KeepTogether(sec_items))
         else:
             story.extend(sec_items)
-
         story.append(Spacer(1, 4))
 
-    # ── COMPARABLES ──────────────────────────────────────────────
-    comps = comps[:3]   # always cap at 3 regardless of LLM output
-    if comps:
-        _PORTAL_RE = re.compile(
-            r'\b(NoBroker|99acres|MagicBricks|Housing\.com|Housing|PropTiger|'
-            r'Square\s*Yards|Squareyards|CommonFloor|Makaan|Sulekha|JustDial)\b',
-            re.IGNORECASE
-        )
-        def _clean_source(src: str) -> str:
-            """Strip third-party portal names; keep date/locality info."""
-            src = _PORTAL_RE.sub("", str(src)).strip("/,. ")
-            src = re.sub(r'\s{2,}', ' ', src).strip()
-            return src or "Market data"
-
-        def _comp_fields(c):
-            """Extract (desc, signal, source) from a comparable dict using flexible key lookup."""
-            if isinstance(c, str):
-                return c, "", ""
-            # Description: prefer structured build over raw str(c)
-            project = (c.get("description") or c.get("project_name") or
-                       c.get("property")    or c.get("address")      or
-                       c.get("project")     or c.get("name"))
-            if project:
-                config = c.get("configuration") or c.get("bhk") or ""
-                size   = c.get("size_sqft") or c.get("area_sqft") or ""
-                parts  = [str(project)]
-                if config: parts.append(str(config))
-                if size:   parts.append(f"{size} sqft")
-                desc = " ".join(parts)
-            else:
-                desc = str(c)   # last resort — raw dict repr
-            # Price signal: prefer per-sqft rate, then total price
-            ppsf = c.get("price_per_sqft") or c.get("rate_per_sqft")
-            if ppsf:
-                try:
-                    signal = f"Rs.{int(ppsf):,}/sqft"
-                except Exception:
-                    signal = str(ppsf)
-            else:
-                signal = (c.get("price_signal") or c.get("total_price") or
-                          c.get("price")         or c.get("rate")        or
-                          c.get("pricing")       or c.get("value")       or "")
-            # Source — strip portal names
-            source = (c.get("source")   or c.get("portal")    or
-                      c.get("area")     or c.get("reference")  or "")
-            return str(desc), str(signal), _clean_source(source)
-
-        sCs = S("cs", fontSize=9, leading=14, textColor=C_BLUE, fontName="Helvetica-Bold")
-        hdr_row = [Paragraph("Property", sBo),
-                   Paragraph("Price Signal", sBo),
-                   Paragraph("Source", sBo)]
-        data_rows = []
-        for c in comps:
-            desc, signal, source = _comp_fields(c)
-            data_rows.append([
-                Paragraph(_tc(desc,   200), sN),
-                Paragraph(_tc(signal,  80), sCs),
-                Paragraph(_tc(source,  80), sMu),
-            ])
-        ct = Table([hdr_row] + data_rows, colWidths=[W*0.5, W*0.28, W*0.22])
-        ct.setStyle(TableStyle([
-            ("BACKGROUND",(0,0),(-1,0),C_BG),
-            ("LINEBELOW",(0,0),(-1,0),1.5,C_BORDER),
-            ("LINEBELOW",(0,1),(-1,-1),0.5,C_BORDER),
-            ("LEFTPADDING",(0,0),(-1,-1),8),("RIGHTPADDING",(0,0),(-1,-1),8),
-            ("TOPPADDING",(0,0),(-1,-1),5),("BOTTOMPADDING",(0,0),(-1,-1),5),
-        ]))
-        # KeepTogether prevents the header row from stranding on its own page
-        story.append(KeepTogether([ct]))
-        story.append(Spacer(1, 8))
+    # ── COMPARABLES SECTION INTENTIONALLY REMOVED ────────────────
+    # The "Comparable Pricing References" section has been removed.
+    # report.comparables is always [] from the engine.
 
     # ── FOOTER NOTE ──────────────────────────────────────────────
     story.append(HRFlowable(width=W, color=C_BORDER))
@@ -572,66 +492,13 @@ def _build_html(report: dict, area: dict, val_id: int) -> str:
     conf_color  = SUCCESS if conf >= 70 else (WARNING if conf >= 50 else DANGER)
     conf_label  = "Good" if conf >= 80 else ("Moderate" if conf >= 60 else "Low — Consult a Professional")
     sections    = report.get("sections", {})
-    _comps_raw  = report.get("comparables", [])
-    comparables = (_comps_raw if isinstance(_comps_raw, list) else [])[:3]
 
     sec_html = ""
     for letter in ["A","B","C","D","E","F","G"]:
         sec_html += _render_section(letter, sections.get(letter, {}))
 
-    def _html_comp_fields(c):
-        if isinstance(c, str):
-            return c, "", ""
-        project = (c.get("description") or c.get("project_name") or
-                   c.get("property")    or c.get("address")      or
-                   c.get("project")     or c.get("name") or "")
-        if project:
-            config = c.get("configuration") or c.get("bhk") or ""
-            size   = c.get("size_sqft") or c.get("area_sqft") or ""
-            parts  = [str(project)]
-            if config: parts.append(str(config))
-            if size:   parts.append(f"{size} sqft")
-            desc = " ".join(parts)
-        else:
-            desc = ""
-        ppsf = c.get("price_per_sqft") or c.get("rate_per_sqft")
-        if ppsf:
-            try:    signal = f"Rs.{int(ppsf):,}/sqft"
-            except: signal = str(ppsf)
-        else:
-            signal = (c.get("price_signal") or c.get("total_price") or
-                      c.get("price") or c.get("rate") or "")
-        source = (c.get("source") or c.get("portal") or c.get("area") or "")
-        _pr = re.compile(
-            r'\b(NoBroker|99acres|MagicBricks|Housing\.com|Housing|PropTiger|'
-            r'Square\s*Yards|Squareyards|CommonFloor|Makaan|Sulekha|JustDial)\b',
-            re.IGNORECASE
-        )
-        source = _pr.sub("", str(source)).strip("/,. ")
-        source = re.sub(r'\s{2,}', ' ', source).strip() or "Market data"
-        return str(desc), str(signal), str(source)
-
+    # Comparable Pricing References section intentionally removed
     comp_html = ""
-    if comparables:
-        rows = "".join(
-            f"""<tr>
-                  <td class="comp-desc">{_html_comp_fields(c)[0]}</td>
-                  <td class="comp-signal">{_html_comp_fields(c)[1]}</td>
-                  <td class="comp-source">{_html_comp_fields(c)[2]}</td>
-                </tr>"""
-            for c in comparables
-        )
-        comp_html = f"""
-        <div class="section-card">
-          <div class="section-head">
-            <span class="sec-badge" style="background:#6B7280;">~</span>
-            <span class="sec-title">Comparable Pricing References</span>
-          </div>
-          <table class="comp-table">
-            <thead><tr><th>Property</th><th>Price Signal</th><th>Source</th></tr></thead>
-            <tbody>{rows}</tbody>
-          </table>
-        </div>"""
 
     conf_warn = ""
     if conf < 70:
@@ -685,6 +552,7 @@ def _build_html(report: dict, area: dict, val_id: int) -> str:
   </div>
 </body></html>"""
 
+
 def _render_section(letter: str, sec: dict) -> str:
     if not sec:
         return ""
@@ -731,6 +599,7 @@ def _render_section(letter: str, sec: dict) -> str:
       </div>
     </div>"""
 
+
 def _main_css() -> str:
     return f"""
     @page {{ size: A4; margin: 18mm 16mm 22mm 16mm; }}
@@ -763,13 +632,9 @@ def _main_css() -> str:
     .risk-list {{ list-style: none; padding: 0; margin: 0; }}
     .risk-item {{ display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-bottom: 1px solid #F3F4F6; font-size: 9.5pt; color: #374151; }}
     .risk-bullet {{ color: {BRAND_ACCENT}; font-size: 12pt; line-height: 1.2; flex-shrink: 0; }}
-    .comp-table {{ width: 100%; border-collapse: collapse; font-size: 9pt; }}
-    .comp-table th {{ text-align: left; padding: 6px 8px; background: #F6F7FA; color: #6B7280; font-size: 8.5pt; border-bottom: 1.5px solid #E0E4EC; }}
-    .comp-desc {{ padding: 8px; color: #111827; font-weight: 500; border-bottom: 1px solid #F3F4F6; }}
-    .comp-signal {{ padding: 8px; color: {BRAND_BLUE}; font-weight: 600; border-bottom: 1px solid #F3F4F6; white-space: nowrap; }}
-    .comp-source {{ padding: 8px; color: #9CA3AF; font-size: 8.5pt; border-bottom: 1px solid #F3F4F6; }}
     .page-footer {{ position: fixed; bottom: -14mm; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 7.5pt; color: #9CA3AF; padding: 6px 16mm; border-top: 1px solid #E0E4EC; }}
     """
+
 
 def _watermark_css() -> str:
     return """
