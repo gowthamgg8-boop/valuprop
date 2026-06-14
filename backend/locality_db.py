@@ -2275,15 +2275,45 @@ LOCALITY_DB: dict[str, LocalityData] = {
 }
 
 # ── Lookup helpers ────────────────────────────────────────────────
+import difflib as _difflib
+import logging as _logging
+_db_logger = _logging.getLogger("valuprop.db")
+
 def get_locality(city: str, locality: str) -> "Optional[LocalityData]":
+    # Step 1: exact key match
     key = f"{city}|{locality}"
     data = LOCALITY_DB.get(key)
-    if data: return data
+    if data:
+        return data
+
+    # Step 2: case-insensitive substring match
     city_lower = city.lower()
     loc_lower  = locality.lower()
     for k, v in LOCALITY_DB.items():
         if city_lower in k.lower() and loc_lower in k.lower():
             return v
+
+    # Step 3: fuzzy match (difflib) — handles typos and minor name variants
+    city_entries = {
+        k.split("|")[1].lower(): (k, v)
+        for k, v in LOCALITY_DB.items()
+        if city_lower in k.lower()
+    }
+    if city_entries:
+        matches = _difflib.get_close_matches(
+            loc_lower, city_entries.keys(), n=1, cutoff=0.62
+        )
+        if matches:
+            _, matched_val = city_entries[matches[0]]
+            score = round(
+                _difflib.SequenceMatcher(None, loc_lower, matches[0]).ratio() * 100
+            )
+            _db_logger.info(
+                f"Fuzzy match: '{locality}' → '{matched_val.locality}' "
+                f"({score}% similarity)"
+            )
+            return matched_val
+
     return None
 
 def get_confidence_label(score: int) -> str:

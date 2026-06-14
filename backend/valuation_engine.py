@@ -18,7 +18,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 from llm_service import (
-    call_llm, parse_json_response,
+    call_llm, call_llm_with_search, parse_json_response,
     validate_llm_output,
 )
 from locality_db import get_locality, get_confidence_label, LocalityData
@@ -133,10 +133,91 @@ VALUPROP_SYSTEM_PROMPT = (
     + "\n\nOUTPUT FORMAT: Respond with valid JSON only. No markdown, no preamble, no backticks."
 )
 # ===================================================================
+# WEB SEARCH FALLBACK — called when locality is not in DB
+# ===================================================================
+async def _derive_locality_from_web(prop: PropertyInput) -> Optional[LocalityData]:
+    """
+    When locality is not in DB and fuzzy match also fails,
+    use LLM + web search to derive current market rates.
+    Confidence capped at 68 — never treated as DB-anchored.
+    """
+    try:
+        system_prompt = (
+            "You are a real estate data analyst for Indian residential markets. "
+            "Use web search to find CURRENT 2025-2026 market rates for the given locality. "
+            "Apply a 5% closing discount to any listed/asking prices to get realistic "
+            "transaction rates. Return ONLY valid JSON, no markdown, no preamble."
+        )
+        user_prompt = (
+            f"Find current (2025-2026) residential property market rates in "
+            f"{prop.locality}, {prop.city}, India.\n"
+            f"Search for: apartment resale rates (Rs/sqft), land/plot rates (Rs/sqft), "
+            f"12-month price trend, demand drivers, and infrastructure highlights.\n\n"
+            f"Return JSON:\n"
+            f'{{"apt_rate_lo": <int>, "apt_rate_hi": <int>, '
+            f'"land_rate_lo": <int>, "land_rate_hi": <int>, '
+            f'"trend_12m": "<e.g. +7.5%>", '
+            f'"demand_drivers": ["driver1", "driver2", "driver3"], '
+            f'"infra_notes": "<50-word infra summary>", '
+            f'"micro_context": "<50-word locality description>"}}'
+        )
+        raw  = await call_llm_with_search(
+            system_prompt, user_prompt, max_tokens=700, max_searches=4
+        )
+        data = parse_json_response(raw)
+        apt_lo  = int(data.get("apt_rate_lo",  0))
+        apt_hi  = int(data.get("apt_rate_hi",  0))
+        land_lo = int(data.get("land_rate_lo", 0))
+        land_hi = int(data.get("land_rate_hi", 0))
+        # Sanity: reject nonsensical values
+        if apt_lo < 1000 or apt_hi < apt_lo or land_lo < 500 or land_hi < land_lo:
+            logger.warning(
+                f"Web-derived rates for {prop.locality}, {prop.city} failed sanity: {data}"
+            )
+            return None
+        trend   = str(data.get("trend_12m", "+7.0%"))
+        drivers = data.get("demand_drivers", ["Residential demand"])
+        if not isinstance(drivers, list):
+            drivers = [str(drivers)]
+        infra   = str(data.get("infra_notes",   ""))
+        context = str(data.get("micro_context",
+                               f"{prop.city} {prop.locality} — live market data."))
+        logger.info(
+            f"Web-derived rates for {prop.locality}, {prop.city}: "
+            f"apt Rs.{apt_lo:,}-Rs.{apt_hi:,}/sqft; "
+            f"land Rs.{land_lo:,}-Rs.{land_hi:,}/sqft"
+        )
+        return LocalityData(
+            city             = prop.city,
+            locality         = prop.locality,
+            apt_rate_lo      = apt_lo,
+            apt_rate_hi      = apt_hi,
+            land_rate_lo     = land_lo,
+            land_rate_hi     = land_hi,
+            guideline_value  = 0,
+            trend_12m        = trend,
+            micro_context    = context,
+            infra_notes      = infra,
+            data_confidence  = 68,   # web-derived — capped below DB minimum (72)
+            demand_drivers   = drivers,
+            risk_factors     = [
+                "Rates derived from live web search — verify with local broker before transaction.",
+                "Guideline value not available for this locality.",
+            ],
+        )
+    except Exception as exc:
+        logger.warning(
+            f"Web rate lookup failed for {prop.locality}, {prop.city}: {exc}"
+        )
+        return None
+
+# ===================================================================
 # FREE ESTIMATE ENGINE
 # ===================================================================
 async def generate_free_estimate(prop: PropertyInput) -> FreeEstimate:
     loc_data = get_locality(prop.city, prop.locality)
+    if not loc_data:
+        loc_data = await _derive_locality_from_web(prop)
     fallback  = get_fallback(prop.city, prop.locality, prop.bhk or "2BHK")
     lo, hi = _calculate_base_range(prop, loc_data, fallback)
     mid  = (lo + hi) / 2
@@ -203,6 +284,8 @@ async def generate_detailed_report(
     free_range: Optional[tuple] = None,
 ) -> DetailedReport:
     loc_data = get_locality(prop.city, prop.locality)
+    if not loc_data:
+        loc_data = await _derive_locality_from_web(prop)
     fallback  = get_fallback(prop.city, prop.locality, prop.bhk or "2BHK")
     base_lo, base_hi = _calculate_base_range(prop, loc_data, fallback)
     midpoint = (base_lo + base_hi) / 2
@@ -573,9 +656,14 @@ def _build_structured_report(
             f" Government guideline value Rs.{loc_data.guideline_value:,}/sqft - regulatory floor only."
             if loc_data.guideline_value > 0 else ""
         )
-        mkt_class = "active" if "+" in str(loc_data.trend_12m) else "stable"
+        mkt_class    = "active" if "+" in str(loc_data.trend_12m) else "stable"
+        rate_source  = (
+            "Live market signals (web search)"
+            if loc_data.data_confidence < 72
+            else "Locality DB rates"
+        )
         section_c = (
-            f"Locality DB rates for {prop.locality}: apartment Rs.{loc_data.apt_rate_lo:,}"
+            f"{rate_source} for {prop.locality}: apartment Rs.{loc_data.apt_rate_lo:,}"
             f"-Rs.{loc_data.apt_rate_hi:,}/sqft; land Rs.{loc_data.land_rate_lo:,}"
             f"-Rs.{loc_data.land_rate_hi:,}/sqft.{dep_note}"
             f" Effective working rate: Rs.{eff_lo:,}-Rs.{eff_hi:,}/sqft."
@@ -631,12 +719,95 @@ def _build_structured_report(
             f"Rs.{rent_lo:,}-Rs.{rent_hi:,}/month. "
             f"Implied gross yield {yield_lo}%-{yield_hi}% - within 2.0-3.5% healthy band. Income supported."
         )
-    else:
+    elif prop.prop_type == "IndependentHouse" and loc_data:
+        plot_area         = prop.plot_house or 1000
+        age_yrs_h         = prop.age_house or 10
+        dep_rate_h        = min(0.8, age_yrs_h * 0.015)
+        dep_pct_h         = round(dep_rate_h * 100)
+        eff_bldg_rate_h   = round(1800 * (1 - dep_rate_h))
+        builtup_h         = prop.builtup_house or int(plot_area * 1.2)
+        land_lo_h         = loc_data.land_rate_lo
+        land_hi_h         = loc_data.land_rate_hi
+        land_val_lo_h     = round(plot_area * land_lo_h / 100000, 1)
+        land_val_hi_h     = round(plot_area * land_hi_h / 100000, 1)
+        bldg_val_h        = round(builtup_h * eff_bldg_rate_h / 100000, 1)
+        road_label_h      = prop.road_house or "Standard"
+        road_pct_h        = {
+            "30 ft+": "+8%", "20-30 ft": "+2%", "Less than 20 ft": "-4%"
+        }.get(prop.road_house, "0%")
         section_d = (
-            f"Land component: Rs.{components['land_lo']}L-Rs.{components['land_hi']}L. "
-            f"Building (depreciated {dep_pct}%): Rs.{components['bldg_lo']}L-Rs.{components['bldg_hi']}L. "
-            f"Location adjustments: Rs.{components['adj_lo']}L-Rs.{components['adj_hi']}L. "
-            f"Total estimated value: Rs.{lo}L-Rs.{hi}L."
+            f"STEPS|Step 1|Land rate|Locality benchmark|Rs.{land_lo_h:,}-Rs.{land_hi_h:,}/sqft\n"
+            f"STEPS|Step 2|Land value|{plot_area:,} sqft x rate|Rs.{land_val_lo_h}L-Rs.{land_val_hi_h}L\n"
+            f"STEPS|Step 3|Building depreciation ({dep_pct_h}%)|Rs.1,800/sqft x {1-dep_rate_h:.2f}|Rs.{eff_bldg_rate_h:,}/sqft effective\n"
+            f"STEPS|Step 4|Building value (depreciated)|{builtup_h:,} sqft x Rs.{eff_bldg_rate_h:,}/sqft|Rs.{bldg_val_h}L\n"
+            f"ADJ|Road width / frontage ({road_label_h})|{road_pct_h}|Road access factor\n"
+            f"ADJ|Connectivity: Employment node access|+1%|Proximity to major employment hubs\n"
+            f"ADJ|Quality factor (structure condition)|+1%|Age-adjusted structural grade\n"
+            f"ADJ|NET STEP 5 ADJUSTMENT|+2%|Combined location and quality adjustments\n"
+            f"FINAL|FINAL VALUE||Land + Building + Adjustments|Rs.{lo}L - Rs.{hi}L\n"
+        )
+    elif prop.prop_type == "Villa" and loc_data:
+        plot_area_v        = prop.plot_villa or 2000
+        builtup_v          = prop.builtup_villa or int(plot_area_v * 1.5)
+        age_str_v          = prop.age_villa or "5-10 years"
+        age_factor_v       = _age_depreciation(age_str_v)
+        dep_pct_v          = round((1 - age_factor_v) * 100)
+        eff_bldg_rate_v    = round(2200 * age_factor_v)
+        bldg_val_v         = round(builtup_v * eff_bldg_rate_v / 100000, 1)
+        land_lo_v          = loc_data.land_rate_lo
+        land_hi_v          = loc_data.land_rate_hi
+        land_val_lo_v      = round(plot_area_v * land_lo_v * 0.9 / 100000, 1)
+        land_val_hi_v      = round(plot_area_v * land_hi_v * 0.9 / 100000, 1)
+        amenity_label_v    = prop.amenities_villa or "Mid-range"
+        amenity_pct_v      = {
+            "Ultra-luxury": "+20%", "Premium": "+12%", "Mid-range": "+5%", "Basic": "0%"
+        }.get(prop.amenities_villa, "+8%")
+        section_d = (
+            f"STEPS|Step 1|Land rate (gated community -10%)|Locality benchmark|Rs.{land_lo_v:,}-Rs.{land_hi_v:,}/sqft\n"
+            f"STEPS|Step 2|Land value|{plot_area_v:,} sqft x rate x 0.90|Rs.{land_val_lo_v}L-Rs.{land_val_hi_v}L\n"
+            f"STEPS|Step 3|Building depreciation ({dep_pct_v}%)|Rs.2,200/sqft x {age_factor_v:.2f}|Rs.{eff_bldg_rate_v:,}/sqft effective\n"
+            f"STEPS|Step 4|Building value (depreciated)|{builtup_v:,} sqft x Rs.{eff_bldg_rate_v:,}/sqft|Rs.{bldg_val_v}L\n"
+            f"ADJ|Amenities tier ({amenity_label_v})|{amenity_pct_v}|Community amenities premium\n"
+            f"ADJ|Connectivity and micro-location factor|+2%|Access and location quality\n"
+            f"ADJ|NET STEP 5 ADJUSTMENT|{amenity_pct_v}|Combined location + amenities uplift\n"
+            f"FINAL|FINAL VALUE||Land + Building + Adjustments|Rs.{lo}L - Rs.{hi}L\n"
+        )
+    elif prop.prop_type == "LandPlot" and loc_data:
+        plot_area_l   = prop.plot_land or 1000
+        land_lo_l     = loc_data.land_rate_lo
+        land_hi_l     = loc_data.land_rate_hi
+        base_lo_l     = round(plot_area_l * land_lo_l / 100000, 1)
+        base_hi_l     = round(plot_area_l * land_hi_l / 100000, 1)
+        use_pct_l     = {
+            "Residential": "0%", "Commercial": "+25%", "Agricultural": "-65%"
+        }.get(prop.land_use or "Residential", "0%")
+        appr_pct_l    = {
+            "DTCP Approved": "0%", "CMDA Approved": "+5%",
+            "Panchayat": "-25%",   "Unapproved": "-50%"
+        }.get(prop.approval or "", "-15%")
+        corner_pct_l  = "+8%" if "Yes" in (prop.corner_plot or "") else "0%"
+        road_pct_l    = {
+            "30 ft+": "+10%", "20-30 ft": "+3%", "Less than 20 ft": "-5%"
+        }.get(prop.road_land or "", "0%")
+        section_d = (
+            f"STEPS|Step 1|Land rate|Locality benchmark|Rs.{land_lo_l:,}-Rs.{land_hi_l:,}/sqft\n"
+            f"STEPS|Step 2|Base plot value|{plot_area_l:,} sqft x rate|Rs.{base_lo_l}L-Rs.{base_hi_l}L\n"
+            f"ADJ|Approval status ({prop.approval or 'N/A'})|{appr_pct_l}|Regulatory approval premium/discount\n"
+            f"ADJ|Land use ({prop.land_use or 'Residential'})|{use_pct_l}|Use classification factor\n"
+            f"ADJ|Corner plot|{corner_pct_l}|{'Corner premium applied' if corner_pct_l != '0%' else 'Interior plot — no premium'}\n"
+            f"ADJ|Road width ({prop.road_land or 'standard'})|{road_pct_l}|Road frontage factor\n"
+            f"FINAL|FINAL VALUE||Plot area x adjusted rate|Rs.{lo}L - Rs.{hi}L\n"
+        )
+    else:
+        # No loc_data even after web search (network failure etc.)
+        # Use STEPS format so PDF renders something meaningful
+        section_d = (
+            f"STEPS|Step 1|City-level estimate|No locality-specific data available|"
+            f"Rs.{round(components['land_lo'] / max(prop.plot_land or prop.plot_house or 1000, 1) * 100000):,}/sqft approx\n"
+            f"STEPS|Step 2|Land + Building total|Combined city-level estimate|"
+            f"Rs.{components['land_lo']}L-Rs.{components['land_hi']}L\n"
+            f"ADJ|Quality and location factor|Included|City-level adjustment applied\n"
+            f"FINAL|FINAL VALUE||City-level estimate|Rs.{lo}L - Rs.{hi}L\n"
         )
     txn_lo     = round(lo * 0.96, 1)
     txn_hi     = round(hi * 0.97, 1)
