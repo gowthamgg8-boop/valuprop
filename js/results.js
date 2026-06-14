@@ -518,12 +518,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   renderPreview(search);
 
-  const valId = sessionStorage.getItem('valuprop_val_id');
-  if (valId) {
-    pollFree(parseInt(valId), search);
-  } else {
-    trySubmitBackend(search);
-  }
+  // Always submit fresh — never reuse a stale valId from a prior estimate.
+  // Without this, the previous estimate's teaser shows for the new property.
+  sessionStorage.removeItem('valuprop_val_id');
+  sessionStorage.removeItem('valuprop_prop_id');
+  trySubmitBackend(search);
 });
 
 async function trySubmitBackend(search) {
