@@ -79,6 +79,8 @@ const PRICE_DB = {
     'T Nagar': {apt:[203,266],house:[914,1200],villa:[1521,1997],land:[420,654],trend:'+5.5%',sqft:17000,pincode:'600017',confidence:'high'},
     'Teynampet': {apt:[190,292],house:[857,1314],villa:[1426,2187],land:[397,654],trend:'+5.5%',sqft:18000,pincode:'600018',confidence:'high'},
     'Thiruvanmiyur': {apt:[152,209],house:[686,943],villa:[1141,1569],land:[280,420],trend:'+5.5%',sqft:14000,pincode:'600041',confidence:'medium'},
+    'Valmiki nagar': {apt:[152,209],house:[686,943],villa:[1141,1569],land:[280,420],trend:'+5.5%',sqft:14000,pincode:'600041',confidence:'medium'},
+    'Vaishnavi nagar': {apt:[152,209],house:[686,943],villa:[1141,1569],land:[280,420],trend:'+5.5%',sqft:14000,pincode:'600041',confidence:'medium'},
     'Thousand Lights': {apt:[178,266],house:[800,1200],villa:[1331,1997],land:[374,607],trend:'+5.5%',sqft:17000,pincode:'600006',confidence:'low'},
     'Triplicane': {apt:[102,165],house:[457,743],villa:[761,1236],land:[199,339],trend:'+5.5%',sqft:10000,pincode:'600005',confidence:'medium'},
     'Uthandi': {apt:[102,159],house:[457,714],villa:[761,1188],land:[187,350],trend:'+5.5%',sqft:10000,pincode:'600119',confidence:'low'},
@@ -552,6 +554,25 @@ async function pollFree(valId, search) {
   } catch(e) { renderStatic(search); }
 }
 
+/* ─── Fuzzy string matching (Levenshtein) ───────────────────────
+ * Used in lookupLocality to handle typos and minor name variants.
+ */
+function _levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({length: m + 1}, (_, i) =>
+    Array.from({length: n + 1}, (_, j) => i === 0 ? j : j === 0 ? i : 0)
+  );
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1] ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+function _strSim(a, b) {
+  if (!a || !b) return 0;
+  return 1 - _levenshtein(a, b) / Math.max(a.length, b.length);
+}
+
 /* ─── Locality lookup — 3-step matching logic ──────────────────
  * Step 1: Exact name match in PRICE_DB
  * Step 2: Pincode lookup (find any PRICE_DB entry with same pincode)
@@ -576,6 +597,16 @@ function lookupLocality(city, locality, pincode) {
       if (key.toLowerCase() === needle) {
         return { db: cityDb[key], matched: key, source: 'exact' };
       }
+    }
+
+    // ── Step 1b: Fuzzy name match — handles typos and minor variants ──
+    let bestKey = null, bestSim = 0;
+    for (const key of Object.keys(cityDb)) {
+      const sim = _strSim(needle, key.toLowerCase());
+      if (sim > bestSim) { bestSim = sim; bestKey = key; }
+    }
+    if (bestKey && bestSim >= 0.72) {
+      return { db: cityDb[bestKey], matched: bestKey, source: 'exact' };
     }
   }
 
