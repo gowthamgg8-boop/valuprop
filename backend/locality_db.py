@@ -1731,6 +1731,18 @@ LOCALITY_DB: dict[str, LocalityData] = {
         demand_drivers=["Residential demand", "Zone 13 - Adyar", "Chennai growth"],
         risk_factors=["Verify GCC approvals before purchase"],
     ),
+    "Chennai|Valmiki nagar": LocalityData(
+        city="Chennai", locality="Valmiki nagar",
+        land_rate_lo=12000, land_rate_hi=18000,
+        apt_rate_lo=12000,  apt_rate_hi=16500,
+        guideline_value=0.0,
+        trend_12m="+5.5%",
+        micro_context="Valmiki nagar, Thiruvanmiyur: Quiet residential pocket within premium South Chennai. Walking distance to beach, Theosophical Society nearby.",
+        infra_notes="Pincode 600041. Part of Thiruvanmiyur cluster. GCC zone. Zone 13 - Adyar.",
+        data_confidence=76,
+        demand_drivers=["Beach proximity", "Zone 13 - Adyar", "Premium South Chennai"],
+        risk_factors=["Verify GCC approvals before purchase"],
+    ),
     "Chennai|Thiruverkadu": LocalityData(
         city="Chennai", locality="Thiruverkadu",
         land_rate_lo=4000, land_rate_hi=6200,
@@ -2280,33 +2292,39 @@ import logging as _logging
 _db_logger = _logging.getLogger("valuprop.db")
 
 def get_locality(city: str, locality: str) -> "Optional[LocalityData]":
-    # Step 1: exact key match
-    key = f"{city}|{locality}"
-    data = LOCALITY_DB.get(key)
-    if data:
-        return data
+    # If locality contains a comma (e.g. "Valmiki nagar, Thiruvanmiyur"),
+    # try the primary part (before the comma) as the real locality name.
+    loc_primary = locality.split(",")[0].strip() if "," in locality else locality
 
-    # Step 2: case-insensitive substring match
+    # Step 1: exact key match (full and primary)
+    for loc_try in ([locality, loc_primary] if loc_primary != locality else [locality]):
+        data = LOCALITY_DB.get(f"{city}|{loc_try}")
+        if data:
+            return data
+
+    # Step 2: case-insensitive substring match (try both primary and full)
     city_lower = city.lower()
-    loc_lower  = locality.lower()
-    for k, v in LOCALITY_DB.items():
-        if city_lower in k.lower() and loc_lower in k.lower():
-            return v
+    for loc_try in ([loc_primary, locality] if loc_primary != locality else [locality]):
+        loc_lower = loc_try.lower()
+        for k, v in LOCALITY_DB.items():
+            if city_lower in k.lower() and loc_lower in k.lower():
+                return v
 
-    # Step 3: fuzzy match (difflib) — handles typos and minor name variants
+    # Step 3: fuzzy match (difflib) using primary locality name
     city_entries = {
         k.split("|")[1].lower(): (k, v)
         for k, v in LOCALITY_DB.items()
         if city_lower in k.lower()
     }
     if city_entries:
+        primary_lower = loc_primary.lower()
         matches = _difflib.get_close_matches(
-            loc_lower, city_entries.keys(), n=1, cutoff=0.62
+            primary_lower, city_entries.keys(), n=1, cutoff=0.62
         )
         if matches:
             _, matched_val = city_entries[matches[0]]
             score = round(
-                _difflib.SequenceMatcher(None, loc_lower, matches[0]).ratio() * 100
+                _difflib.SequenceMatcher(None, primary_lower, matches[0]).ratio() * 100
             )
             _db_logger.info(
                 f"Fuzzy match: '{locality}' → '{matched_val.locality}' "
