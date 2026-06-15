@@ -583,26 +583,60 @@ function _strSim(a, b) {
  *   matched: the locality name we ended up using
  *   source:  'exact' | 'pincode' | 'city_avg'
  */
+/* Normalize city: handles cases where user types a sub-area or locality
+ * name in the city field (e.g. "tiruvanmiyur" instead of "Chennai").
+ * Checks PRICE_DB keys first, then scans all locality names across cities.
+ */
+function normalizeCity(city) {
+  if (!city) return 'Chennai';
+  // Direct match (already a valid PRICE_DB city key)
+  if (PRICE_DB[city]) return city;
+  // Case-insensitive city key match
+  const cityLower = city.toLowerCase().trim();
+  for (const c of Object.keys(PRICE_DB)) {
+    if (c.toLowerCase() === cityLower) return c;
+  }
+  // Check if the value is actually a locality name within a city
+  // e.g. "tiruvanmiyur" → found as locality key in Chennai → return "Chennai"
+  for (const [c, db] of Object.entries(PRICE_DB)) {
+    for (const loc of Object.keys(db)) {
+      if (loc.toLowerCase() === cityLower) return c;
+    }
+  }
+  // Default to Chennai
+  return 'Chennai';
+}
+
 function lookupLocality(city, locality, pincode) {
-  const cityDb = PRICE_DB[city];
+  // Normalize city — handles area names typed in city field
+  const normCity = normalizeCity(city);
+  const cityDb = PRICE_DB[normCity];
   if (!cityDb) {
-    // Unknown city — default to Chennai city average
     return cityAverageLookup('Chennai');
   }
 
-  // ── Step 1: Exact name match (case-insensitive, trimmed) ──
   if (locality) {
-    const needle = locality.toLowerCase().trim();
-    for (const key of Object.keys(cityDb)) {
-      if (key.toLowerCase() === needle) {
-        return { db: cityDb[key], matched: key, source: 'exact' };
+    // If locality contains a comma (e.g. "Valmiki nagar, Thiruvanmiyur"),
+    // try the primary part (before the comma) first.
+    const localityPrimary = locality.includes(',')
+      ? locality.split(',')[0].trim()
+      : locality;
+
+    // ── Step 1: Exact name match (case-insensitive) ──
+    for (const tryLoc of [localityPrimary, locality]) {
+      const needle = tryLoc.toLowerCase().trim();
+      for (const key of Object.keys(cityDb)) {
+        if (key.toLowerCase() === needle) {
+          return { db: cityDb[key], matched: key, source: 'exact' };
+        }
       }
     }
 
-    // ── Step 1b: Fuzzy name match — handles typos and minor variants ──
+    // ── Step 1b: Fuzzy name match — uses primary locality only ──
+    const needlePrimary = localityPrimary.toLowerCase().trim();
     let bestKey = null, bestSim = 0;
     for (const key of Object.keys(cityDb)) {
-      const sim = _strSim(needle, key.toLowerCase());
+      const sim = _strSim(needlePrimary, key.toLowerCase());
       if (sim > bestSim) { bestSim = sim; bestKey = key; }
     }
     if (bestKey && bestSim >= 0.72) {
@@ -621,7 +655,7 @@ function lookupLocality(city, locality, pincode) {
   }
 
   // ── Step 3: City-wide average ──
-  return cityAverageLookup(city);
+  return cityAverageLookup(normCity);
 }
 
 /* Compute city-wide averages from all PRICE_DB entries in the city. */
