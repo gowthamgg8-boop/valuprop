@@ -531,80 +531,80 @@ def _build_section_f_engine(prop: PropertyInput, loc_data: Optional[LocalityData
         ab_short = "local authority"
     if prop.prop_type == "Apartment":
         item1 = (
-            f"* Title and UDS verification: {prop.locality} falls under {ab_full} jurisdiction. "
+            f"Title and UDS verification: {prop.locality} falls under {ab_full} jurisdiction. "
             f"Verify encumbrance certificate chain for minimum 30 years. "
             f"UDS percentage in the sale agreement must match the society's undivided share register - "
             f"mismatch is a common title risk in older projects."
         )
         item2 = (
-            f"* {ab_short} approvals and OC: Confirm building plan is sanctioned by {ab_short}. "
+            f"{ab_short} approvals and OC: Confirm building plan is sanctioned by {ab_short}. "
             f"Occupancy Certificate (OC) must be available - absence restricts PSU bank and NBFC "
             f"financing and significantly limits future resale options."
         )
         item3 = (
-            f"* Age and structural condition: For {age_str} stock, verify OC is in place and "
+            f"Age and structural condition: For {age_str} stock, verify OC is in place and "
             f"the structure is in standard condition. Budget 5-10% of purchase value for "
             f"renovation or fit-out if the unit has dated finishes or deferred maintenance."
         )
         item4 = (
-            f"* Layout and encumbrance checks: Confirm the project is not in a road-widening "
+            f"Layout and encumbrance checks: Confirm the project is not in a road-widening "
             f"alignment, high-tension line corridor, or water body buffer zone. "
             f"Verify no pending litigation or mortgage is registered against the project or the specific flat."
         )
         item5 = (
-            f"* Dues clearance and NOC: Verify property tax, water charges, and maintenance dues "
+            f"Dues clearance and NOC: Verify property tax, water charges, and maintenance dues "
             f"are cleared by the seller. Obtain society NOC and existing bank NOC (if applicable) "
             f"before executing the sale agreement."
         )
     elif prop.prop_type == "IndependentHouse":
         item1 = (
-            f"* Title and patta verification: {prop.locality} falls under {ab_full} jurisdiction. "
+            f"Title and patta verification: {prop.locality} falls under {ab_full} jurisdiction. "
             f"Verify patta/khata is in the seller's name and boundary measurements match "
             f"registered documents. Review 30-year encumbrance certificate for liens or litigation."
         )
         item2 = (
-            f"* {ab_short} plan sanction: Confirm building plan is sanctioned by {ab_short}. "
+            f"{ab_short} plan sanction: Confirm building plan is sanctioned by {ab_short}. "
             f"Check for deviations from the sanctioned plan - unapproved additions affect "
             f"loan eligibility and create regularisation liability."
         )
         item3 = (
-            f"* Structural condition: For a {age_str} building, commission an independent structural "
+            f"Structural condition: For a {age_str} building, commission an independent structural "
             f"assessment. Older structures may require investment in waterproofing, electrical "
             f"rewiring, or plumbing - budget accordingly before finalising offer price."
         )
         item4 = (
-            f"* Land encumbrances: Verify no overhead HT lines, road-widening proposals, or "
+            f"Land encumbrances: Verify no overhead HT lines, road-widening proposals, or "
             f"government acquisition notices affect the plot. Check CRZ or water body buffer "
             f"zone applicability if the property is near the coast or a lake."
         )
         item5 = (
-            f"* Dues and succession: Verify property tax and water dues are cleared by the seller. "
+            f"Dues and succession: Verify property tax and water dues are cleared by the seller. "
             f"If the property has multiple legal heirs, obtain a valid release deed or family "
             f"settlement document before transacting."
         )
     else:
         item1 = (
-            f"* Title and survey verification: {prop.locality} falls under {ab_full} jurisdiction. "
+            f"Title and survey verification: {prop.locality} falls under {ab_full} jurisdiction. "
             f"Verify patta/title deed chain for minimum 30 years. Confirm survey number and "
             f"boundary measurements match field verification."
         )
         item2 = (
-            f"* {ab_short} layout approval: Confirm the layout is approved by {ab_short}. "
+            f"{ab_short} layout approval: Confirm the layout is approved by {ab_short}. "
             f"Unapproved or lapsed layouts carry major home loan and resale risk - do not "
             f"proceed without a valid layout approval certificate."
         )
         item3 = (
-            f"* Land use and conversion: Verify land use classification - agricultural land "
+            f"Land use and conversion: Verify land use classification - agricultural land "
             f"requires conversion to residential before construction. Conversion adds cost, "
             f"regulatory timeline, and uncertainty."
         )
         item4 = (
-            f"* Access and right of way: Verify road width, access road ownership, and "
+            f"Access and right of way: Verify road width, access road ownership, and "
             f"right-of-way documentation. Confirm access from the main road to the plot "
             f"is undisputed and has adequate width for construction vehicles."
         )
         item5 = (
-            f"* Statutory valuation note: For transactions above Rs.1 Cr, consider engaging "
+            f"Statutory valuation note: For transactions above Rs.1 Cr, consider engaging "
             f"a registered valuer under the Wealth Tax Act / IBBI guidelines for an independent "
             f"statutory valuation opinion."
         )
