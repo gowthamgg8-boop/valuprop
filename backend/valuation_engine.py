@@ -397,11 +397,11 @@ def _build_engine_comparables(
 def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData]) -> str:
     if not loc_data:
         return (
-            f"* Market positioning: {prop.locality} is a residential locality in {prop.city}. "
+            f"Market positioning: {prop.locality} is a residential locality in {prop.city}. "
             f"Demand is supported by employment access, road connectivity, and civic infrastructure.\n"
-            f"* Connectivity: {prop.locality} is served by the road network linking to arterial routes. "
+            f"Connectivity: {prop.locality} is served by the road network linking to arterial routes. "
             f"Public transport options provide access to key city destinations.\n"
-            f"* Demand profile: Residential demand is driven by end-user buyers and investors "
+            f"Demand profile: Residential demand is driven by end-user buyers and investors "
             f"seeking urban amenities and employment proximity in {prop.city}."
         )
     mid_rate = (loc_data.apt_rate_lo + loc_data.apt_rate_hi) // 2
@@ -423,7 +423,7 @@ def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData
     boundary  = getattr(loc_data, "boundary_tier", "")
     zone_note = f" ({boundary})" if boundary else ""
     item1 = (
-        f"* Market positioning: {prop.locality}{zone_note} is a {mkt_tier} locality in {prop.city}. "
+        f"Market positioning: {prop.locality}{zone_note} is a {mkt_tier} locality in {prop.city}. "
         f"Apartment rates Rs.{loc_data.apt_rate_lo:,}-Rs.{loc_data.apt_rate_hi:,}/sqft; "
         f"land rates Rs.{loc_data.land_rate_lo:,}-Rs.{loc_data.land_rate_hi:,}/sqft. "
         f"12-month appreciation {loc_data.trend_12m} YoY - {trend_desc}."
@@ -472,7 +472,7 @@ def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData
             f"Connectivity to key employment and commercial hubs supports residential demand. "
             f"Infrastructure quality is consistent with the locality's market rate positioning."
         )
-    item2 = f"* Connectivity: {conn}"
+    item2 = f"Connectivity: {conn}"
     if prop.city == "Chennai":
         if mid_rate >= 12000:
             demand = (
@@ -506,7 +506,7 @@ def _build_section_b_engine(prop: PropertyInput, loc_data: Optional[LocalityData
             f"Employment proximity, social infrastructure, and connectivity are the key purchase drivers. "
             f"Investor demand is supported by rental yields consistent with the locality's rate band."
         )
-    item3 = f"* Demand profile: {demand}"
+    item3 = f"Demand profile: {demand}"
     return f"{item1}\n{item2}\n{item3}"
 def _build_section_f_engine(prop: PropertyInput, loc_data: Optional[LocalityData]) -> str:
     boundary = getattr(loc_data, "boundary_tier", "") if loc_data else ""
