@@ -1,4 +1,4 @@
-# valUProp.in — AI Residential Real Estate Valuation Prompt (v2.7)
+# valUProp.in — AI Residential Real Estate Valuation Prompt (v2.8)
 
 > **Property Intelligence, Simplified**
 > *AI for Human Greatness*
@@ -302,12 +302,14 @@ Step-by-step transparent math (step numbers below mirror the Methodology section
   - **Connectivity Factor**, with each applicable sub-component broken out separately (corridor, metro/rail proximity, main-road frontage, employment-node access) — never collapsed into a single "location adjustment"
   - Quality Factor, Gated Community Factor, Vastu/Facing, special features
   - the Income/Rental-Yield Support Factor
+  - **show the net cumulative multiplicative uplift/discount** (e.g. "Net adjustment: +18%") so the step from base value to adjusted value is explicit
+- **Adjusted value = Step 2 base value (after Step 3 depreciation) × net Step 5 adjustment.** The **final reported value must be this post-Step-5 adjusted figure — never the raw Step 2 base value.** State the adjusted value explicitly on its own line so the reader can trace base → adjustments → final.
 - **Step 5b:** Rental-Yield Cross-Check table (Low/Mid/High rent → annualised → implied gross yield), when rent data is available, with the benchmark comparable stated
-- **Step 6:** Final table with Low / Mid / High scenarios
+- **Step 6:** Final table with Low / Mid / High scenarios — each scenario derived from the **post-Step-5 adjusted value**, and the mid scenario must reconcile to the Independent Value Opinion (Section E)
 
 ### E. Independent Value Opinion
 
-- **Estimated Market Value:** ₹X.XX – ₹Y.YY [Cr/L]
+- **Estimated Market Value:** ₹X.XX – ₹Y.YY [Cr/L] — this **must equal the post-Step-5 adjusted value** from the Build-Up (Section D), not the pre-adjustment base value
 - **Most Likely Transaction Range:** ₹X.XX – ₹Y.YY [Cr/L]
 - **Confidence Score:** XX% (Weak / Fair / Good / Strong)
 - **Sanity Checks Performed** (4–6 bullets validating the number)
@@ -337,6 +339,7 @@ Step-by-step transparent math (step numbers below mirror the Methodology section
 1. **Always cross-check at least 2 sanity checks** (guideline + comparable, or rental yield + appreciation pathway)
 1. **Discard listings older than 18 months as primary signals** — treat as historical reference only
 1. **Apply the Connectivity Factor exactly once, at Step 5**, as an explicit multiplicative line (or set of sub-component lines) — never fold it into the base rate, never apply it inside Step 4, and never double-count it across Step 4 and Step 5. This applies uniformly to plots, houses, villas, and apartments.
+1. **The final reported value is the post-Step-5 adjusted value, never the raw base.** Carry the net Step 5 multiplicative adjustment through to the headline number in Section D, Section E, and the Step 6 scenario table; show base value → net adjustment → adjusted value as traceable lines. A report that headlines the pre-adjustment Step 2 base value is incorrect.
 1. **Apply the 5% listing-to-closing discount exactly once.** Discount fresh self-pulled listings by 5% to get effective rates; never re-discount locality-DB rates that are already effective (tagged `manual_seed_eff5` or labelled effective/closing). Double-discounting understates value.
 1. **Seed-vs-web base rate is a switch, not a blend (Step 1).** Use the supplied seed rate as the locality anchor only when `confidence_score` ≥ 85 (`high`); otherwise — or when no seed is supplied — derive the rate from live web search and apply the 5% discount. Never average the seed and live-derived rate together to form the anchor; pick one path per Step 1 and state which.
 
@@ -415,6 +418,6 @@ When the property is within **2 km of major under-construction infrastructure** 
 
 -----
 
-*This is v2.7 of the valUProp valuation prompt. Updated June 2026. Builds on v2.6 (seed-vs-web base-rate switch). **v2.7 lowers the standard listing-to-closing discount from 10% to a flat 5%** (applied once to live self-pulled listings; seed rows are now pre-discounted at 5% and tagged `manual_seed_eff5`), and **raises the seed-vs-web confidence threshold to ≥ 85**: a supplied seed rate with `confidence_score` ≥ 85 (`high`) is taken as the base and the valuation built up from it, while `< 85` (`medium`/`low`) or absent seeds route to live web search with a 5% discount applied. The Connectivity Factor wiring (v2.4) and Income/Rental-Yield Support Factor (v2.3) remain unchanged and in force. No other valuation logic changed.*
+*This is v2.8 of the valUProp valuation prompt. Updated June 2026. Builds on v2.7 (5% listing discount + seed-vs-web switch at ≥85). **v2.8 makes explicit in the paid-report output (Section D) that the final reported value is the post-Step-5 adjusted value** — base value (after Step 3 depreciation) × net Step 5 multiplicative adjustment — never the raw Step 2 base. The Build-Up must show base → net adjustment → adjusted value as traceable lines, the Step 6 scenarios derive from the adjusted value, and Section E's Estimated Market Value must equal that post-Step-5 figure. The seed-vs-web switch (v2.7/v2.6), Connectivity Factor wiring (v2.4), and Income/Rental-Yield Support Factor (v2.3) remain unchanged and in force. No other valuation logic changed.*
 
 **© myRiky Technologies P. Ltd. · [info@myriky.com](mailto:info@myriky.com)**
