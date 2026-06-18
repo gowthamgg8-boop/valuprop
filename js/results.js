@@ -702,7 +702,9 @@ function renderStatic(search) {
   if(search.type==='Apartment'){
     [lo,hi]=db.apt; const m=bhkM[search.bhk]||1;
     lo=Math.round(lo*m); hi=Math.round(hi*m);
-    if(search.salableArea){const a=parseInt(search.salableArea),r=db.sqft;lo=Math.round(a*r*0.9/1e5);hi=Math.round(a*r*1.1/1e5);}
+    // salableArea = explicit rename; superBuiltup = existing form field name — both treated as salable area
+    const sArea=search.salableArea||search.superBuiltup;
+    if(sArea){const a=parseInt(sArea),r=db.sqft;lo=Math.round(a*r*0.9/1e5);hi=Math.round(a*r*1.1/1e5);}
     else if(search.carpetArea){const a=parseInt(search.carpetArea),r=db.sqft,sba=Math.round(a/0.7);lo=Math.round(sba*r*0.9/1e5);hi=Math.round(sba*r*1.1/1e5);}
   }else if(search.type==='IndependentHouse'){
     [lo,hi]=db.house;
@@ -736,7 +738,8 @@ function buildAssetLine(s) {
   const tl={'Apartment':'Apartment','IndependentHouse':'Indep. House','Villa':'Villa','LandPlot':'Land / Plot'};
   const p=[tl[s.type]||s.type];
   if(s.bhk) p.push(s.bhk.replace('BHK',' BHK'));
-  if(s.salableArea) p.push(s.salableArea+' sq.ft (salable)');
+  const _sa=s.salableArea||s.superBuiltup;
+  if(_sa) p.push(_sa+' sq.ft (salable)');
   else if(s.carpetArea) p.push(s.carpetArea+' sq.ft (carpet)');
   if(s.plotHouse)  p.push('Plot: '+s.plotHouse+' sq.ft');
   if(s.plotLand)   p.push(s.plotLand+' sq.ft');
@@ -771,8 +774,9 @@ function renderSectionA(s, db, source, matchedLoc) {
   const facts = [];
   facts.push(['Property type', typeLabel]);
   if (s.bhk)         facts.push(['Configuration', s.bhk.replace('BHK',' BHK')]);
-  if (s.salableArea) facts.push(['Salable area', `${parseInt(s.salableArea).toLocaleString('en-IN')} sq.ft`]);
-  if (s.carpetArea)  facts.push(['Carpet area',  `${parseInt(s.carpetArea).toLocaleString('en-IN')} sq.ft`]);
+  const _salable = s.salableArea || s.superBuiltup;
+  if (_salable)     facts.push(['Salable area', `${parseInt(_salable).toLocaleString('en-IN')} sq.ft`]);
+  if (s.carpetArea) facts.push(['Carpet area',  `${parseInt(s.carpetArea).toLocaleString('en-IN')} sq.ft`]);
   if (s.plotHouse)   facts.push(['Plot area', `${parseInt(s.plotHouse).toLocaleString('en-IN')} sq.ft`]);
   if (s.plotLand)    facts.push(['Plot area', `${parseInt(s.plotLand).toLocaleString('en-IN')} sq.ft`]);
   if (s.age)         facts.push(['Property age', `${s.age} years`]);
