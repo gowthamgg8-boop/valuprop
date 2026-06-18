@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
-
   <nav class="navbar">
     <div class="nav-inner">
       <a href="index.html" class="logo">valUProp<span class="logo-dot">.in</span></a>
@@ -22,9 +21,7 @@
       </div>
     </div>
   </nav>
-
   <main class="form-main">
-
     <!-- ══ STEP 1: Property Type Selection ══ -->
     <div id="step-1" class="form-step active">
       <div class="form-header">
@@ -81,7 +78,6 @@
       </div>
       <button class="next-btn" id="step1-next" onclick="goToStep2()" disabled>Next — Enter Details →</button>
     </div>
-
     <!-- ══ STEP 2: Dynamic Property Form ══ -->
     <div id="step-2" class="form-step">
       <div class="form-header">
@@ -89,9 +85,7 @@
         <h1 class="form-h1" id="step2-title">Property Details</h1>
         <p class="form-sub">More details = more accurate valuation. Required fields are marked *</p>
       </div>
-
       <div class="form-card">
-
         <!-- COMMON FIELDS (all types) -->
         <div class="form-section">
           <div class="section-label">Location</div>
@@ -112,9 +106,7 @@
             </div>
           </div>
         </div>
-
         <div class="form-divider"></div>
-
         <!-- APARTMENT FIELDS -->
         <div id="form-apartment" class="prop-form-fields">
           <div class="form-section">
@@ -136,18 +128,20 @@
             <div class="section-label">Area</div>
             <div class="field-row">
               <div class="field">
-                <label for="f-carpet">Carpet area (sq.ft) *</label>
-                <input type="number" id="f-carpet" placeholder="e.g. 950" min="100" max="20000"/>
+                <label for="f-superbuiltup">Salable area (sq.ft) *</label>
+                <input type="number" id="f-superbuiltup" placeholder="e.g. 1350" min="100" max="20000"/>
+                <div class="field-hint">Super built-up / what builder quotes per sq.ft</div>
               </div>
               <div class="field">
-                <label for="f-builtup">Built-up area (sq.ft)</label>
-                <input type="number" id="f-builtup" placeholder="e.g. 1100" min="100" max="20000"/>
+                <label for="f-carpet">Carpet area (sq.ft)</label>
+                <input type="number" id="f-carpet" placeholder="e.g. 950" min="100" max="20000"/>
+                <div class="field-hint">RERA carpet area — reference only</div>
               </div>
             </div>
             <div class="field-row">
               <div class="field">
-                <label for="f-superbuiltup">Super built-up area (sq.ft)</label>
-                <input type="number" id="f-superbuiltup" placeholder="e.g. 1350" min="100" max="20000"/>
+                <label for="f-builtup">Built-up area (sq.ft)</label>
+                <input type="number" id="f-builtup" placeholder="e.g. 1100" min="100" max="20000"/>
               </div>
               <div class="field">
                 <label for="f-floor">Floor no. / Total floors</label>
@@ -204,7 +198,6 @@
             </div>
           </div>
         </div>
-
         <!-- INDEPENDENT HOUSE FIELDS -->
         <div id="form-house" class="prop-form-fields" style="display:none;">
           <div class="form-section">
@@ -274,7 +267,6 @@
             </div>
           </div>
         </div>
-
         <!-- VILLA FIELDS -->
         <div id="form-villa" class="prop-form-fields" style="display:none;">
           <div class="form-section">
@@ -327,7 +319,6 @@
             </div>
           </div>
         </div>
-
         <!-- LAND/PLOT FIELDS -->
         <div id="form-land" class="prop-form-fields" style="display:none;">
           <div class="form-section">
@@ -381,21 +372,16 @@
             </div>
           </div>
         </div>
-
       </div><!-- end form-card -->
-
       <div class="step2-actions">
         <button class="back-btn-form" onclick="goToStep1()">← Back</button>
         <button class="next-btn" onclick="submitForm()">Get My Free Estimate →</button>
       </div>
-
       <div class="form-disclaimer">
         By submitting you agree to our <a href="pages/terms.html">Terms of Service</a> and <a href="pages/privacy.html">Privacy Policy</a>.
       </div>
     </div>
-
   </main>
-
   <script src="js/estimate.js"></script>
 </body>
 </html>
