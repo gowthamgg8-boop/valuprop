@@ -702,7 +702,8 @@ function renderStatic(search) {
   if(search.type==='Apartment'){
     [lo,hi]=db.apt; const m=bhkM[search.bhk]||1;
     lo=Math.round(lo*m); hi=Math.round(hi*m);
-    if(search.carpetArea){const a=parseInt(search.carpetArea),r=db.sqft,sba=a*1.25;lo=Math.round(sba*r*0.9/1e5);hi=Math.round(sba*r*1.1/1e5);}
+    if(search.salableArea){const a=parseInt(search.salableArea),r=db.sqft;lo=Math.round(a*r*0.9/1e5);hi=Math.round(a*r*1.1/1e5);}
+    else if(search.carpetArea){const a=parseInt(search.carpetArea),r=db.sqft,sba=Math.round(a/0.7);lo=Math.round(sba*r*0.9/1e5);hi=Math.round(sba*r*1.1/1e5);}
   }else if(search.type==='IndependentHouse'){
     [lo,hi]=db.house;
     if(search.plotHouse){const a=parseInt(search.plotHouse),r=db.sqft*1.4;lo=Math.round(a*r*0.85/1e5);hi=Math.round(a*r*1.15/1e5);}
@@ -735,7 +736,8 @@ function buildAssetLine(s) {
   const tl={'Apartment':'Apartment','IndependentHouse':'Indep. House','Villa':'Villa','LandPlot':'Land / Plot'};
   const p=[tl[s.type]||s.type];
   if(s.bhk) p.push(s.bhk.replace('BHK',' BHK'));
-  if(s.carpetArea) p.push(s.carpetArea+' sq.ft');
+  if(s.salableArea) p.push(s.salableArea+' sq.ft (salable)');
+  else if(s.carpetArea) p.push(s.carpetArea+' sq.ft (carpet)');
   if(s.plotHouse)  p.push('Plot: '+s.plotHouse+' sq.ft');
   if(s.plotLand)   p.push(s.plotLand+' sq.ft');
   p.push(s.locality||s.address);
@@ -769,7 +771,8 @@ function renderSectionA(s, db, source, matchedLoc) {
   const facts = [];
   facts.push(['Property type', typeLabel]);
   if (s.bhk)         facts.push(['Configuration', s.bhk.replace('BHK',' BHK')]);
-  if (s.carpetArea)  facts.push(['Carpet area', `${parseInt(s.carpetArea).toLocaleString('en-IN')} sq.ft`]);
+  if (s.salableArea) facts.push(['Salable area', `${parseInt(s.salableArea).toLocaleString('en-IN')} sq.ft`]);
+  if (s.carpetArea)  facts.push(['Carpet area',  `${parseInt(s.carpetArea).toLocaleString('en-IN')} sq.ft`]);
   if (s.plotHouse)   facts.push(['Plot area', `${parseInt(s.plotHouse).toLocaleString('en-IN')} sq.ft`]);
   if (s.plotLand)    facts.push(['Plot area', `${parseInt(s.plotLand).toLocaleString('en-IN')} sq.ft`]);
   if (s.age)         facts.push(['Property age', `${s.age} years`]);
@@ -906,7 +909,7 @@ function renderSectionD(s, db) {
   if (s.type === 'Apartment') {
     html = `
       <div class="rep-formula-row">
-        <span class="rep-formula-label">Carpet area \u00d7 effective ₹/sq.ft</span>
+        <span class="rep-formula-label">Salable area \u00d7 effective ₹/sq.ft</span>
         <span class="rep-formula-val"><span class="rep-blur">\u20b9X,XX,XX,XXX</span></span>
       </div>
       <div class="rep-formula-row">
@@ -995,11 +998,4 @@ async function proceedToPayment() {
   const valId=sessionStorage.getItem('valuprop_val_id');
   if(!valId){
     try{
-      const r=await fetch(`${BACKEND_URL}/api/property/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(search)});
-      const d=await r.json();
-      if(d.property_id) sessionStorage.setItem('valuprop_prop_id',d.property_id);
-      if(d.valuation_id) sessionStorage.setItem('valuprop_val_id',d.valuation_id);
-    }catch(e){}
-  }
-  window.location.href='payment.html';
-}
+      const r=await fetch(`${BACKEND_URL}/api/property/submit`,{method:'POS
