@@ -618,11 +618,24 @@ def _build_structured_report(
     components = _calculate_components(prop, loc_data, lo, hi)
     confidence = loc_data.data_confidence if loc_data else 65
     area_info = ""
-    if prop.carpet_area:
-        area_info = (
-            f" The apartment measures {prop.carpet_area:,} sq.ft carpet area ({prop.bhk})."
-            if prop.bhk else f" Carpet area: {prop.carpet_area:,} sq.ft."
-        )
+    if prop.super_builtup or prop.carpet_area:
+        salable = prop.super_builtup
+        carpet  = prop.carpet_area
+        if salable and carpet:
+            area_info = (
+                f" Salable area: {salable:,} sq.ft; carpet area: {carpet:,} sq.ft ({prop.bhk})."
+                if prop.bhk else f" Salable area: {salable:,} sq.ft; carpet area: {carpet:,} sq.ft."
+            )
+        elif salable:
+            area_info = (
+                f" Salable area: {salable:,} sq.ft ({prop.bhk})."
+                if prop.bhk else f" Salable area: {salable:,} sq.ft."
+            )
+        else:
+            area_info = (
+                f" Carpet area: {carpet:,} sq.ft ({prop.bhk})."
+                if prop.bhk else f" Carpet area: {carpet:,} sq.ft."
+            )
     elif prop.plot_house:
         area_info = f" Plot area: {prop.plot_house:,} sq.ft."
     elif prop.plot_land:
@@ -673,7 +686,8 @@ def _build_structured_report(
         section_c = f"Pricing signals based on our locality database for {prop.locality}, {prop.city}."
     age_factor = _age_depreciation(prop.age_apt or "5-10 years")
     dep_pct    = round((1 - age_factor) * 100)
-    area       = prop.carpet_area or 950
+    # Valuation uses salable (super built-up) area; carpet area is reference only
+    area       = prop.super_builtup or (round(prop.carpet_area / 0.7) if prop.carpet_area else 1270)
     if prop.prop_type == "Apartment" and loc_data:
         rate_lo     = loc_data.apt_rate_lo
         rate_hi     = loc_data.apt_rate_hi
@@ -812,7 +826,7 @@ def _build_structured_report(
     txn_lo     = round(lo * 0.96, 1)
     txn_hi     = round(hi * 0.97, 1)
     gv         = loc_data.guideline_value if loc_data else 0
-    area_gv    = prop.carpet_area or 950
+    area_gv    = prop.super_builtup or (round(prop.carpet_area / 0.7) if prop.carpet_area else 1270)
     gv_total   = round(gv * area_gv / 100000, 1) if gv > 0 else 0
     gv_multiple= round(lo / gv_total, 1) if gv_total > 0 else 0
     gv_check   = (
@@ -903,14 +917,19 @@ def _calculate_base_range(
             "4BHK": 1.95, "5BHK+": 2.45,
         }
         m = bhk_multipliers.get(prop.bhk or "2BHK", 1.0)
-        if loc_data and prop.carpet_area:
+        # Rates in DB are ₹/sqft salable (super built-up) area
+        eff_area = (
+            prop.super_builtup
+            or (round(prop.carpet_area / 0.7) if prop.carpet_area else None)
+        )
+        if loc_data and eff_area:
             age_factor = _age_depreciation(prop.age_apt)
-            lo = round(prop.carpet_area * loc_data.apt_rate_lo * age_factor / 100000, 1)
-            hi = round(prop.carpet_area * loc_data.apt_rate_hi * age_factor / 100000, 1)
+            lo = round(eff_area * loc_data.apt_rate_lo * age_factor / 100000, 1)
+            hi = round(eff_area * loc_data.apt_rate_hi * age_factor / 100000, 1)
         elif loc_data:
             base_area = {
-                "1BHK": 550, "2BHK": 950, "3BHK": 1350, "4BHK": 1800, "5BHK+": 2400,
-            }.get(prop.bhk or "2BHK", 950)
+                "1BHK": 750, "2BHK": 1270, "3BHK": 1700, "4BHK": 2200, "5BHK+": 3000,
+            }.get(prop.bhk or "2BHK", 1270)
             age_factor = _age_depreciation(prop.age_apt)
             lo = round(base_area * loc_data.apt_rate_lo * age_factor / 100000, 1)
             hi = round(base_area * loc_data.apt_rate_hi * age_factor / 100000, 1)
