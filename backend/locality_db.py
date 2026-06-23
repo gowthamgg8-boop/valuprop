@@ -2282,45 +2282,57 @@ import logging as _logging
 _db_logger = _logging.getLogger("valuprop.db")
 
 def get_locality(city: str, locality: str) -> "Optional[LocalityData]":
-    # If locality contains a comma (e.g. "Valmiki nagar, Thiruvanmiyur"),
-    # try the primary part (before the comma) as the real locality name.
-    loc_primary = locality.split(",")[0].strip() if "," in locality else locality
+    # Split all comma-separated parts (e.g. "Vaishnavi nagar, Tirumullaivoyal"
+    # gives ["Vaishnavi nagar", "Tirumullaivoyal"]).
+    parts = [p.strip() for p in locality.split(",") if p.strip()]
+    loc_primary = parts[0]
 
-    # Step 1: exact key match (full and primary)
-    for loc_try in ([locality, loc_primary] if loc_primary != locality else [locality]):
+    # Step 1: exact key match — try full string and all parts
+    for loc_try in ([locality] + parts):
         data = LOCALITY_DB.get(f"{city}|{loc_try}")
         if data:
             return data
 
-    # Step 2: case-insensitive substring match (try both primary and full)
+    # Step 2: case-insensitive substring match — try all parts
     city_lower = city.lower()
-    for loc_try in ([loc_primary, locality] if loc_primary != locality else [locality]):
+    for loc_try in ([locality] + parts):
         loc_lower = loc_try.lower()
         for k, v in LOCALITY_DB.items():
             if city_lower in k.lower() and loc_lower in k.lower():
                 return v
 
-    # Step 3: fuzzy match (difflib) using primary locality name
+    # Step 3: fuzzy match — try ALL parts, pick the best-scoring match.
+    # This prevents a low-confidence sub-locality name (e.g. "Vaishnavi nagar")
+    # from beating a high-confidence parent locality (e.g. "Tirumullaivoyal")
+    # just because it appears first in the address string.
     city_entries = {
         k.split("|")[1].lower(): (k, v)
         for k, v in LOCALITY_DB.items()
         if city_lower in k.lower()
     }
     if city_entries:
-        primary_lower = loc_primary.lower()
-        matches = _difflib.get_close_matches(
-            primary_lower, city_entries.keys(), n=1, cutoff=0.62
-        )
-        if matches:
-            _, matched_val = city_entries[matches[0]]
-            score = round(
-                _difflib.SequenceMatcher(None, primary_lower, matches[0]).ratio() * 100
+        best_score = 0.0
+        best_val   = None
+        best_input = loc_primary
+
+        for part in parts:
+            part_lower = part.lower()
+            m = _difflib.get_close_matches(
+                part_lower, city_entries.keys(), n=1, cutoff=0.62
             )
+            if m:
+                score = _difflib.SequenceMatcher(None, part_lower, m[0]).ratio()
+                if score > best_score:
+                    best_score = score
+                    _, best_val = city_entries[m[0]]
+                    best_input  = part
+
+        if best_val:
             _db_logger.info(
-                f"Fuzzy match: '{locality}' → '{matched_val.locality}' "
-                f"({score}% similarity)"
+                f"Fuzzy match: '{best_input}' (from '{locality}') → '{best_val.locality}' "
+                f"({round(best_score * 100)}% similarity)"
             )
-            return matched_val
+            return best_val
 
     return None
 
