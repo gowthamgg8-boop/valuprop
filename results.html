@@ -50,7 +50,6 @@
       color: #6b7280;
       margin-bottom: 22px;
     }
-
     /* Section card */
     .rep-section {
       background: #ffffff;
@@ -64,7 +63,6 @@
     .rep-section:hover {
       border-color: #d1d5db;
     }
-
     .rep-sec-head {
       display: flex;
       align-items: center;
@@ -111,7 +109,6 @@
       color: #92400e;
       border: 1px solid #fde68a;
     }
-
     .rep-sec-body {
       font-family: 'DM Sans', sans-serif;
       font-size: 14px;
@@ -122,7 +119,6 @@
       margin: 0 0 10px;
     }
     .rep-sec-body p:last-child { margin-bottom: 0; }
-
     /* Data rows (used in C and D) */
     .rep-data-grid {
       display: grid;
@@ -156,7 +152,6 @@
       margin-top: 2px;
       font-weight: 400;
     }
-
     /* Build-up formula (D) */
     .rep-formula {
       background: linear-gradient(180deg, #fafbfc 0%, #f5f7fa 100%);
@@ -194,7 +189,6 @@
       font-weight: 600;
       font-variant-numeric: tabular-nums;
     }
-
     /* The blur primitive (anti-cheat: real text is decorative placeholder) */
     .rep-blur {
       display: inline-block;
@@ -207,7 +201,6 @@
     .rep-blur-strong {
       filter: blur(7px);
     }
-
     /* Section E — the money shot, locked */
     .rep-section.is-locked {
       background: linear-gradient(180deg, #ffffff 0%, #fdfcf7 100%);
@@ -261,7 +254,6 @@
       filter: blur(4px);
       width: 70%;
     }
-
     /* Section F — risk preview */
     .rep-risk-list {
       margin: 8px 0 0;
@@ -296,7 +288,6 @@
       color: #9ca3af;
     }
     .rep-risk-text { color: #374151; flex: 1; }
-
     /* Lock chip on locked sections */
     .rep-lock-chip {
       display: inline-flex;
@@ -306,7 +297,6 @@
       font-weight: 600;
       color: #92400e;
     }
-
     /* Sticky CTA on scroll into locked zone */
     .rep-sticky-cta {
       position: sticky;
@@ -355,7 +345,6 @@
       background: #f59e0b;
       transform: translateY(-1px);
     }
-
     /* ==========================================================
        PRE-PAYMENT DISCLAIMER (Set 2 #8)
        Sits directly above the lead-capture card so users see it
@@ -397,7 +386,6 @@
     .pre-payment-disclaimer a:hover {
       color: #451A03;
     }
-
     /* Mobile tweaks */
     @media (max-width: 560px) {
       .rep-wrap { padding: 0 14px; margin-top: 20px; }
@@ -414,16 +402,13 @@
   </style>
 </head>
 <body>
-
   <nav class="navbar">
     <div class="nav-inner">
       <a href="index.html" class="logo">valUProp<span class="logo-dot">.in</span></a>
       <a href="estimate.html" class="btn-back-nav">← New estimate</a>
     </div>
   </nav>
-
   <main class="results-main">
-
     <!-- Property label -->
     <div class="results-property-bar">
       <div class="rpb-inner">
@@ -431,7 +416,6 @@
         <div class="rpb-address" id="res-address">Anna Nagar, Chennai</div>
       </div>
     </div>
-
     <!-- FREE ESTIMATE BLOCK -->
     <div class="free-estimate-block">
       <div class="feb-label">FREE ESTIMATE</div>
@@ -439,7 +423,6 @@
       <div class="feb-sub">Estimated market value · Based on AI analysis of locality data</div>
       <div class="feb-teaser" id="res-teaser-insight"></div>
     </div>
-
     <!-- ONE TEASER INSIGHT -->
     <div class="teaser-insight-card" id="teaser-card">
       <div class="tic-icon">
@@ -447,7 +430,6 @@
       </div>
       <div id="teaser-text">Properties in this locality have appreciated 8% in the last 12 months.</div>
     </div>
-
     <!-- ====================================================
          REPORT PREVIEW — aggressive tease
          A,B,C visible · D mostly visible · E,F locked
@@ -456,7 +438,6 @@
       <div class="rep-eyebrow">A taste of your full report</div>
       <h2 class="rep-title">Your Detailed Valuation Report</h2>
       <p class="rep-subtitle">6 sections · Continues below · Unlock the full report for ₹199</p>
-
       <!-- A. Asset Overview -->
       <div class="rep-section">
         <div class="rep-sec-head">
@@ -468,7 +449,6 @@
           <!-- filled by results.js -->
         </div>
       </div>
-
       <!-- B. Micro-Market Context -->
       <div class="rep-section">
         <div class="rep-sec-head">
@@ -480,7 +460,6 @@
           <!-- filled by results.js -->
         </div>
       </div>
-
       <!-- C. Observed Pricing Signals -->
       <div class="rep-section">
         <div class="rep-sec-head">
@@ -495,7 +474,6 @@
           </div>
         </div>
       </div>
-
       <!-- D. Valuation Build-Up — formula visible, final blurred -->
       <div class="rep-section">
         <div class="rep-sec-head">
@@ -513,7 +491,6 @@
           </p>
         </div>
       </div>
-
       <!-- E. Independent Value Opinion — THE MONEY SHOT, LOCKED -->
       <div class="rep-section is-locked">
         <div class="rep-sec-head">
@@ -536,7 +513,6 @@
           </div>
         </div>
       </div>
-
       <!-- F. Risk & Due Diligence — 1 visible, rest locked -->
       <div class="rep-section">
         <div class="rep-sec-head">
@@ -551,7 +527,6 @@
           </ul>
         </div>
       </div>
-
       <!-- Sticky CTA -->
       <div class="rep-sticky-cta" id="rep-sticky-cta">
         <div class="rep-sticky-cta-text">
@@ -563,7 +538,6 @@
         </button>
       </div>
     </section>
-
     <!-- ==========================================================
          PRE-PAYMENT DISCLAIMER (Set 2 #8)
          Placed strictly before the lead-capture / payment card.
@@ -575,7 +549,6 @@
         This is an AI-generated property valuation for informational and decision-support purposes only. It is <strong>not</strong> a statutory, bank-certified, or RERA-approved valuation. Do not use this report alone for bank loans, legal disputes, or court proceedings — those require a registered valuer. <a href="pages/limitations.html">See full limitations →</a>
       </div>
     </div>
-
     <!-- LEAD CAPTURE + PAYMENT -->
     <div class="lead-capture-card" id="lead-capture">
       <div class="lcc-head">
@@ -605,17 +578,13 @@
         </div>
       </div>
     </div>
-
     <div class="results-disclaimer">
       This is an AI-generated estimate for informational purposes only. Not a statutory or bank-certified valuation. <a href="pages/limitations.html">Read our limitations →</a>
     </div>
-
     <div style="text-align:center; padding: 8px 0 32px;">
       <a href="estimate.html" style="font-size:13px; color:var(--muted);">← Start a new estimate</a>
     </div>
-
   </main>
-
   <script src="js/estimate.js"></script>
   <script src="js/results.js?v=2"></script>
 </body>
