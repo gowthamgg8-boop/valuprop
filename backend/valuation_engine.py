@@ -1,7 +1,3 @@
-https://raw.githubusercontent.com/gowthamgg8-boop/valuprop/3859105/backend/valuation_engine.py
-→ https://raw.githubusercontent.com/gowthamgg8-boop/valuprop/3859105/backend/valuation_engine.py
-Content-Type: text/plain; charset=utf-8
-
 """
 ValUprop.in — Valuation Engine
 valuation_engine.py
@@ -1011,4 +1007,3 @@ def _apply_floor_factor(lo: float, hi: float, floor_info: str) -> tuple:
         return round(lo * factor, 1), round(hi * factor, 1)
     except (ValueError, IndexError):
         return lo, hi
-
