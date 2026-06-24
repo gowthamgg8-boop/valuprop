@@ -991,4 +991,14 @@ async function proceedToPayment() {
   sessionStorage.setItem('valuprop_search',JSON.stringify(search));
   const propId=sessionStorage.getItem('valuprop_prop_id');
   if(propId){try{await fetch(`${BACKEND_URL}/api/lead/capture`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({property_id:parseInt(propId),phone,email})});}catch(e){}}
-  // Guard: if backend never respond
+  // Guard: if backend never responded, re-submit so payment page has IDs
+  if (!propId) {
+    try {
+      const r = await fetch(`${BACKEND_URL}/api/property/submit`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(search)});
+      const d = await r.json();
+      if(d.property_id) sessionStorage.setItem('valuprop_prop_id',d.property_id);
+      if(d.valuation_id) sessionStorage.setItem('valuprop_val_id',d.valuation_id);
+    }catch(e){}
+  }
+  window.location.href='payment.html';
+}
