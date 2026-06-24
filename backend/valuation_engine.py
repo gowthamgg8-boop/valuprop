@@ -215,7 +215,12 @@ async def _derive_locality_from_web(prop: PropertyInput) -> Optional[LocalityDat
 # FREE ESTIMATE ENGINE
 # ===================================================================
 async def generate_free_estimate(prop: PropertyInput) -> FreeEstimate:
-    loc_data = get_locality(prop.city, prop.locality)
+    # Use full address string for locality lookup — it may contain the parent
+    # locality after a comma (e.g. "Vaishnavi nagar, Tirumullaivoyal") which
+    # gives the 3-tier matcher crucial context.  Fall back to locality alone
+    # when address is absent or identical.
+    _lookup_str = prop.address.strip() if prop.address and prop.address.strip() else prop.locality
+    loc_data = get_locality(prop.city, _lookup_str)
     if not loc_data:
         loc_data = await _derive_locality_from_web(prop)
     fallback  = get_fallback(prop.city, prop.locality, prop.bhk or "2BHK")
@@ -283,7 +288,8 @@ async def generate_detailed_report(
     prop: PropertyInput,
     free_range: Optional[tuple] = None,
 ) -> DetailedReport:
-    loc_data = get_locality(prop.city, prop.locality)
+    _lookup_str = prop.address.strip() if prop.address and prop.address.strip() else prop.locality
+    loc_data = get_locality(prop.city, _lookup_str)
     if not loc_data:
         loc_data = await _derive_locality_from_web(prop)
     fallback  = get_fallback(prop.city, prop.locality, prop.bhk or "2BHK")
