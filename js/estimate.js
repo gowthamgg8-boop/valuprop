@@ -5,7 +5,6 @@
  * Handles: property type selection, dynamic forms,
  * address autocomplete (local), session storage, form submission
  */
-
 /* ─── Address Data (locality suggestions) ─────────────────────── */
 const LOCALITIES = [
   // ── Chennai (rebuilt from CSV seed, sorted alphabetically) ──
@@ -218,7 +217,6 @@ const LOCALITIES = [
   { label: 'Banaswadi, Bangalore', city: 'Bangalore', pincode: '560043' },
   { label: 'Electronic City, Bangalore', city: 'Bangalore', pincode: '560100' },
 ];
-
 /* ─── Address Aliases ──────────────────────────────────────────
  * Common sub-locality / colony / landmark names users actually type.
  * Each alias points to a `parent` locality that MUST exist as a PRICE_DB
@@ -286,7 +284,6 @@ const LOCALITY_ALIASES = [
   // ── Chennai — Porur / West outskirts ────────────────────────
   { label: 'Mount-Poonamallee Road, Chennai',parent: 'Porur',              city: 'Chennai',   pincode: '600116' },
   { label: 'L&T Bypass, Chennai',            parent: 'Manapakkam',         city: 'Chennai',   pincode: '600125' },
-
   // ── Bangalore — Indiranagar / Koramangala / Jayanagar ──────
   { label: '100 Feet Road Indiranagar, Bangalore', parent: 'Indiranagar',  city: 'Bangalore', pincode: '560038' },
   { label: 'CMH Road, Bangalore',            parent: 'Indiranagar',        city: 'Bangalore', pincode: '560038' },
@@ -343,7 +340,6 @@ const LOCALITY_ALIASES = [
   { label: 'Hosur Road, Bangalore',          parent: 'Electronic City',    city: 'Bangalore', pincode: '560100' },
   { label: 'Bommasandra, Bangalore',         parent: 'Electronic City',    city: 'Bangalore', pincode: '560099' },
 ];
-
 /* Combined list used for autocomplete searches. Aliases are flagged so the
  * picker handler knows to substitute the parent for price lookup. */
 function getCombinedLocalities() {
@@ -354,12 +350,10 @@ function getCombinedLocalities() {
   }));
   return main.concat(aliases);
 }
-
 /* ─── State ───────────────────────────────────────────────────── */
 let selectedType  = null;
 let selectedBhk   = null;
 let selectedLocality = null;
-
 /* ─── Step 1: Type Selection ──────────────────────────────────── */
 function selectType(card) {
   document.querySelectorAll('.prop-type-card').forEach(c => c.classList.remove('selected'));
@@ -367,7 +361,6 @@ function selectType(card) {
   selectedType = card.dataset.type;
   document.getElementById('step1-next').disabled = false;
 }
-
 function goToStep2() {
   if (!selectedType) return;
   const titles = {
@@ -377,7 +370,6 @@ function goToStep2() {
     'LandPlot':        'Land / Plot Details',
   };
   document.getElementById('step2-title').textContent = titles[selectedType] || 'Property Details';
-
   document.querySelectorAll('.prop-form-fields').forEach(f => f.style.display = 'none');
   const formMap = {
     'Apartment':       'form-apartment',
@@ -387,12 +379,9 @@ function goToStep2() {
   };
   const formEl = document.getElementById(formMap[selectedType]);
   if (formEl) formEl.style.display = 'block';
-
   showStep(2);
 }
-
 function goToStep1() { showStep(1); }
-
 function showStep(n) {
   document.querySelectorAll('.form-step').forEach(s => s.classList.remove('active'));
   document.getElementById('step-' + n).classList.add('active');
@@ -405,25 +394,19 @@ function showStep(n) {
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
 /* ─── Address autocomplete (Set 2 #6: suggestions only, free text allowed) ─ */
 function handleAddressInput(input) {
   const query = input.value.trim().toLowerCase();
   const suggestBox = document.getElementById('address-suggestions');
   suggestBox.innerHTML = '';
-
   // Free text: typing invalidates any earlier selection unless user re-picks
   selectedLocality = null;
-
   if (query.length < 1) { suggestBox.style.display = 'none'; return; }
-
   const all = getCombinedLocalities();
   const matches = all.filter(l =>
     l.label.toLowerCase().includes(query)
   ).slice(0, 10);
-
   if (matches.length === 0) { suggestBox.style.display = 'none'; return; }
-
   suggestBox.style.display = 'block';
   matches.forEach(loc => {
     const div = document.createElement('div');
@@ -442,14 +425,12 @@ function handleAddressInput(input) {
     suggestBox.appendChild(div);
   });
 }
-
 document.addEventListener('click', (e) => {
   const box = document.getElementById('address-suggestions');
   if (box && !box.contains(e.target) && e.target.id !== 'f-address') {
     box.style.display = 'none';
   }
 });
-
 /* ─── BHK selection ───────────────────────────────────────────── */
 function selectBhk(btn) {
   document.querySelectorAll('.bhk-btn').forEach(b => b.classList.remove('selected'));
@@ -458,7 +439,6 @@ function selectBhk(btn) {
   const hidden = document.getElementById('f-bhk');
   if (hidden) hidden.value = selectedBhk;
 }
-
 /* ─── Free-text city detection (Set 2 #6) ─────────────────────────
  * When the user types freely without picking a suggestion, do our best
  * to extract city and locality from the typed string. Defaults to Chennai. */
@@ -472,7 +452,6 @@ function detectCity(address) {
   }
   return 'Chennai';
 }
-
 function extractLocality(address) {
   // If the user typed "<street>, <locality>, <city>" we want the middle part.
   // If they typed "<locality>, <city>" we want the first part.
@@ -483,15 +462,12 @@ function extractLocality(address) {
   if (parts.length === 2) return parts[0];                  // "Locality, City"
   return parts[0] || '';
 }
-
 /* ─── Form submission ─────────────────────────────────────────── */
 function submitForm() {
   const address = document.getElementById('f-address')?.value?.trim();
   const pincode = document.getElementById('f-pincode')?.value?.trim();
-
   if (!address) { alert('Please enter a property location.'); return; }
   if (!pincode) { alert('Please enter a pincode.'); return; }
-
   if (selectedType === 'Apartment') {
     if (!selectedBhk) { alert('Please select BHK configuration.'); return; }
     if (!document.getElementById('f-carpet')?.value) { alert('Please enter carpet area.'); return; }
@@ -509,13 +485,15 @@ function submitForm() {
     if (!document.getElementById('f-landuse')?.value) { alert('Please select land use.'); return; }
     if (!document.getElementById('f-approval')?.value) { alert('Please select approval status.'); return; }
   }
-
   // Build search object — free-text friendly. If user picked a suggestion,
   // use its city/label. Otherwise infer from typed address.
   const inferredCity     = selectedLocality?.city || detectCity(address);
+  // FIX: When user free-types (no suggestion picked), pass the full address
+  // as locality so the backend can try all comma-separated parts via fuzzy
+  // matching (e.g. "Vaishnavi nagar, Tirumullaivoyal" → backend finds
+  // Thirumullaivoyal). When a suggestion was picked, use the parent label.
   const inferredLocality = selectedLocality?.label?.split(',')[0]?.trim()
-                            || extractLocality(address);
-
+                            || address;
   const search = {
     type:      selectedType,
     address:   address,
@@ -553,21 +531,17 @@ function submitForm() {
     cornerPlot:    document.getElementById('f-corner')?.value || '',
     submittedAt: new Date().toISOString(),
   };
-
   sessionStorage.setItem('valuprop_search', JSON.stringify(search));
   window.location.href = 'loading.html';
 }
-
 /* ─── Shared: get search from session ────────────────────────── */
 function getSearch() {
   try { return JSON.parse(sessionStorage.getItem('valuprop_search') || '{}'); }
   catch (e) { return {}; }
 }
-
 function markPaid(phone, email) {
   sessionStorage.setItem('valuprop_paid', '1');
   sessionStorage.setItem('valuprop_phone', phone);
   sessionStorage.setItem('valuprop_email', email);
 }
-
 function isPaid() { return sessionStorage.getItem('valuprop_paid') === '1'; }
