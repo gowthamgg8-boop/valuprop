@@ -38,6 +38,8 @@ let _poll = 0;
  *   gccZone     — CGCC zone or CMA boundary classification
  */
 
+const RATE_DATA_VERSION = 'e8199b59-20260628'; // matches backend locality_db.py
+
 const PRICE_DB = {
   Chennai: {
     // ── PREMIUM ──
