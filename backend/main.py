@@ -28,6 +28,7 @@ from dotenv import load_dotenv
 from fastapi.responses import StreamingResponse, RedirectResponse
 from database import SessionLocal, engine
 import models, llm_service, email_service, pdf_service, s3_service, valuation_engine
+from locality_db import RATE_DATA_VERSION
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -280,7 +281,7 @@ class VerifyRequest(BaseModel):
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "2.0.0"}
+    return {"status": "ok", "version": "2.0.0", "rate_data_version": RATE_DATA_VERSION}
 
 
 @app.post("/api/property/submit")
