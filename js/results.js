@@ -209,8 +209,8 @@ const PRICE_DB = {
     'Veppampattu': {apt:[22,35],house:[89,147],villa:[148,237],land:[37,64],trend:'+12.0%',sqft:2100,pincode:'602024',confidence:'low'},
     'Walajabad': {apt:[20,34],house:[43,115],villa:[72,185],land:[18,50],trend:'+9.0%',sqft:1900,pincode:'631605',confidence:'low'},
     // ── MANUAL / NOT IN CSV ──
-    'Valmiki nagar': {apt:[145,199],house:[658,958],villa:[1096,1518],land:[274,410],trend:'+5.5%',sqft:13300,pincode:'600041',confidence:'medium'},
-    'Vaishnavi nagar': {apt:[145,199],house:[658,958],villa:[1096,1518],land:[274,410],trend:'+5.5%',sqft:13300,pincode:'600041',confidence:'medium'},
+    // 'Valmiki nagar' removed — not in seed CSV; resolves to parent Thiruvanmiyur
+    // 'Vaishnavi nagar' removed — not in seed CSV; resolves to parent Thirumullaivoyal
     'Mylapore': {apt:[55,85],house:[290,440],villa:[480,720],land:[115,175],trend:'+5.0%',sqft:5100,pincode:'600004',confidence:'low'},
     'Mandaveli': {apt:[58,90],house:[300,450],villa:[500,750],land:[120,180],trend:'+5.2%',sqft:5300,pincode:'600028',confidence:'low'},
     'R.A. Puram': {apt:[78,122],house:[440,660],villa:[700,1050],land:[165,245],trend:'+5.0%',sqft:6500,pincode:'600028',confidence:'low'},
@@ -575,6 +575,22 @@ function _strSim(a, b) {
   return 1 - _levenshtein(a, b) / Math.max(a.length, b.length);
 }
 
+/* Collapses Tamil-English transliteration variants so phonetic spellings
+   match: Th->T, double->single consonant, zh->l, oo->u, punctuation stripped.
+   Makes "tirumullaivoyal" and "thirumullaivoyal" identical. */
+function _normLoc(s) {
+  return (s || '')
+    .toLowerCase().trim()
+    .replace(/\bth/g, 't')        // word-initial Th -> T
+    .replace(/th/g, 't')          // internal th -> t
+    .replace(/zh/g, 'l')          // Tamil zh -> l
+    .replace(/oo/g, 'u')          // oo -> u
+    .replace(/([a-z])\1+/g, '$1') // collapse doubled letters
+    .replace(/[^a-z0-9 ]/g, '')   // strip punctuation
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 /* ─── Locality lookup — 3-step matching logic ──────────────────
  * Step 1: Exact name match in PRICE_DB
  * Step 2: Pincode lookup (find any PRICE_DB entry with same pincode)
@@ -610,43 +626,26 @@ function normalizeCity(city) {
 }
 
 function lookupLocality(city, locality, pincode) {
-  // Normalize city — handles area names typed in city field
   const normCity = normalizeCity(city);
   const cityDb = PRICE_DB[normCity];
-  if (!cityDb) {
-    return cityAverageLookup('Chennai');
-  }
+  if (!cityDb) return cityAverageLookup('Chennai');
 
-  if (locality) {
-    // If locality contains a comma (e.g. "Valmiki nagar, Thiruvanmiyur"),
-    // try the primary part (before the comma) first.
-    const localityPrimary = locality.includes(',')
-      ? locality.split(',')[0].trim()
-      : locality;
+  // Split ALL comma-parts (mirror backend get_locality), not just the first.
+  const parts = locality
+    ? locality.split(',').map(p => p.trim()).filter(Boolean)
+    : [];
 
-    // ── Step 1: Exact name match (case-insensitive) ──
-    for (const tryLoc of [localityPrimary, locality]) {
-      const needle = tryLoc.toLowerCase().trim();
-      for (const key of Object.keys(cityDb)) {
-        if (key.toLowerCase() === needle) {
-          return { db: cityDb[key], matched: key, source: 'exact' };
-        }
+  // ── Step 1: Exact match (transliteration-normalised) over ALL parts ──
+  for (const part of parts) {
+    const needle = _normLoc(part);
+    for (const key of Object.keys(cityDb)) {
+      if (_normLoc(key) === needle) {
+        return { db: cityDb[key], matched: key, source: 'exact' };
       }
     }
-
-    // ── Step 1b: Fuzzy name match — uses primary locality only ──
-    const needlePrimary = localityPrimary.toLowerCase().trim();
-    let bestKey = null, bestSim = 0;
-    for (const key of Object.keys(cityDb)) {
-      const sim = _strSim(needlePrimary, key.toLowerCase());
-      if (sim > bestSim) { bestSim = sim; bestKey = key; }
-    }
-    if (bestKey && bestSim >= 0.72) {
-      return { db: cityDb[bestKey], matched: bestKey, source: 'exact' };
-    }
   }
 
-  // ── Step 2: Pincode match ──
+  // ── Step 2: Pincode match — BEFORE fuzzy, so a reliable pincode wins ──
   if (pincode) {
     const pinClean = String(pincode).trim();
     for (const key of Object.keys(cityDb)) {
@@ -656,7 +655,20 @@ function lookupLocality(city, locality, pincode) {
     }
   }
 
-  // ── Step 3: City-wide average ──
+  // ── Step 3: Fuzzy over ALL parts — keep the single best, normalised ──
+  let bestKey = null, bestSim = 0;
+  for (const part of parts) {
+    const needle = _normLoc(part);
+    for (const key of Object.keys(cityDb)) {
+      const sim = _strSim(needle, _normLoc(key));
+      if (sim > bestSim) { bestSim = sim; bestKey = key; }
+    }
+  }
+  if (bestKey && bestSim >= 0.82) {          // raised from 0.72
+    return { db: cityDb[bestKey], matched: bestKey, source: 'fuzzy' };
+  }
+
+  // ── Step 4: City-wide average (last resort) ──
   return cityAverageLookup(normCity);
 }
 
